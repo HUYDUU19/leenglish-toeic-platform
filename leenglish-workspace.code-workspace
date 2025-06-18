@@ -1,0 +1,48 @@
+{
+  "folders": [
+    {
+      "name": "Backend (Spring Boot)",
+      "path": "./backend"
+    },
+    {
+      "name": "Frontend (Next.js)",
+      "path": "./frontend"
+    },
+    {
+      "name": "Mobile (Flutter)",
+      "path": "./mobile"
+    },
+    {
+      "name": "Root",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "java.configuration.workspaces": [
+      "backend"
+    ],
+    "typescript.preferences.includePackageJsonAutoImports": "auto",
+    "flutter.sdkPath": "",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "files.associations": {
+      "*.dart": "dart"
+    },
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.configuration.runtimes": []
+  },
+  "extensions": {
+    "recommendations": [
+      "vscjava.vscode-java-pack",
+      "bradlc.vscode-tailwindcss",
+      "esbenp.prettier-vscode",
+      "ms-vscode.vscode-typescript-next",
+      "dart-code.flutter",
+      "dart-code.dart-code",
+      "redhat.java",
+      "pivotal.vscode-spring-boot"
+    ]
+  }
+}
