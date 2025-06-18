@@ -1,6 +1,7 @@
 package com.leenglish.toeic.controller;
 
 import com.leenglish.toeic.domain.User;
+import com.leenglish.toeic.enums.Role;
 import com.leenglish.toeic.service.JwtService;
 import com.leenglish.toeic.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,12 +53,10 @@ public class AuthController {
 
             // Authenticate user
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginIdentifier, password));
-
-            // Get user details
+                    new UsernamePasswordAuthenticationToken(loginIdentifier, password)); // Get user details
             Optional<User> userOptional = username != null
-                    ? userService.getUserByUsername(username)
-                    : userService.getUserByEmail(email);
+                    ? userService.findUserByUsername(username)
+                    : userService.findUserByEmail(email);
 
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
@@ -72,7 +71,6 @@ public class AuthController {
                 // Generate tokens
                 String accessToken = jwtService.generateAccessToken(user);
                 String refreshToken = jwtService.generateRefreshToken(user);
-
                 response.put("success", true);
                 response.put("message", "Login successful");
                 response.put("accessToken", accessToken);
@@ -80,13 +78,23 @@ public class AuthController {
                 response.put("tokenType", "Bearer");
                 response.put("expiresIn", jwtService.getAccessTokenExpiration());
 
-                // User info
+                // User info with role-based redirect URL
                 Map<String, Object> userInfo = new HashMap<>();
                 userInfo.put("id", user.getId());
                 userInfo.put("username", user.getUsername());
                 userInfo.put("email", user.getEmail());
                 userInfo.put("fullName", user.getFullName());
                 userInfo.put("role", user.getRole().name());
+
+                // Add redirect URL based on role
+                String redirectUrl = "/dashboard"; // Default user dashboard
+                if ("ADMIN".equals(user.getRole().name())) {
+                    redirectUrl = "/admin/dashboard";
+                } else if ("USER".equals(user.getRole().name())) {
+                    redirectUrl = "/user/dashboard";
+                }
+                userInfo.put("redirectUrl", redirectUrl);
+
                 response.put("user", userInfo);
 
                 return ResponseEntity.ok(response);
@@ -129,20 +137,24 @@ public class AuthController {
             }
 
             // Check if user already exists
-            if (userService.getUserByUsername(username).isPresent()) {
+            if (userService.findUserByUsername(username).isPresent()) {
                 response.put("success", false);
                 response.put("message", "Username already exists");
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
             }
 
-            if (userService.getUserByEmail(email).isPresent()) {
+            if (userService.findUserByEmail(email).isPresent()) {
                 response.put("success", false);
                 response.put("message", "Email already exists");
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-            }
-
-            // Create new user
-            User newUser = userService.createUser(username, email, password, fullName);
+            } // Create new user (only USER role allowed for registration)
+            User newUser = userService.createUser(
+                    registerRequest.get("username"),
+                    registerRequest.get("email"),
+                    registerRequest.get("password"),
+                    registerRequest.get("fullName"),
+                    Role.USER // Add the default role
+            );
 
             // Generate tokens
             String accessToken = jwtService.generateAccessToken(newUser);
@@ -155,13 +167,14 @@ public class AuthController {
             response.put("tokenType", "Bearer");
             response.put("expiresIn", jwtService.getAccessTokenExpiration());
 
-            // User info
+            // User info with redirect URL
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("id", newUser.getId());
             userInfo.put("username", newUser.getUsername());
             userInfo.put("email", newUser.getEmail());
             userInfo.put("fullName", newUser.getFullName());
             userInfo.put("role", newUser.getRole().name());
+            userInfo.put("redirectUrl", "/user/dashboard"); // Regular users go to user dashboard
             response.put("user", userInfo);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -190,11 +203,9 @@ public class AuthController {
                 response.put("success", false);
                 response.put("message", "Invalid refresh token");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-            }
-
-            // Get user from token
+            } // Get user from token
             String username = jwtService.extractUsername(refreshToken);
-            Optional<User> userOptional = userService.getUserByUsername(username);
+            Optional<User> userOptional = userService.findUserByUsername(username);
 
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
@@ -247,8 +258,7 @@ public class AuthController {
 
             String token = authHeader.substring(7);
             String username = jwtService.extractUsername(token);
-
-            Optional<User> userOptional = userService.getUserByUsername(username);
+            Optional<User> userOptional = userService.findUserByUsername(username);
 
             if (userOptional.isPresent()) {
                 User user = userOptional.get();

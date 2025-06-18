@@ -3,11 +3,13 @@ package com.leenglish.toeic.security;
 import com.leenglish.toeic.service.JwtService;
 import com.leenglish.toeic.service.UserService;
 import com.leenglish.toeic.domain.User;
+import com.leenglish.toeic.dto.UserDto;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtService jwtService;
 
     @Autowired
+    @Lazy
     private UserService userService;
 
     @Override
@@ -50,31 +53,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             // Verify token is valid and user exists
-            Optional<User> userOptional = userService.getUserByUsername(username);
+            Optional<UserDto> userDtoOptional = userService.getUserByUsername(username);
 
-            if (userOptional.isPresent() && jwtService.isTokenValid(jwt, userOptional.get())) {
-                User user = userOptional.get();
-
-                // Check if user is active
-                if (!user.isActiveUser()) {
-                    logger.warn("User is not active: " + username);
-                    filterChain.doFilter(request, response);
-                    return;
-                }
+            if (userDtoOptional.isPresent() && jwtService.isTokenValid(jwt, userDtoOptional.get())) {
+                UserDto userDto = userDtoOptional.get();
 
                 // Set authorities based on role
-                SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().name());
+                SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + userDto.getRole().name());
 
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         username, null, Arrays.asList(authority));
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // Set user details in the authentication
-                authToken.setDetails(user);
-
                 SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                logger.info("JWT Filter: Authenticated user = " + username + ", role = " + user.getRole().name());
+                logger.info("JWT Filter: Authenticated user = " + username + ", role = " + userDto.getRole().name());
             } else {
                 logger.warn("Invalid JWT token for user: " + username);
             }

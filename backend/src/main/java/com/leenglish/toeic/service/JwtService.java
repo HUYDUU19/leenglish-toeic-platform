@@ -3,6 +3,7 @@ package com.leenglish.toeic.service;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Value;
 import com.leenglish.toeic.domain.User;
+import com.leenglish.toeic.dto.UserDto;
 import java.time.*;
 import java.util.*;
 import java.util.function.Function;
@@ -170,9 +171,25 @@ public class JwtService {
         }
     }
 
+    public boolean isTokenValid(String token, UserDto userDto) {
+        try {
+            final String username = extractUsername(token);
+            return (username.equals(userDto.getUsername())) && !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public String refreshAccessToken(String refreshToken, User user) {
         if (isRefreshToken(refreshToken) && isTokenValid(refreshToken, user)) {
             return generateAccessToken(user);
+        }
+        throw new IllegalArgumentException("Invalid refresh token");
+    }
+
+    public String refreshAccessToken(String refreshToken, UserDto userDto) {
+        if (isRefreshToken(refreshToken) && isTokenValid(refreshToken, userDto)) {
+            return generateAccessToken(userDto);
         }
         throw new IllegalArgumentException("Invalid refresh token");
     }
@@ -184,6 +201,28 @@ public class JwtService {
             return generateToken(username, role);
         }
         throw new IllegalArgumentException("Invalid token");
+    }
+
+    public String generateAccessToken(UserDto userDto) {
+        return generateToken(userDto, jwtExpiration, ACCESS_TOKEN_TYPE);
+    }
+
+    public String generateRefreshToken(UserDto userDto) {
+        return generateToken(userDto, refreshExpiration, REFRESH_TOKEN_TYPE);
+    }
+
+    private String generateToken(UserDto userDto, long expiration, String tokenType) {
+        Key key = getSigningKey();
+        return Jwts.builder()
+                .setSubject(userDto.getUsername())
+                .claim("userId", userDto.getId())
+                .claim("role", userDto.getRole().name())
+                .claim("email", userDto.getEmail())
+                .claim(TOKEN_TYPE_CLAIM, tokenType)
+                .setIssuedAt(new Date())
+                .setExpiration(Date.from(Instant.now().plus(expiration, ChronoUnit.SECONDS)))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
     }
 
     // Additional utility methods

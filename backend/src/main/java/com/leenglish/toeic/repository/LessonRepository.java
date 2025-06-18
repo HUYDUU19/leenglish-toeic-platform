@@ -67,4 +67,16 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     // Find lessons ordered by update date
     @Query("SELECT l FROM Lesson l WHERE l.isActive = true ORDER BY l.updatedAt DESC")
     List<Lesson> findActiveOrderByUpdatedAtDesc();
+
+    List<Lesson> findByIsActiveTrueOrderByCreatedAtDesc();
+
+    List<Lesson> findByTypeAndIsActiveTrue(String type);
+
+    List<Lesson> findByDifficultyAndIsActiveTrue(String difficulty);
+
+    List<Lesson> findByTitleContaining(String title);
+
+    List<Lesson> findByCategoryId(Long categoryId);
+    List<Lesson> findTop5ByOrderByCreatedAtDesc();
 }
+

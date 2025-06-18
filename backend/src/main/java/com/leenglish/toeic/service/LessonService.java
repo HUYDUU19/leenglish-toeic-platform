@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -45,6 +47,7 @@ public class LessonService {
         lesson.setId(null); // Ensure it's a new lesson
         lesson.setCreatedAt(LocalDateTime.now());
         lesson.setUpdatedAt(LocalDateTime.now());
+        lesson.setIsActive(true);
 
         // Set defaults if not provided
         if (lesson.getIsActive() == null) {
@@ -57,6 +60,7 @@ public class LessonService {
             lesson.setOrderIndex(0);
         }
 
+        // Just save the lesson without calling updateLesson
         return lessonRepository.save(lesson);
     }
 
@@ -108,6 +112,13 @@ public class LessonService {
         return lessonRepository.searchByKeyword(keyword);
     }
 
+    // Replace the searchLessonsByTitle method
+    public List<LessonDto> searchLessonsByTitle(String title) {
+        return lessonRepository.findByTitleContaining(title).stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     public List<Lesson> getLessonsWithAudio() {
         return lessonRepository.findLessonsWithAudio();
     }
@@ -137,6 +148,10 @@ public class LessonService {
     // Statistics
     public Long countByLevel(String level) {
         return lessonRepository.countByLevel(level);
+    }
+
+    public long getTotalLessonCount() {
+        return lessonRepository.count();
     }
 
     // Status management
@@ -208,13 +223,49 @@ public class LessonService {
     }
 
     public LessonDto updateLesson(Long id, LessonDto lessonDto) {
-        Lesson lesson = convertToEntity(lessonDto);
-        lesson.setId(id);
-        Lesson updatedLesson = updateLesson(lesson);
-        return convertToDto(updatedLesson);
-    }
+        Optional<Lesson> existingLessonOpt = lessonRepository.findById(id);
+        if (existingLessonOpt.isPresent()) {
+            Lesson existingLesson = existingLessonOpt.get();
+            // Update fields from DTO
+            existingLesson.setTitle(lessonDto.getTitle());
+            existingLesson.setDescription(lessonDto.getDescription());
+            existingLesson.setContent(lessonDto.getContent());
+            existingLesson.setType(lessonDto.getType());
+            existingLesson.setDifficulty(lessonDto.getDifficulty());
+            existingLesson.setLevel(lessonDto.getLevel());
+            existingLesson.setAudioUrl(lessonDto.getAudioUrl());
+            existingLesson.setImageUrl(lessonDto.getImageUrl());
+            existingLesson.setDuration(lessonDto.getDuration());
+            existingLesson.setIsActive(lessonDto.getIsActive());
+            existingLesson.setUpdatedAt(LocalDateTime.now());
 
-    private LessonDto convertToDto(Lesson lesson) {
+            Lesson savedLesson = lessonRepository.save(existingLesson);
+            return convertToDto(savedLesson);
+        }
+        throw new EntityNotFoundException("Lesson not found with id: " + id);
+    } // Add method to get lessons by category - commented out until Category entity
+      // is available
+      // public List<LessonDto> getLessonsByCategory(Long categoryId) {
+      // return lessonRepository.findByCategoryId(categoryId).stream()
+      // .map(this::convertToDto)
+      // .collect(Collectors.toList());
+      // } // Remove the problematic methods for now
+      // Fix the updateExistingLesson method
+      // public Lesson updateExistingLesson(Lesson lesson) {
+      // return updateLesson(lesson.getId(), convertToLessonDto(lesson));
+      // }
+
+    // Add a method to convert Lesson to LessonDto
+    // private LessonDto convertToLessonDto(Lesson lesson) {
+    // return new LessonDto(
+    // lesson.getId(),
+    // lesson.getTitle(),
+    // lesson.getContent(),
+    // lesson.getLevel()
+    // // Add other fields as needed
+    // );
+    // }// Remove any duplicate convertToDto method
+    public LessonDto convertToDto(Lesson lesson) {
         LessonDto dto = new LessonDto();
         dto.setId(lesson.getId());
         dto.setTitle(lesson.getTitle());
@@ -229,10 +280,11 @@ public class LessonService {
         dto.setIsActive(lesson.getIsActive());
         dto.setCreatedAt(lesson.getCreatedAt());
         dto.setUpdatedAt(lesson.getUpdatedAt());
+        // dto.setCategoryId(lesson.getCategoryId()); // Remove this for now
         return dto;
     }
 
-    private Lesson convertToEntity(LessonDto dto) {
+    public Lesson convertToEntity(LessonDto dto) {
         Lesson lesson = new Lesson();
         lesson.setId(dto.getId());
         lesson.setTitle(dto.getTitle());
@@ -245,6 +297,50 @@ public class LessonService {
         lesson.setImageUrl(dto.getImageUrl());
         lesson.setDuration(dto.getDuration());
         lesson.setIsActive(dto.getIsActive());
+        lesson.setCreatedAt(dto.getCreatedAt());
+        lesson.setUpdatedAt(dto.getUpdatedAt());
+        // lesson.setCategoryId(dto.getCategoryId()); // Remove this for now
         return lesson;
+    }
+
+    public List<LessonDto> findAllLessonsAsDto() {
+        return lessonRepository.findAll().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    // Temporary method - commented out until Category entity and repository method
+    // are available
+    public List<LessonDto> findLessonsByCategoryAsDto(Long categoryId) {
+        // return lessonRepository.findByCategoryId(categoryId).stream()
+        // .map(this::convertToDto)
+        // .collect(Collectors.toList());
+        return new ArrayList<>(); // Return empty list for now
+    }
+
+    public List<LessonDto> getRecentLessons() {
+        List<Lesson> recentLessons = lessonRepository.findTop5ByOrderByCreatedAtDesc();
+        return recentLessons.stream()
+                .map(this::convertToDto).collect(Collectors.toList());
+    }
+
+    public LessonDto updateLessonDto(Long id, LessonDto dto) {
+        return lessonRepository.findById(id)
+                .map(lesson -> {
+                    lesson.setTitle(dto.getTitle());
+                    lesson.setDescription(dto.getDescription());
+                    lesson.setContent(dto.getContent());
+                    lesson.setType(dto.getType());
+                    lesson.setDifficulty(dto.getDifficulty());
+                    lesson.setLevel(dto.getLevel());
+                    lesson.setAudioUrl(dto.getAudioUrl());
+                    lesson.setImageUrl(dto.getImageUrl());
+                    lesson.setDuration(dto.getDuration());
+                    lesson.setIsActive(dto.getIsActive());
+                    // lesson.setCategoryId(dto.getCategoryId()); // Commented out - Lesson entity
+                    // doesn't have categoryId field
+                    return convertToDto(lessonRepository.save(lesson));
+                })
+                .orElseThrow(() -> new RuntimeException("Lesson not found"));
     }
 }

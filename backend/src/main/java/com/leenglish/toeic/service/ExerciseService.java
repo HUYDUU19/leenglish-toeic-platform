@@ -296,4 +296,13 @@ public class ExerciseService {
         exercise.setIsActive(dto.getIsActive());
         return exercise;
     }
+
+    public long getTotalExerciseCount() {
+        return exerciseRepository.count();
+    }
+
+    public List<Exercise> searchExercisesByTitle(String query) {
+        // Implementation to search exercises by title
+        return exerciseRepository.findByTitleContaining(query);
+    }
 }

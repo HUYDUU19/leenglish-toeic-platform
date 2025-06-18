@@ -1,5 +1,6 @@
 package com.leenglish.toeic.controller;
 
+import com.leenglish.toeic.domain.Lesson;
 import com.leenglish.toeic.dto.LessonDto;
 import com.leenglish.toeic.service.LessonService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,7 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/lessons")
@@ -17,16 +20,23 @@ public class LessonController {
     @Autowired
     private LessonService lessonService;
 
-    @GetMapping
-    public ResponseEntity<List<LessonDto>> getAllLessons() {
-        List<LessonDto> lessons = lessonService.getAllActiveLessons();
-        return ResponseEntity.ok(lessons);
+    @GetMapping("/{id}")
+    public ResponseEntity<LessonDto> getLesson(@PathVariable Long id) {
+        return lessonService.getLessonById(id)
+                .map(lessonService::convertToDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<LessonDto> getLessonById(@PathVariable Long id) {
-        LessonDto lesson = lessonService.getLessonById(id);
-        return ResponseEntity.ok(lesson);
+    @GetMapping
+    public ResponseEntity<List<LessonDto>> getAllLessons() {
+        return ResponseEntity.ok().body(lessonService.findAllLessonsAsDto());
+    }
+
+    @PostMapping
+    public ResponseEntity<LessonDto> createLesson(@RequestBody LessonDto lessonDto) {
+        LessonDto createdLesson = lessonService.createLesson(lessonDto);
+        return ResponseEntity.ok().body(createdLesson);
     }
 
     @GetMapping("/type/{type}")
@@ -41,24 +51,10 @@ public class LessonController {
         return ResponseEntity.ok(lessons);
     }
 
-    @GetMapping("/level/{level}")
-    public ResponseEntity<List<LessonDto>> getLessonsByLevel(@PathVariable String level) {
-        List<LessonDto> lessons = lessonService.getLessonsByLevel(level);
-        return ResponseEntity.ok(lessons);
-    }
-
-    @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('COLLABORATOR')")
-    public ResponseEntity<LessonDto> createLesson(@RequestBody LessonDto lessonDto) {
-        LessonDto createdLesson = lessonService.createLesson(lessonDto);
-        return ResponseEntity.ok(createdLesson);
-    }
-
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('COLLABORATOR')")
     public ResponseEntity<LessonDto> updateLesson(@PathVariable Long id, @RequestBody LessonDto lessonDto) {
         LessonDto updatedLesson = lessonService.updateLesson(id, lessonDto);
-        return ResponseEntity.ok(updatedLesson);
+        return ResponseEntity.ok().body(updatedLesson);
     }
 
     @DeleteMapping("/{id}")
@@ -68,9 +64,31 @@ public class LessonController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<LessonDto>> getLessonsByCategory(@PathVariable Long categoryId) {
+        // Temporarily comment out until the method is available
+        // return
+        // ResponseEntity.ok().body(lessonService.findLessonsByCategoryAsDto(categoryId));
+        return ResponseEntity.ok().body(new ArrayList<>());
+    }
+
+    @GetMapping("/level/{level}")
+    public ResponseEntity<List<LessonDto>> getLessonsByLevel(@PathVariable String level) {
+        List<Lesson> lessons = lessonService.getLessonsByLevel(level);
+        List<LessonDto> lessonDtos = lessons.stream()
+                .map(lessonService::convertToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(lessonDtos);
+    }
+
     @GetMapping("/search")
-    public ResponseEntity<List<LessonDto>> searchLessons(@RequestParam String query) {
-        List<LessonDto> lessons = lessonService.searchLessons(query);
+    public ResponseEntity<List<LessonDto>> searchLessonsByTitle(@RequestParam String title) {
+        List<LessonDto> lessons = lessonService.searchLessonsByTitle(title);
         return ResponseEntity.ok(lessons);
+    }
+
+    @GetMapping("/recent")
+    public ResponseEntity<List<LessonDto>> getRecentLessons() {
+        return ResponseEntity.ok().body(lessonService.getRecentLessons());
     }
 }

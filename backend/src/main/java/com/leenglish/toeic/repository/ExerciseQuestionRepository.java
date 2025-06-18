@@ -45,4 +45,7 @@ public interface ExerciseQuestionRepository extends JpaRepository<ExerciseQuesti
 
     // Delete questions by exercise
     void deleteByExerciseId(Long exerciseId);
+
+    // Find questions by exercise ordered by order index
+    List<ExerciseQuestion> findByExerciseIdOrderByOrderIndexAsc(Long exerciseId);
 }

@@ -30,11 +30,136 @@ class ApiService {
     }
   }
 
-  // User APIs
-  async getAllUsers(): Promise<User[]> {
-    return this.request<User[]>('/users');
+  // Authentication methods
+  async login(credentials: { username?: string; email?: string; password: string }): Promise<{
+    success: boolean;
+    message: string;
+    accessToken?: string;
+    refreshToken?: string;
+    user?: {
+      id: number;
+      username: string;
+      email: string;
+      fullName: string;
+      role: string;
+      redirectUrl: string;
+    }
+  }> {
+    return this.request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
   }
 
+  async register(userData: { 
+    username: string; 
+    email: string; 
+    password: string; 
+    fullName: string;
+  }): Promise<{
+    success: boolean;
+    message: string;
+    accessToken?: string;
+    refreshToken?: string;
+    user?: {
+      id: number;
+      username: string;
+      email: string;
+      fullName: string;
+      role: string;
+      redirectUrl: string;
+    }
+  }> {
+    return this.request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
+  }
+
+  async getCurrentUser(token: string): Promise<{
+    success: boolean;
+    user?: {
+      id: number;
+      username: string;
+      email: string;
+      fullName: string;
+      role: string;
+    }
+  }> {
+    return this.request('/auth/me', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  async refreshToken(refreshToken: string): Promise<{
+    success: boolean;
+    accessToken?: string;
+    message: string;
+  }> {
+    return this.request('/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify({ refreshToken }),
+    });
+  }
+
+  // Admin methods
+  async getAdminDashboard(token: string): Promise<{
+    success: boolean;
+    stats?: {
+      totalUsers: number;
+      totalExercises: number;
+      totalLessons: number;
+    };
+    message: string;
+  }> {
+    return this.request('/admin/dashboard', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  async getAllUsers(token: string): Promise<{
+    success: boolean;
+    users?: User[];
+    message: string;
+  }> {
+    return this.request('/admin/users', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  async activateUser(userId: number, token: string): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    return this.request(`/admin/users/${userId}/activate`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+
+  async deactivateUser(userId: number, token: string): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    return this.request(`/admin/users/${userId}/deactivate`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+  }
+  // User APIs (for regular users)
   async getUserById(id: number): Promise<User> {
     return this.request<User>(`/users/${id}`);
   }
@@ -135,32 +260,6 @@ class ApiService {
 
   async getQuestionCountByType(type: QuestionType): Promise<number> {
     return this.request<number>(`/questions/count/type/${type}`);
-  }
-
-  // Auth APIs
-  async login(credentials: { username: string; password: string }): Promise<{ user: User; token: string }> {
-    return this.request<{ user: User; token: string }>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(credentials),
-    });
-  }
-
-  async register(userData: {
-    username: string;
-    email: string;
-    password: string;
-    fullName?: string;
-  }): Promise<{ user: User; token: string }> {
-    return this.request<{ user: User; token: string }>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
-  }
-
-  async logout(): Promise<void> {
-    return this.request<void>('/auth/logout', {
-      method: 'POST',
-    });
   }
 }
 

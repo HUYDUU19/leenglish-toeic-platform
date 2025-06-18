@@ -52,6 +52,15 @@ public class Lesson {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "type", length = 50)
+    private String type;
+
+    @Column(name = "difficulty", length = 50)
+    private String difficulty;
+
+    @Column(name = "duration")
+    private Integer duration;
+
     // Constructors
     public Lesson() {
         this.createdAt = LocalDateTime.now();
@@ -178,6 +187,30 @@ public class Lesson {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(String difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    public Integer getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Integer duration) {
+        this.duration = duration;
     }
 
     // Business Logic Methods

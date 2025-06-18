@@ -67,6 +67,21 @@ public class MembershipPlan {
     @OneToMany(mappedBy = "membershipPlan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<UserMembership> memberships = new ArrayList<>();
 
+    // New fields
+    private String currency;
+
+    private Integer durationDays;
+
+    private Integer maxLessonsPerDay;
+
+    private Integer maxFlashcardsPerSet;
+
+    private Boolean hasAudioAccess;
+
+    private Boolean hasPremiumContent;
+
+    private Boolean hasProgressTracking;
+
     // Constructors
     public MembershipPlan() {
     }
@@ -232,6 +247,62 @@ public class MembershipPlan {
 
     public void setMemberships(List<UserMembership> memberships) {
         this.memberships = memberships;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public Integer getDurationDays() {
+        return durationDays;
+    }
+
+    public void setDurationDays(Integer durationDays) {
+        this.durationDays = durationDays;
+    }
+
+    public Integer getMaxLessonsPerDay() {
+        return maxLessonsPerDay;
+    }
+
+    public void setMaxLessonsPerDay(Integer maxLessonsPerDay) {
+        this.maxLessonsPerDay = maxLessonsPerDay;
+    }
+
+    public Integer getMaxFlashcardsPerSet() {
+        return maxFlashcardsPerSet;
+    }
+
+    public void setMaxFlashcardsPerSet(Integer maxFlashcardsPerSet) {
+        this.maxFlashcardsPerSet = maxFlashcardsPerSet;
+    }
+
+    public Boolean getHasAudioAccess() {
+        return hasAudioAccess;
+    }
+
+    public void setHasAudioAccess(Boolean hasAudioAccess) {
+        this.hasAudioAccess = hasAudioAccess;
+    }
+
+    public Boolean getHasPremiumContent() {
+        return hasPremiumContent;
+    }
+
+    public void setHasPremiumContent(Boolean hasPremiumContent) {
+        this.hasPremiumContent = hasPremiumContent;
+    }
+
+    public Boolean getHasProgressTracking() {
+        return hasProgressTracking;
+    }
+
+    public void setHasProgressTracking(Boolean hasProgressTracking) {
+        this.hasProgressTracking = hasProgressTracking;
     }
 
     // Business Logic Methods

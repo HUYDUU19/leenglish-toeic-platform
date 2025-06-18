@@ -31,7 +31,14 @@
       "*.dart": "dart"
     },
     "java.compile.nullAnalysis.mode": "automatic",
-    "java.configuration.runtimes": []
+    "java.configuration.runtimes": [],
+    "vscode-pets.position": "panel",
+    "vscode-pets.theme": "beach",
+    "vscode-pets.petType": "dog",
+    "vscode-pets.petSize": "medium",
+    "vscode-pets.disableEffects": true,
+    "vscode-pets.throwBallWithMouse": true,
+    "vscode-pets.petColor": "socks beige"
   },
   "extensions": {
     "recommendations": [

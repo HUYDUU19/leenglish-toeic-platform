@@ -1,5 +1,6 @@
 package com.leenglish.toeic.controller;
 
+import com.leenglish.toeic.domain.User;
 import com.leenglish.toeic.dto.UserDto;
 import com.leenglish.toeic.enums.Role;
 import com.leenglish.toeic.service.UserService;
@@ -76,8 +77,14 @@ public class UserController {
                 return ResponseEntity.badRequest().build();
             }
 
-            UserDto createdUser = userService.createUser(userDto, password);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+            User newUser = userService.createUser(
+                    userDto.getUsername(),
+                    userDto.getEmail(),
+                    password,
+                    userDto.getFullName(),
+                    userDto.getRole() != null ? userDto.getRole() : Role.USER);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(convertToDto(newUser));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
         } catch (Exception e) {
@@ -88,8 +95,8 @@ public class UserController {
     @PutMapping("/{id}")
     public ResponseEntity<UserDto> updateUser(@PathVariable Long id, @Valid @RequestBody UserDto userDto) {
         try {
-            UserDto updatedUser = userService.updateUser(id, userDto);
-            return ResponseEntity.ok(updatedUser);
+            User updatedUser = userService.updateUser(id, userDto);
+            return ResponseEntity.ok(convertToDto(updatedUser));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
@@ -137,12 +144,36 @@ public class UserController {
                 return ResponseEntity.badRequest().build();
             }
 
-            UserDto updatedUser = userService.updateUserScore(id, score);
-            return ResponseEntity.ok(updatedUser);
+            User updatedUser = userService.updateUserScore(id, score);
+            return ResponseEntity.ok(convertToDto(updatedUser));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    private UserDto convertToDto(User user) {
+        UserDto userDto = new UserDto();
+        userDto.setId(user.getId());
+        userDto.setUsername(user.getUsername());
+        userDto.setEmail(user.getEmail());
+        userDto.setFullName(user.getFullName());
+        userDto.setRole(user.getRole());
+        userDto.setCreatedAt(user.getCreatedAt());
+        userDto.setUpdatedAt(user.getUpdatedAt());
+
+        // Set additional fields with default values if methods don't exist
+        if (user.getTotalScore() != null) {
+            userDto.setTotalScore(user.getTotalScore());
+        } else {
+            userDto.setTotalScore(0);
+        }
+
+        // Set default values for fields that might not exist in User entity
+        userDto.setCurrentLevel(1);
+        userDto.setTestsCompleted(0);
+
+        return userDto;
     }
 }

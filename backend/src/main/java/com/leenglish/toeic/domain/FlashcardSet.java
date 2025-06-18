@@ -1,3 +1,4 @@
+
 package com.leenglish.toeic.domain;
 
 import jakarta.persistence.*;
@@ -188,6 +189,23 @@ public class FlashcardSet {
 
     public void setFlashcards(List<Flashcard> flashcards) {
         this.flashcards = flashcards;
+    }
+
+    public String getLevel() {
+        return difficultyLevel;
+    }
+
+    public void setLevel(String level) {
+        setDifficultyLevel(level);
+    }
+
+    public int getCardCount() {
+        return getFlashcardCount();
+    }
+
+    public void setCardCount(int cardCount) {
+        // This is a computed field, so we don't actually set it
+        // but provide the method for compatibility
     }
 
     // Business Logic Methods

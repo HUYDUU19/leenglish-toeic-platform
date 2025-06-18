@@ -2,44 +2,32 @@ package com.leenglish.toeic.dto;
 
 import java.time.LocalDateTime;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class LessonDto {
     private Long id;
     private String title;
     private String description;
     private String content;
-    private String type; // LISTENING, READING, SPEAKING, WRITING
-    private String difficulty; // BEGINNER, INTERMEDIATE, ADVANCED
-    private String level; // TOEIC_600, TOEIC_750, TOEIC_900
+    private String type;
+    private String difficulty;
+    private String level;
     private String audioUrl;
     private String imageUrl;
-    private Integer duration; // in minutes
+    private Integer duration;
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long categoryId;
 
-    public LessonDto() {
-    }
-
-    public LessonDto(Long id, String title, String description, String content,
-            String type, String difficulty, String level, String audioUrl,
-            String imageUrl, Integer duration, Boolean isActive,
-            LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.content = content;
-        this.type = type;
-        this.difficulty = difficulty;
-        this.level = level;
-        this.audioUrl = audioUrl;
-        this.imageUrl = imageUrl;
-        this.duration = duration;
-        this.isActive = isActive;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
-    // Getters and Setters
+    // Explicit getters and setters (as backup if Lombok doesn't work)
     public Long getId() {
         return id;
     }
@@ -143,4 +131,13 @@ public class LessonDto {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public Long getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
+
 }

@@ -92,4 +92,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     // Find exercises by points range
     @Query("SELECT e FROM Exercise e WHERE e.points BETWEEN :minPoints AND :maxPoints AND e.isActive = true")
     List<Exercise> findByPointsRange(@Param("minPoints") Integer minPoints, @Param("maxPoints") Integer maxPoints);
+
+    // Find exercises by title containing
+    List<Exercise> findByTitleContaining(String title);
 }

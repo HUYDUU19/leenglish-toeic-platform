@@ -58,7 +58,7 @@ public class FlashcardSetService {
         flashcardSet.setLevel(flashcardSetDto.getLevel());
         flashcardSet.setIsPublic(flashcardSetDto.getIsPublic());
         flashcardSet.setIsActive(true);
-        flashcardSet.setCardCount(0);
+        flashcardSet.setCardCount(0); // Change from int to Integer
         flashcardSet.setCreatedAt(LocalDateTime.now());
         flashcardSet.setUpdatedAt(LocalDateTime.now());
         flashcardSet.setCreatedBy(userOpt.get());

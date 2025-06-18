@@ -88,6 +88,11 @@ public class User {
         return passwordHash;
     }
 
+    // Alias for Spring Security compatibility
+    public String getPassword() {
+        return passwordHash;
+    }
+
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
     }
@@ -162,6 +167,12 @@ public class User {
 
     public void setIsPremium(Boolean isPremium) {
         this.isPremium = isPremium;
+    }
+
+    public Integer getTotalScore() {
+        // Return total score or calculate it based on your business logic
+        // This is a placeholder implementation
+        return 0; // You may want to calculate this based on user's test results
     }
 
     // ========== BUSINESS LOGIC ==========

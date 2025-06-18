@@ -78,6 +78,9 @@ public class Exercise {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ExerciseQuestion> questions;
 
+    @Column(name = "difficulty")
+    private String difficulty;
+
     // Constructors
     public Exercise() {
     }
@@ -257,6 +260,14 @@ public class Exercise {
 
     public void setQuestions(List<ExerciseQuestion> questions) {
         this.questions = questions;
+    }
+
+    public String getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(String difficulty) {
+        this.difficulty = difficulty;
     }
 
     // Business Logic Methods

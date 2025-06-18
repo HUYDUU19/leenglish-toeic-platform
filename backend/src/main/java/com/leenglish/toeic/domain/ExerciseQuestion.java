@@ -1,6 +1,7 @@
 package com.leenglish.toeic.domain;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "exercise_question")
@@ -30,6 +31,15 @@ public class ExerciseQuestion {
 
     @Column(name = "exercise_id", nullable = false)
     private Long exerciseId;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "order_index")
+    private Integer orderIndex;
 
     // Quan hệ nhiều câu hỏi - 1 bài tập
     @ManyToOne(fetch = FetchType.LAZY)
@@ -118,6 +128,30 @@ public class ExerciseQuestion {
 
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public Integer getOrderIndex() {
+        return orderIndex;
+    }
+
+    public void setOrderIndex(Integer orderIndex) {
+        this.orderIndex = orderIndex;
     }
 
     // Business Logic Methods

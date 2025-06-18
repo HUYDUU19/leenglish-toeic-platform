@@ -48,6 +48,12 @@ public class Flashcard {
     @JoinColumn(name = "flashcard_set_id")
     private FlashcardSet flashcardSet;
 
+    // Additional fields
+    private String term;
+    private String definition;
+    private String example;
+    private String level;
+
     // Constructors
     public Flashcard() {
     }
@@ -205,6 +211,38 @@ public class Flashcard {
 
     public void setFlashcardSet(FlashcardSet flashcardSet) {
         this.flashcardSet = flashcardSet;
+    }
+
+    public String getTerm() {
+        return term;
+    }
+
+    public void setTerm(String term) {
+        this.term = term;
+    }
+
+    public String getDefinition() {
+        return definition;
+    }
+
+    public void setDefinition(String definition) {
+        this.definition = definition;
+    }
+
+    public String getExample() {
+        return example;
+    }
+
+    public void setExample(String example) {
+        this.example = example;
+    }
+
+    public String getLevel() {
+        return level;
+    }
+
+    public void setLevel(String level) {
+        this.level = level;
     }
 
     // Business Logic Methods
