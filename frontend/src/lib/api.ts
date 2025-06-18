@@ -30,8 +30,38 @@ class ApiService {
     }
   }
 
+  async get<T>(endpoint: string, token?: string): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'GET',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    });
+  }
+
+  async post<T>(endpoint: string, data?: any, token?: string): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    });
+  }
+
+  async put<T>(endpoint: string, data?: any, token?: string): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    });
+  }
+
+  async delete<T>(endpoint: string, token?: string): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'DELETE',
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    });
+  }
+
   // Authentication methods
-  async login(credentials: { username?: string; email?: string; password: string }): Promise<{
+  async login(credentials: { username: string; password: string }): Promise<{
     success: boolean;
     message: string;
     accessToken?: string;
@@ -102,6 +132,15 @@ class ApiService {
     return this.request('/auth/refresh', {
       method: 'POST',
       body: JSON.stringify({ refreshToken }),
+    });
+  }
+
+  async logout(token: string): Promise<{ success: boolean; message: string }> {
+    return this.request('/auth/logout', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
     });
   }
 
@@ -260,6 +299,48 @@ class ApiService {
 
   async getQuestionCountByType(type: QuestionType): Promise<number> {
     return this.request<number>(`/questions/count/type/${type}`);
+  }
+
+  // Progress tracking methods
+  async getDailyActivity(userId: number, days: number = 7, token?: string): Promise<any> {
+    return this.get(`/progress/user/${userId}/daily-activity?days=${days}`, token);
+  }
+
+  async getProgressSummary(userId: number, token?: string): Promise<any> {
+    return this.get(`/progress/user/${userId}/summary`, token);
+  }
+
+  async getWeeklyProgress(userId: number, token?: string): Promise<any> {
+    return this.get(`/progress/user/${userId}/weekly-progress`, token);
+  }
+
+  async getStudyStreak(userId: number, token?: string): Promise<number> {
+    return this.get(`/progress/user/${userId}/stats/streak`, token);
+  }
+
+  async getUserProgress(userId: number, token?: string): Promise<any[]> {
+    return this.get(`/progress/user/${userId}`, token);
+  }
+
+  async updateProgress(userId: number, lessonId: number, progressPercentage: number, timeSpent: number, token?: string): Promise<any> {
+    return this.request(`/progress/update`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: new URLSearchParams({
+        userId: userId.toString(),
+        lessonId: lessonId.toString(),
+        progressPercentage: progressPercentage.toString(),
+        timeSpent: timeSpent.toString(),
+      }),
+    });
+  }
+
+  async addTimeSpent(userId: number, lessonId: number, additionalMinutes: number, token?: string): Promise<any> {
+    return this.put(`/progress/user/${userId}/lesson/${lessonId}/add-time`, 
+      { additionalMinutes }, token);
   }
 }
 

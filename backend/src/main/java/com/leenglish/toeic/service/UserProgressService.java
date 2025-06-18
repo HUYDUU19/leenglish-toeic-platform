@@ -12,8 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -89,6 +90,222 @@ public class UserProgressService {
 
         UserLessonProgress savedProgress = userLessonProgressRepository.save(progress);
         return convertToDto(savedProgress);
+    }
+
+    /**
+     * Get daily activity for specified number of days
+     */
+    public Map<String, Object> getDailyActivity(Long userId, Integer days) {
+        if (days == null)
+            days = 7; // Default 7 days
+
+        LocalDateTime startDate = LocalDateTime.now().minusDays(days);
+
+        List<UserLessonProgress> recentProgress = userLessonProgressRepository
+                .findByUserIdOrderByLastAccessedAtDesc(userId).stream()
+                .filter(progress -> progress.getLastAccessedAt() != null &&
+                        progress.getLastAccessedAt().isAfter(startDate))
+                .collect(Collectors.toList());
+
+        // Group by date and calculate daily metrics
+        Map<String, List<UserLessonProgress>> dailyGroups = recentProgress.stream()
+                .collect(Collectors.groupingBy(
+                        progress -> progress.getLastAccessedAt().toLocalDate().toString()));
+
+        Map<String, Map<String, Object>> dailyActivity = new LinkedHashMap<>();
+        for (Map.Entry<String, List<UserLessonProgress>> entry : dailyGroups.entrySet()) {
+            String date = entry.getKey();
+            List<UserLessonProgress> dayProgress = entry.getValue();
+
+            Map<String, Object> dayMetrics = new HashMap<>();
+            dayMetrics.put("lessonsCount", dayProgress.size());
+            dayMetrics.put("completedLessons", dayProgress.stream()
+                    .filter(p -> "COMPLETED".equals(p.getStatus())).count());
+            dayMetrics.put("totalTimeMinutes", dayProgress.stream()
+                    .mapToInt(p -> p.getTimeSpentMinutes() != null ? p.getTimeSpentMinutes() : 0)
+                    .sum());
+
+            dailyActivity.put(date, dayMetrics);
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("dailyActivity", dailyActivity);
+        result.put("totalDaysActive", dailyActivity.size());
+        result.put("averageLessonsPerDay", dailyActivity.values().stream()
+                .mapToLong(day -> (Long) ((Map<String, Object>) day).get("lessonsCount"))
+                .average()
+                .orElse(0.0));
+        result.put("totalLessonsInPeriod", recentProgress.size());
+        result.put("totalTimeInPeriod", recentProgress.stream()
+                .mapToInt(p -> p.getTimeSpentMinutes() != null ? p.getTimeSpentMinutes() : 0)
+                .sum());
+
+        return result;
+    }
+
+    /**
+     * Calculate current study streak (consecutive days)
+     */
+    public Integer calculateStudyStreak(Long userId) {
+        List<UserLessonProgress> allProgress = userLessonProgressRepository
+                .findByUserIdOrderByLastAccessedAtDesc(userId);
+
+        if (allProgress.isEmpty())
+            return 0;
+
+        // Get unique study dates
+        Set<LocalDate> studyDates = allProgress.stream()
+                .filter(p -> p.getLastAccessedAt() != null)
+                .map(p -> p.getLastAccessedAt().toLocalDate())
+                .collect(Collectors.toSet());
+
+        List<LocalDate> sortedDates = studyDates.stream()
+                .sorted(Collections.reverseOrder())
+                .collect(Collectors.toList());
+
+        if (sortedDates.isEmpty())
+            return 0;
+
+        int streak = 0;
+        LocalDate today = LocalDate.now();
+        LocalDate currentDate = today;
+
+        // Check if user studied today or yesterday (allow 1 day gap)
+        if (!sortedDates.contains(today)) {
+            currentDate = today.minusDays(1);
+            if (!sortedDates.contains(currentDate)) {
+                return 0; // No recent activity
+            }
+        }
+
+        // Count consecutive days
+        for (LocalDate date : sortedDates) {
+            if (date.equals(currentDate)) {
+                streak++;
+                currentDate = currentDate.minusDays(1);
+            } else if (date.isBefore(currentDate)) {
+                break;
+            }
+        }
+
+        return streak;
+    }
+
+    /**
+     * Get weekly progress summary
+     */
+    public Map<String, Object> getWeeklyProgress(Long userId) {
+        LocalDateTime startOfWeek = LocalDateTime.now().minusDays(7);
+
+        List<UserLessonProgress> weekProgress = userLessonProgressRepository
+                .findByUserIdOrderByLastAccessedAtDesc(userId).stream()
+                .filter(progress -> progress.getLastAccessedAt() != null &&
+                        progress.getLastAccessedAt().isAfter(startOfWeek))
+                .collect(Collectors.toList());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalLessonsThisWeek", weekProgress.size());
+        result.put("completedThisWeek", weekProgress.stream()
+                .filter(p -> "COMPLETED".equals(p.getStatus()))
+                .count());
+        result.put("inProgressThisWeek", weekProgress.stream()
+                .filter(p -> "IN_PROGRESS".equals(p.getStatus()))
+                .count());
+        result.put("averageProgress", weekProgress.stream()
+                .mapToInt(UserLessonProgress::getProgressPercentage)
+                .average()
+                .orElse(0.0));
+        result.put("totalTimeThisWeek", weekProgress.stream()
+                .mapToInt(p -> p.getTimeSpentMinutes() != null ? p.getTimeSpentMinutes() : 0)
+                .sum());
+
+        return result;
+    }
+
+    /**
+     * Get comprehensive progress summary
+     */
+    public Map<String, Object> getProgressSummary(Long userId) {
+        List<UserLessonProgress> allProgress = userLessonProgressRepository
+                .findByUserIdOrderByLastAccessedAtDesc(userId);
+
+        long totalLessons = allProgress.size();
+        long completedLessons = allProgress.stream()
+                .filter(p -> "COMPLETED".equals(p.getStatus()))
+                .count();
+        long inProgressLessons = allProgress.stream()
+                .filter(p -> "IN_PROGRESS".equals(p.getStatus()))
+                .count();
+
+        double overallProgress = calculateOverallProgress(userId);
+        int currentStreak = calculateStudyStreak(userId);
+        double averageStudyTime = calculateAverageStudyTime(userId);
+
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("totalLessons", totalLessons);
+        summary.put("completedLessons", completedLessons);
+        summary.put("inProgressLessons", inProgressLessons);
+        summary.put("notStartedLessons", Math.max(0, totalLessons - completedLessons - inProgressLessons));
+        summary.put("overallProgress", overallProgress);
+        summary.put("completionRate", totalLessons > 0 ? (completedLessons * 100.0 / totalLessons) : 0);
+        summary.put("currentStreak", currentStreak);
+        summary.put("averageStudyTimeMinutes", averageStudyTime);
+        summary.put("totalTimeSpent", getTotalTimeSpent(userId));
+
+        return summary;
+    }
+
+    /**
+     * Calculate overall progress percentage
+     */
+    public Double calculateOverallProgress(Long userId) {
+        List<UserLessonProgress> allProgress = userLessonProgressRepository
+                .findByUserIdOrderByLastAccessedAtDesc(userId);
+
+        if (allProgress.isEmpty())
+            return 0.0;
+
+        return allProgress.stream()
+                .mapToInt(UserLessonProgress::getProgressPercentage)
+                .average()
+                .orElse(0.0);
+    }
+
+    /**
+     * Calculate average study time per completed lesson
+     */
+    private double calculateAverageStudyTime(Long userId) {
+        List<UserLessonProgress> completedLessons = userLessonProgressRepository
+                .findCompletedLessonsByUser(userId);
+
+        if (completedLessons.isEmpty())
+            return 0.0;
+
+        return completedLessons.stream()
+                .filter(p -> p.getTimeSpentMinutes() != null)
+                .mapToInt(UserLessonProgress::getTimeSpentMinutes)
+                .average()
+                .orElse(0.0);
+    }
+
+    /**
+     * Add time spent to a specific lesson
+     */
+    public UserProgressDto addTimeSpent(Long userId, Long lessonId, Integer additionalMinutes) {
+        Optional<UserLessonProgress> progressOpt = userLessonProgressRepository
+                .findByUserIdAndLessonId(userId, lessonId);
+
+        if (progressOpt.isPresent()) {
+            UserLessonProgress progress = progressOpt.get();
+            Integer currentTime = progress.getTimeSpentMinutes() != null ? progress.getTimeSpentMinutes() : 0;
+            progress.setTimeSpentMinutes(currentTime + additionalMinutes);
+            progress.setLastAccessedAt(LocalDateTime.now());
+
+            UserLessonProgress savedProgress = userLessonProgressRepository.save(progress);
+            return convertToDto(savedProgress);
+        }
+
+        return null;
     }
 
     public Long getCompletedLessonsCount(Long userId) {
