@@ -3,18 +3,26 @@ package com.leenglish.toeic.service;
 import com.leenglish.toeic.domain.User;
 import com.leenglish.toeic.dto.UserDto;
 import com.leenglish.toeic.enums.Role;
+import com.leenglish.toeic.enums.Gender;
 import com.leenglish.toeic.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class UserService {
     
     @Autowired
@@ -22,19 +30,20 @@ public class UserService {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
-      public User registerUser(UserDto userDto) {
-        User user = new User();
-        user.setUsername(userDto.getUsername());
-        user.setEmail(userDto.getEmail());
-        // Note: Password should be handled separately for security
-        
-        return userRepository.save(user);
-    }
     
+    // Basic CRUD operations
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
+    }
+
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
-    
+
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
@@ -49,7 +58,8 @@ public class UserService {
         return userRepository.findById(id)
                 .map(this::convertToDto);
     }
-      public User updateUser(Long id, UserDto userDto) {
+    
+    public User updateUser(Long id, UserDto userDto) {
         return userRepository.findById(id)
                 .map(user -> {
                     user.setUsername(userDto.getUsername());
@@ -59,7 +69,8 @@ public class UserService {
                 })
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
-      public void deleteUser(Long id) {
+    
+    public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
 
@@ -71,44 +82,86 @@ public class UserService {
         return dto;
     }
 
-    
-
-    public List<User> findPremiumUsers() {
-        return userRepository.findPremiumUsers();
+    // Enum-based service methods
+    public List<User> findByRole(Role role) {
+        return userRepository.findByRole(role);
     }
 
-    public List<User> findExpiredPremiumUsers() {
-        return userRepository.findExpiredPremiumUsers();
+    public List<User> findByGender(Gender gender) {
+        return userRepository.findByGender(gender);
     }
-      public User saveUser(User user) {
+
+    public List<User> findActiveUsersByRole(Role role) {
+        return userRepository.findByRoleAndIsActive(role, true);
+    }
+
+    public List<User> findActiveUsersByGender(Gender gender) {
+        return userRepository.findByGenderAndIsActive(gender, true);
+    }
+
+    // Advanced filtering with enum support
+    public Page<User> findUsersWithFilters(String username, String email, Role role, 
+                                         Gender gender, String country, Boolean isActive, 
+                                         Pageable pageable) {
+        return userRepository.findUsersWithFilters(username, email, role, gender, country, isActive, pageable);
+    }
+
+    // Save user with password encoding
+    public User save(User user) {
+        // Encode password if it's a new user or password changed
+        if (user.getId() == null || user.getPasswordHash() != null) {
+            if (user.getPasswordHash() != null && !user.getPasswordHash().startsWith("$2a$")) {
+                user.setPasswordHash(passwordEncoder.encode(user.getPasswordHash()));
+            }
+        }
+        
+        // Set default values if not provided
+        if (user.getRole() == null) {
+            user.setRole(Role.USER);  // Default enum value
+        }
+        if (user.getIsActive() == null) {
+            user.setIsActive(true);
+        }
+        if (user.getTotalScore() == null) {
+            user.setTotalScore(0);
+        }
+
         return userRepository.save(user);
     }
 
     // User creation and registration
-    public User createUser(String username, String email, String password, String fullName, Role role) {
-        // Check if username or email already exists
-        if (userRepository.existsByUsername(username)) {
+    public User createUser(String username, String email, String password, String fullName, 
+                          Role role, Gender gender, String country) {
+        
+        // Validate required fields
+        if (username == null || email == null || password == null) {
+            throw new IllegalArgumentException("Username, email, and password are required");
+        }
+
+        // Check if user already exists
+        if (userRepository.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("Username already exists");
         }
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("Email already exists");
         }
 
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
-        user.setPasswordHash(passwordEncoder.encode(password));
+        user.setPasswordHash(password); // Will be encoded in save()
         user.setFullName(fullName);
-        user.setRole(role != null ? role : Role.USER);
+        user.setRole(role != null ? role : Role.USER);  // Enum with default
+        user.setGender(gender);                         // Enum (can be null)
+        user.setCountry(country);
         user.setIsActive(true);
-        user.setCreatedAt(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now());
-        
-        return userRepository.save(user);
+        user.setTotalScore(0);
+
+        return save(user);
     }
 
     public User registerUser(String username, String email, String password, String fullName) {
-        return createUser(username, email, password, fullName, Role.USER);
+        return createUser(username, email, password, fullName, Role.USER, null, null);
     }
 
     public User updateUser(Long id, User userUpdate) {
@@ -248,5 +301,72 @@ public class UserService {
 
     public Optional<User> findUserByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    // Get user statistics by enum
+    public Map<String, Object> getUserStatistics() {
+        Map<String, Object> stats = new HashMap<>();
+        
+        // Count by role
+        List<Object[]> roleStats = userRepository.countUsersByRole();
+        Map<String, Long> roleCounts = new HashMap<>();
+        for (Object[] stat : roleStats) {
+            Role role = (Role) stat[0];  // Cast to enum
+            Long count = (Long) stat[1];
+            roleCounts.put(role.name(), count);
+        }
+        stats.put("roleDistribution", roleCounts);
+
+        // Count by gender  
+        List<Object[]> genderStats = userRepository.countUsersByGender();
+        Map<String, Long> genderCounts = new HashMap<>();
+        for (Object[] stat : genderStats) {
+            Gender gender = (Gender) stat[0];  // Cast to enum
+            Long count = (Long) stat[1];
+            if (gender != null) {
+                genderCounts.put(gender.name(), count);
+            }
+        }
+        stats.put("genderDistribution", genderCounts);
+
+        // Total counts
+        stats.put("totalUsers", userRepository.count());
+        stats.put("activeUsers", userRepository.findByRoleAndIsActive(Role.USER, true).size());
+        stats.put("admins", userRepository.findByRoleAndIsActive(Role.ADMIN, true).size());
+
+        return stats;
+    }
+
+    // Leaderboard
+    public List<User> findTopUsersByScore(int limit) {
+        return userRepository.findTopUsersByRole(Role.USER, PageRequest.of(0, limit));
+    }
+
+    // Admin methods with enum support
+    public List<User> findAllAdmins() {
+        return userRepository.findActiveAdmins();
+    }
+
+    public List<User> findUsersByCountryAndRole(String country, Role role) {
+        return userRepository.findByCountryAndRole(country, role);
+    }
+
+    public List<User> findPremiumUsersByRole(Role role) {
+        return userRepository.findPremiumUsersByRole(role);
+    }
+
+    // Search users
+    public List<User> searchUsers(String searchTerm) {
+        return userRepository.searchUsers(searchTerm);
+    }
+
+    // Promote user to collaborator
+    public User promoteToCollaborator(Long userId) {
+        return updateUserRole(userId, Role.COLLABORATOR);
+    }
+
+    // Demote collaborator to user
+    public User demoteToUser(Long userId) {
+        return updateUserRole(userId, Role.USER);
     }
 }

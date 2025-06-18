@@ -61,12 +61,14 @@ node create-issues.js
 The scripts will create the following types of issues:
 
 ### 🐛 Bug Issues
+
 - Database connection timeout on high load
 - JWT token expiration not handled properly
 - Login form validation issues
 - Audio playback problems on iOS
 
 ### 🚀 Feature Issues
+
 - Redis caching implementation
 - Responsive design for mobile
 - Offline mode for mobile app
@@ -76,6 +78,7 @@ The scripts will create the following types of issues:
 - Biometric authentication
 
 ### 📋 Task Issues
+
 - CI/CD pipeline setup
 - API documentation with Swagger
 - Docker configuration
@@ -85,6 +88,7 @@ The scripts will create the following types of issues:
 ## 🎯 Issue Labels
 
 Issues are automatically labeled with:
+
 - **Type**: `bug`, `enhancement`, `task`
 - **Platform**: `backend`, `frontend`, `mobile`
 - **Category**: `ui/ux`, `security`, `performance`, `documentation`
@@ -100,10 +104,10 @@ Edit the `issues` array in either script to add new issues:
 // In create-issues.js
 const issues = [
   {
-    title: '[BUG] Your issue title',
+    title: "[BUG] Your issue title",
     body: `## 🐛 Bug Description
 Your detailed description here...`,
-    labels: ['bug', 'backend', 'high-priority']
+    labels: ["bug", "backend", "high-priority"],
   },
   // ... more issues
 ];
@@ -129,8 +133,8 @@ Change the repository owner and name at the top of each script:
 
 ```javascript
 // create-issues.js
-const REPO_OWNER = 'YOUR_USERNAME';
-const REPO_NAME = 'YOUR_REPO_NAME';
+const REPO_OWNER = "YOUR_USERNAME";
+const REPO_NAME = "YOUR_REPO_NAME";
 ```
 
 ```powershell
@@ -142,15 +146,19 @@ $Repo = "YOUR_REPO_NAME"
 ## 🚨 Safety Features
 
 ### Dry Run Mode (PowerShell only)
+
 Test the script without creating actual issues:
+
 ```powershell
 .\create-issues.ps1 -DryRun
 ```
 
 ### Rate Limiting
+
 Both scripts include delays between API calls to avoid GitHub rate limits.
 
 ### Error Handling
+
 Scripts will continue creating other issues even if one fails.
 
 ## 📊 Output Example
@@ -177,14 +185,17 @@ Scripts will continue creating other issues even if one fails.
 ### Common Issues
 
 1. **"GitHub token not provided"**
+
    - Make sure you set the `GITHUB_TOKEN` environment variable
    - Verify the token has correct permissions
 
 2. **"Rate limit exceeded"**
+
    - Wait a few minutes and try again
    - The scripts include delays to prevent this
 
 3. **"Repository not found"**
+
    - Check the repository owner and name are correct
    - Ensure the token has access to the repository
 

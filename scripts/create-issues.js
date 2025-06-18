@@ -5,18 +5,18 @@
  * Creates issues for LeEnglish TOEIC Platform
  */
 
-const { Octokit } = require('@octokit/rest');
-const fs = require('fs');
-const path = require('path');
+const { Octokit } = require("@octokit/rest");
+const fs = require("fs");
+const path = require("path");
 
 // Configuration
-const REPO_OWNER = 'HUYDUU19';
-const REPO_NAME = 'leenglish-toeic-platform';
+const REPO_OWNER = "HUYDUU19";
+const REPO_NAME = "leenglish-toeic-platform";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 if (!GITHUB_TOKEN) {
-  console.error('❌ Please set GITHUB_TOKEN environment variable');
-  console.log('Get token from: https://github.com/settings/tokens');
+  console.error("❌ Please set GITHUB_TOKEN environment variable");
+  console.log("Get token from: https://github.com/settings/tokens");
   process.exit(1);
 }
 
@@ -28,7 +28,7 @@ const octokit = new Octokit({
 const issues = [
   // Backend Issues
   {
-    title: '[BUG] Database connection timeout on high load',
+    title: "[BUG] Database connection timeout on high load",
     body: `## 🐛 Bug Description
 When multiple users access the platform simultaneously, database connections timeout causing 500 errors.
 
@@ -56,11 +56,11 @@ Need to configure proper connection pool settings and implement connection retry
 - [ ] Add connection retry mechanism
 - [ ] Add monitoring for connection metrics
 - [ ] Load test to verify fix`,
-    labels: ['bug', 'backend', 'database', 'high-priority']
+    labels: ["bug", "backend", "database", "high-priority"],
   },
-  
+
   {
-    title: '[FEATURE] Add Redis caching for frequently accessed data',
+    title: "[FEATURE] Add Redis caching for frequently accessed data",
     body: `## 🚀 Feature Description
 Implement Redis caching to improve API response times for questions and user data.
 
@@ -92,11 +92,11 @@ As a developer, I want to cache frequently accessed data so that API responses a
 - [ ] User profile caching added
 - [ ] Cache invalidation strategy implemented
 - [ ] Performance tests show improvement`,
-    labels: ['enhancement', 'backend', 'performance']
+    labels: ["enhancement", "backend", "performance"],
   },
 
   {
-    title: '[FEATURE] Implement responsive design for mobile browsers',
+    title: "[FEATURE] Implement responsive design for mobile browsers",
     body: `## 🚀 Feature Description
 Optimize the web application for mobile browsers with responsive design.
 
@@ -127,11 +127,11 @@ As a mobile user, I want to access the platform on my phone browser so that I ca
 - [ ] Test forms work on mobile
 - [ ] Images scale properly
 - [ ] Text is readable without zooming`,
-    labels: ['enhancement', 'frontend', 'ui/ux', 'mobile']
+    labels: ["enhancement", "frontend", "ui/ux", "mobile"],
   },
 
   {
-    title: '[FEATURE] Implement offline mode for downloaded tests',
+    title: "[FEATURE] Implement offline mode for downloaded tests",
     body: `## 🚀 Feature Description
 Allow users to download test questions and take tests offline.
 
@@ -163,11 +163,11 @@ As a mobile user, I want to download tests so that I can study without internet 
 - [ ] Result synchronization when online
 - [ ] Progress indicators for downloads
 - [ ] Storage management (delete old tests)`,
-    labels: ['enhancement', 'mobile', 'offline', 'high-priority']
+    labels: ["enhancement", "mobile", "offline", "high-priority"],
   },
 
   {
-    title: '[BUG] JWT token expiration not handled properly',
+    title: "[BUG] JWT token expiration not handled properly",
     body: `## 🐛 Bug Description
 When JWT token expires, the API returns 500 error instead of 401 Unauthorized.
 
@@ -200,11 +200,11 @@ Frontend should handle 401 errors to redirect to login page.
 - [ ] Consistent error message format
 - [ ] Frontend handles 401 correctly
 - [ ] Unit tests for token validation`,
-    labels: ['bug', 'backend', 'security', 'high-priority']
+    labels: ["bug", "backend", "security", "high-priority"],
   },
 
   {
-    title: '[TASK] Set up CI/CD pipeline with GitHub Actions',
+    title: "[TASK] Set up CI/CD pipeline with GitHub Actions",
     body: `## 📋 Task Description
 Implement automated testing and deployment pipeline using GitHub Actions.
 
@@ -238,11 +238,11 @@ Implement automated testing and deployment pipeline using GitHub Actions.
 - [ ] Staging environment configured
 - [ ] Production deployment process documented
 - [ ] Rollback procedure defined`,
-    labels: ['task', 'devops', 'ci-cd', 'high-priority']
+    labels: ["task", "devops", "ci-cd", "high-priority"],
   },
 
   {
-    title: '[TASK] Create API documentation with Swagger',
+    title: "[TASK] Create API documentation with Swagger",
     body: `## 📋 Task Description
 Generate comprehensive API documentation using Swagger/OpenAPI.
 
@@ -266,11 +266,11 @@ Generate comprehensive API documentation using Swagger/OpenAPI.
 - [ ] Authentication documentation
 - [ ] Error response documentation
 - [ ] Try-it-out functionality working`,
-    labels: ['task', 'documentation', 'api', 'high-priority']
+    labels: ["task", "documentation", "api", "high-priority"],
   },
 
   {
-    title: '[FEATURE] Add push notifications for study reminders',
+    title: "[FEATURE] Add push notifications for study reminders",
     body: `## 🚀 Feature Description
 Send push notifications to remind users to study daily.
 
@@ -301,28 +301,30 @@ As a user, I want to receive study reminders so that I can maintain consistent p
 - [ ] Custom notification content
 - [ ] Handle notification taps
 - [ ] Notification history`,
-    labels: ['enhancement', 'mobile', 'notifications']
-  }
+    labels: ["enhancement", "mobile", "notifications"],
+  },
 ];
 
 async function createIssues() {
-  console.log('🚀 Starting to create GitHub issues...');
+  console.log("🚀 Starting to create GitHub issues...");
   console.log(`📦 Repository: ${REPO_OWNER}/${REPO_NAME}`);
   console.log(`📝 Issues to create: ${issues.length}`);
   console.log();
 
   for (let i = 0; i < issues.length; i++) {
     const issue = issues[i];
-    
+
     try {
-      console.log(`📋 Creating issue ${i + 1}/${issues.length}: ${issue.title}`);
-      
+      console.log(
+        `📋 Creating issue ${i + 1}/${issues.length}: ${issue.title}`
+      );
+
       const response = await octokit.rest.issues.create({
         owner: REPO_OWNER,
         repo: REPO_NAME,
         title: issue.title,
         body: issue.body,
-        labels: issue.labels
+        labels: issue.labels,
       });
 
       console.log(`✅ Created: #${response.data.number} - ${issue.title}`);
@@ -330,8 +332,7 @@ async function createIssues() {
       console.log();
 
       // Add delay to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
       console.error(`❌ Failed to create issue: ${issue.title}`);
       console.error(`Error: ${error.message}`);
@@ -339,12 +340,14 @@ async function createIssues() {
     }
   }
 
-  console.log('🎉 Finished creating issues!');
-  console.log(`🔗 View all issues: https://github.com/${REPO_OWNER}/${REPO_NAME}/issues`);
+  console.log("🎉 Finished creating issues!");
+  console.log(
+    `🔗 View all issues: https://github.com/${REPO_OWNER}/${REPO_NAME}/issues`
+  );
 }
 
 // Run the script
-createIssues().catch(error => {
-  console.error('❌ Script failed:', error.message);
+createIssues().catch((error) => {
+  console.error("❌ Script failed:", error.message);
   process.exit(1);
 });

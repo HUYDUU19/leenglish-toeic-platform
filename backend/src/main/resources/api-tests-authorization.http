@@ -1,0 +1,235 @@
+### ================================================================
+### LEENGLISH TOEIC API - AUTHORIZATION TESTING
+### ================================================================
+### QUY ĐỊNH AUTHORIZATION:
+### - ADMIN (ID=1): Có thể làm tất cả mọi thứ
+### - USER (ID=2): Chỉ được sửa profile chính mình (ID=2)
+### - USER (ID=3): Chỉ được sửa profile chính mình (ID=3)
+### 
+### SECURITY RULES:
+### ✅ Admin có thể: view/edit/delete bất kỳ user nào
+### ✅ User có thể: view/edit chỉ profile của chính mình
+### ❌ User KHÔNG thể: view/edit/delete user khác
+### ❌ Admin KHÔNG thể: tự xóa/demote chính mình (prevent lockout)
+
+### =================================
+### 1. PUBLIC ENDPOINTS (Ai cũng access được)
+### =================================
+
+### GET enum values - PUBLIC (cho frontend dropdown)
+GET http://localhost:8080/api/users/enums
+
+### GET leaderboard - PUBLIC (động lực học tập)
+GET http://localhost:8080/api/users/leaderboard?limit=5
+
+### =================================
+### 2. ADMIN-ONLY ENDPOINTS
+### =================================
+
+### ✅ ADMIN xem tất cả users (ALLOWED)
+GET http://localhost:8080/api/users?page=0&size=5
+Current-User-Id: 1
+
+### ❌ USER cố xem tất cả users (FORBIDDEN)
+GET http://localhost:8080/api/users?page=0&size=5
+Current-User-Id: 2
+
+### ✅ ADMIN filter users by role (ALLOWED)
+GET http://localhost:8080/api/users/by-role/USER
+Current-User-Id: 1
+
+### ❌ USER cố filter users by role (FORBIDDEN)
+GET http://localhost:8080/api/users/by-role/USER
+Current-User-Id: 2
+
+### =================================
+### 3. PROFILE VIEWING TESTS
+### =================================
+
+### ✅ ADMIN xem profile của User ID=2 (ALLOWED)
+GET http://localhost:8080/api/users/2
+Current-User-Id: 1
+
+### ✅ USER ID=2 xem profile chính mình (ALLOWED)
+GET http://localhost:8080/api/users/2
+Current-User-Id: 2
+
+### ❌ USER ID=2 cố xem profile của User ID=3 (FORBIDDEN)
+GET http://localhost:8080/api/users/3
+Current-User-Id: 2
+
+### ✅ USER ID=3 xem profile chính mình (ALLOWED)
+GET http://localhost:8080/api/users/3
+Current-User-Id: 3
+
+### ✅ USER xem profile mình qua endpoint /profile (ALLOWED)
+GET http://localhost:8080/api/users/profile
+Current-User-Id: 2
+
+### =================================
+### 4. PROFILE EDITING TESTS
+### =================================
+
+### ✅ ADMIN sửa profile của User ID=2 (ALLOWED - full access)
+PUT http://localhost:8080/api/users/2
+Current-User-Id: 1
+Content-Type: application/json
+
+{
+  "fullName": "Updated by Admin",
+  "phone": "+1234567890",
+  "country": "Vietnam",
+  "gender": "MALE",
+  "role": "COLLABORATOR"
+}
+
+### ✅ USER ID=2 sửa profile chính mình (ALLOWED - không có role)
+PUT http://localhost:8080/api/users/2
+Current-User-Id: 2
+Content-Type: application/json
+
+{
+  "fullName": "John Doe Updated",
+  "phone": "+1987654321", 
+  "country": "USA",
+  "gender": "MALE"
+}
+
+### ❌ USER ID=2 cố sửa profile của User ID=3 (FORBIDDEN)
+PUT http://localhost:8080/api/users/3
+Current-User-Id: 2
+Content-Type: application/json
+
+{
+  "fullName": "Hacker Attempt",
+  "country": "Hacked"
+}
+
+### ❌ USER cố thay đổi role (FORBIDDEN - chỉ admin mới được)
+PUT http://localhost:8080/api/users/2
+Current-User-Id: 2
+Content-Type: application/json
+
+{
+  "fullName": "John Doe",
+  "role": "ADMIN"
+}
+
+### ✅ USER tự update profile qua endpoint /profile (ALLOWED)
+PUT http://localhost:8080/api/users/profile
+Current-User-Id: 2
+Content-Type: application/json
+
+{
+  "fullName": "John Updated via Profile",
+  "phone": "+1111111111",
+  "country": "Canada",
+  "gender": "MALE"
+}
+
+### =================================
+### 5. ROLE MANAGEMENT TESTS (ADMIN ONLY)
+### =================================
+
+### ✅ ADMIN thay đổi role của User ID=2 (ALLOWED)
+POST http://localhost:8080/api/users/2/change-role?newRole=COLLABORATOR
+Current-User-Id: 1
+
+### ❌ USER cố thay đổi role của user khác (FORBIDDEN)
+POST http://localhost:8080/api/users/3/change-role?newRole=ADMIN
+Current-User-Id: 2
+
+### ❌ ADMIN cố tự demote chính mình (FORBIDDEN - prevent lockout)
+POST http://localhost:8080/api/users/1/change-role?newRole=USER
+Current-User-Id: 1
+
+### =================================
+### 6. USER DELETION TESTS (ADMIN ONLY)
+### =================================
+
+### ✅ ADMIN xóa User ID=3 (ALLOWED)
+DELETE http://localhost:8080/api/users/3
+Current-User-Id: 1
+
+### ❌ USER cố xóa user khác (FORBIDDEN)
+DELETE http://localhost:8080/api/users/2
+Current-User-Id: 3
+
+### ❌ ADMIN cố tự xóa chính mình (FORBIDDEN - prevent lockout)
+DELETE http://localhost:8080/api/users/1
+Current-User-Id: 1
+
+### =================================
+### 7. ERROR CASES & SECURITY TESTS
+### =================================
+
+### ❌ Không có Current-User-Id header (UNAUTHORIZED)
+GET http://localhost:8080/api/users/2
+
+### ❌ Current-User-Id không tồn tại (UNAUTHORIZED)
+GET http://localhost:8080/api/users/2
+Current-User-Id: 999
+
+### ❌ Invalid enum values (BAD REQUEST)
+PUT http://localhost:8080/api/users/2
+Current-User-Id: 2
+Content-Type: application/json
+
+{
+  "gender": "INVALID_GENDER",
+  "role": "SUPER_ADMIN"
+}
+
+### ❌ SQL Injection attempt (BAD REQUEST)
+PUT http://localhost:8080/api/users/2
+Current-User-Id: 2
+Content-Type: application/json
+
+{
+  "fullName": "'; DROP TABLE users; --",
+  "country": "'; DELETE FROM users WHERE id=1; --"
+}
+
+### ❌ Privilege escalation attempt (FORBIDDEN)
+PUT http://localhost:8080/api/users/2
+Current-User-Id: 2
+Content-Type: application/json
+
+{
+  "role": "ADMIN",
+  "isActive": true,
+  "isPremium": true
+}
+
+### =================================
+### 8. VALID SUCCESS CASES
+### =================================
+
+### ✅ Admin creates new user
+POST http://localhost:8080/api/users
+Current-User-Id: 1
+Content-Type: application/json
+
+{
+  "username": "newuser",
+  "email": "newuser@example.com",
+  "password": "securepassword",
+  "fullName": "New User",
+  "phone": "+84123456789",
+  "gender": "FEMALE",
+  "country": "Vietnam",
+  "role": "USER"
+}
+
+### ✅ User updates own basic info successfully
+PUT http://localhost:8080/api/users/profile
+Current-User-Id: 2
+Content-Type: application/json
+
+{
+  "fullName": "John Doe Professional",
+  "phone": "+1-555-0123",
+  "dateOfBirth": "1990-01-15",
+  "gender": "MALE",
+  "country": "United States"
+}

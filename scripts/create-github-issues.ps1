@@ -20,7 +20,8 @@ function Create-Issue {
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "✅ Created: $Title" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "❌ Failed to create: $Title" -ForegroundColor Red
     }
 }
