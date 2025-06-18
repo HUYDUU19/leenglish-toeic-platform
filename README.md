@@ -227,10 +227,12 @@ logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %msg%n
 
 1. **Make sure MySQL is running** and database `english5` exists
 2. **Start the backend server**:
+
    ```bash
    cd backend
    mvn spring-boot:run
    ```
+
    Or use VS Code task: `Start Backend Server`
 
 3. **Verify server is running**: http://localhost:8080/api/health
@@ -238,23 +240,28 @@ logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %msg%n
 ### 🛠️ Testing Tools
 
 #### 1. **Postman** (Recommended)
+
 - Download: https://www.postman.com/downloads/
 - Import collection từ file `postman_collection.json` (nếu có)
 
 #### 2. **Thunder Client** (VS Code Extension)
+
 - Install extension: `Thunder Client`
 - Lightweight alternative to Postman
 
 #### 3. **curl** (Command Line)
+
 - Built-in với Windows PowerShell/CMD
 
 #### 4. **REST Client** (VS Code Extension)
+
 - Install extension: `REST Client`
 - Create `.http` files for testing
 
 ### 📋 Step-by-Step Testing
 
 #### Step 1: Test Health Check
+
 ```bash
 # Using curl
 curl -X GET http://localhost:8080/api/health
@@ -267,6 +274,7 @@ curl -X GET http://localhost:8080/api/health
 ```
 
 #### Step 2: User Registration
+
 ```bash
 # Using curl
 curl -X POST http://localhost:8080/api/auth/register \
@@ -284,6 +292,7 @@ curl -X POST http://localhost:8080/api/auth/register \
 ```
 
 #### Step 3: User Login
+
 ```bash
 # Using curl
 curl -X POST http://localhost:8080/api/auth/login \
@@ -305,6 +314,7 @@ curl -X POST http://localhost:8080/api/auth/login \
 ```
 
 #### Step 4: Test Protected Endpoints
+
 ```bash
 # Save the token from login response
 TOKEN="your-jwt-token-here"
@@ -432,24 +442,31 @@ Content-Type: application/json
 ### 🚨 Common Issues & Solutions
 
 #### 1. **CORS Error**
+
 ```
 Access to fetch at 'http://localhost:8080' from origin 'http://localhost:3000' has been blocked by CORS policy
 ```
+
 **Solution**: Check CORS configuration trong Spring Boot
 
 #### 2. **401 Unauthorized**
+
 ```
 {
   "error": "Unauthorized",
   "message": "JWT token is missing or invalid"
 }
 ```
-**Solution**: 
+
+**Solution**:
+
 - Kiểm tra token có đúng không
 - Thêm `Authorization: Bearer <token>` header
 
 #### 3. **500 Internal Server Error**
-**Solution**: 
+
+**Solution**:
+
 - Check server logs
 - Verify database connection
 - Check application.properties
@@ -464,6 +481,50 @@ Access to fetch at 'http://localhost:8080' from origin 'http://localhost:3000' h
 - [ ] ✅ CRUD operations work for questions
 - [ ] ✅ File upload works (if implemented)
 - [ ] ✅ Error handling returns proper status codes
+
+## 🤖 MCP (Model Context Protocol) Integration
+
+This project includes MCP configuration for enhanced AI assistance during development.
+
+### 📁 MCP Files
+
+- **`.vscode/mcp.json`** - MCP server configuration
+- **`docs/MCP_CONFIGURATION.md`** - Detailed MCP setup guide
+- **`project-metadata.json`** - Project metadata for AI context
+
+### 🔧 MCP Servers Configured
+
+- **Filesystem**: File operations and project navigation
+- **Git**: Version control operations
+- **GitHub**: Repository management and integration
+- **Brave Search**: Web search for development research
+- **Memory**: Persistent context across conversations
+- **Sequential Thinking**: Enhanced problem-solving capabilities
+
+### 🚀 MCP Setup
+
+```bash
+# Install MCP dependencies
+npm install -g @modelcontextprotocol/server-filesystem
+npm install -g @modelcontextprotocol/server-git
+npm install -g @modelcontextprotocol/server-github
+npm install -g @modelcontextprotocol/server-brave-search
+npm install -g @modelcontextprotocol/server-memory
+npm install -g @modelcontextprotocol/server-sequential-thinking
+
+# Configure environment variables
+cp .env.example .env
+# Edit .env with your API keys
+```
+
+### 📖 MCP Benefits
+
+- **Enhanced Development**: AI can directly interact with project files
+- **Better Context**: Persistent memory of project decisions
+- **Integrated Workflows**: Git, GitHub, and file operations in one interface
+- **Research Capabilities**: Real-time web search for development questions
+
+For detailed MCP setup instructions, see [`docs/MCP_CONFIGURATION.md`](./docs/MCP_CONFIGURATION.md)
 
 ## 🛠️ Development Scripts
 
