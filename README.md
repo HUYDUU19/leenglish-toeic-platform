@@ -7,6 +7,8 @@ A comprehensive **multi-platform TOEIC learning platform** with Spring Boot back
 ![Frontend](https://img.shields.io/badge/Frontend-Next.js-blue)
 ![Mobile](https://img.shields.io/badge/Mobile-Flutter-lightblue)
 
+🔗 **Repository**: [https://github.com/HUYDUU19/leenglish-toeic-platform](https://github.com/HUYDUU19/leenglish-toeic-platform)
+
 ## 🏗️ Project Architecture
 
 ```
