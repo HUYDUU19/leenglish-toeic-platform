@@ -98,31 +98,128 @@ flutter run
 
 ## 🔗 API Documentation
 
+### 📊 Base URL
+
+```
+Development: http://localhost:8080
+```
+
+### 🔒 Authentication
+
+All protected endpoints require JWT token in Authorization header:
+
+```
+Authorization: Bearer <your-jwt-token>
+```
+
 ### 🏥 Health Check
 
-- `GET /api/health` - Backend health status
+| Method | Endpoint      | Description           | Auth Required |
+| ------ | ------------- | --------------------- | ------------- |
+| `GET`  | `/api/health` | Backend health status | ❌            |
 
-### 🔐 Authentication
+### 🔐 Authentication Endpoints
 
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/logout` - User logout
+| Method | Endpoint             | Description       | Request Body                  | Response        |
+| ------ | -------------------- | ----------------- | ----------------------------- | --------------- |
+| `POST` | `/api/auth/login`    | User login        | `{username, password}`        | `{token, user}` |
+| `POST` | `/api/auth/register` | User registration | `{username, email, password}` | `{message}`     |
+| `POST` | `/api/auth/logout`   | User logout       | -                             | `{message}`     |
+| `POST` | `/api/auth/refresh`  | Refresh JWT token | `{refreshToken}`              | `{token}`       |
 
 ### 👤 User Management
 
-- `GET /api/users` - Get all users
-- `GET /api/users/{id}` - Get user by ID
-- `PUT /api/users/{id}` - Update user profile
-- `POST /api/users/{id}/score` - Update user score
-- `GET /api/users/leaderboard` - Get top users
+| Method | Endpoint                 | Description         | Auth Required | Response    |
+| ------ | ------------------------ | ------------------- | ------------- | ----------- |
+| `GET`  | `/api/users`             | Get all users       | ✅            | `[{users}]` |
+| `GET`  | `/api/users/{id}`        | Get user by ID      | ✅            | `{user}`    |
+| `PUT`  | `/api/users/{id}`        | Update user profile | ✅            | `{user}`    |
+| `POST` | `/api/users/{id}/score`  | Update user score   | ✅            | `{message}` |
+| `GET`  | `/api/users/leaderboard` | Get top users       | ❌            | `[{users}]` |
 
 ### 📝 Questions & Tests
 
-- `GET /api/questions` - Get questions (with filters)
-- `GET /api/questions/{id}` - Get specific question
-- `POST /api/questions` - Create new question
-- `GET /api/questions/random` - Get random questions
-- `GET /api/questions/section/{section}/random` - Random by section
+| Method   | Endpoint                                  | Description                | Parameters                     | Auth Required |
+| -------- | ----------------------------------------- | -------------------------- | ------------------------------ | ------------- |
+| `GET`    | `/api/questions`                          | Get questions with filters | `?section=&difficulty=&limit=` | ✅            |
+| `GET`    | `/api/questions/{id}`                     | Get specific question      | -                              | ✅            |
+| `POST`   | `/api/questions`                          | Create new question        | Question object                | ✅            |
+| `PUT`    | `/api/questions/{id}`                     | Update question            | Question object                | ✅            |
+| `DELETE` | `/api/questions/{id}`                     | Delete question            | -                              | ✅            |
+| `GET`    | `/api/questions/random`                   | Get random questions       | `?count=10`                    | ✅            |
+| `GET`    | `/api/questions/section/{section}/random` | Random by section          | `?count=10`                    | ✅            |
+
+### 🏆 Test Sessions
+
+| Method | Endpoint                         | Description            | Auth Required |
+| ------ | -------------------------------- | ---------------------- | ------------- |
+| `POST` | `/api/test-sessions`             | Start new test session | ✅            |
+| `GET`  | `/api/test-sessions/{id}`        | Get test session       | ✅            |
+| `PUT`  | `/api/test-sessions/{id}`        | Update test session    | ✅            |
+| `POST` | `/api/test-sessions/{id}/submit` | Submit test answers    | ✅            |
+
+## ⚙️ Backend Configuration
+
+### 📋 Application Properties
+
+The backend uses the following configuration in `application.properties`:
+
+```properties
+# Application Name
+spring.application.name=englishback
+
+# Database Configuration (MySQL)
+spring.datasource.url=jdbc:mysql://localhost:3306/english5?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+spring.datasource.username=root
+spring.datasource.password=
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA/Hibernate Configuration
+spring.jpa.database-platform=org.hibernate.dialect.MySQL8Dialect
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.use_sql_comments=true
+
+# Server Configuration
+server.port=8080
+
+# JWT Configuration
+app.jwt.secret=leenglish-secret-key
+
+# File Upload Configuration
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+
+# Liquibase (Disabled)
+spring.liquibase.enabled=false
+
+# Logging Configuration
+logging.level.org.springframework.web=DEBUG
+logging.level.org.springframework.http.converter.json=DEBUG
+logging.level.org.springframework=DEBUG
+logging.level.com.leenglish.toeic=INFO
+logging.level.org.springframework.security=DEBUG
+logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %msg%n
+```
+
+### 🗄️ Database Setup
+
+1. **Install MySQL** (version 8.0+)
+2. **Create Database**:
+   ```sql
+   CREATE DATABASE english5;
+   ```
+3. **Update credentials** in `application.properties` if needed
+4. **Run the application** - tables will be created automatically
+
+### 🔐 Security Configuration
+
+- **JWT Secret**: Change `app.jwt.secret` in production
+- **CORS**: Configured for development (localhost:3000)
+- **Authentication**: JWT-based with refresh tokens
+- **Password Encoding**: BCrypt hashing
 
 ## 🛠️ Development Scripts
 
