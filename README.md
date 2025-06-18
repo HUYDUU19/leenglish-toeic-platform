@@ -221,6 +221,250 @@ logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %msg%n
 - **Authentication**: JWT-based with refresh tokens
 - **Password Encoding**: BCrypt hashing
 
+## 🧪 API Testing Guide
+
+### 🚀 Starting the Backend Server
+
+1. **Make sure MySQL is running** and database `english5` exists
+2. **Start the backend server**:
+   ```bash
+   cd backend
+   mvn spring-boot:run
+   ```
+   Or use VS Code task: `Start Backend Server`
+
+3. **Verify server is running**: http://localhost:8080/api/health
+
+### 🛠️ Testing Tools
+
+#### 1. **Postman** (Recommended)
+- Download: https://www.postman.com/downloads/
+- Import collection từ file `postman_collection.json` (nếu có)
+
+#### 2. **Thunder Client** (VS Code Extension)
+- Install extension: `Thunder Client`
+- Lightweight alternative to Postman
+
+#### 3. **curl** (Command Line)
+- Built-in với Windows PowerShell/CMD
+
+#### 4. **REST Client** (VS Code Extension)
+- Install extension: `REST Client`
+- Create `.http` files for testing
+
+### 📋 Step-by-Step Testing
+
+#### Step 1: Test Health Check
+```bash
+# Using curl
+curl -X GET http://localhost:8080/api/health
+
+# Expected Response:
+{
+  "status": "UP",
+  "timestamp": "2025-06-18T10:30:00Z"
+}
+```
+
+#### Step 2: User Registration
+```bash
+# Using curl
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "email": "test@example.com",
+    "password": "password123"
+  }'
+
+# Expected Response:
+{
+  "message": "User registered successfully"
+}
+```
+
+#### Step 3: User Login
+```bash
+# Using curl
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "password": "password123"
+  }'
+
+# Expected Response:
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "username": "testuser",
+    "email": "test@example.com"
+  }
+}
+```
+
+#### Step 4: Test Protected Endpoints
+```bash
+# Save the token from login response
+TOKEN="your-jwt-token-here"
+
+# Get user profile
+curl -X GET http://localhost:8080/api/users/1 \
+  -H "Authorization: Bearer $TOKEN"
+
+# Get questions
+curl -X GET http://localhost:8080/api/questions \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### 📝 Postman Collection Example
+
+Create a new collection với các requests sau:
+
+```json
+{
+  "info": {
+    "name": "LeEnglish TOEIC API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/health",
+          "host": ["{{base_url}}"],
+          "path": ["api", "health"]
+        }
+      }
+    },
+    {
+      "name": "Register User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/register",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "register"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}
+```
+
+### 🔧 REST Client (.http files)
+
+Create file `api-tests.http` trong VS Code:
+
+```http
+### Variables
+@baseUrl = http://localhost:8080
+@token = your-jwt-token-here
+
+### Health Check
+GET {{baseUrl}}/api/health
+
+### Register User
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+### Login User
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+### Get User Profile (Protected)
+GET {{baseUrl}}/api/users/1
+Authorization: Bearer {{token}}
+
+### Get Questions (Protected)
+GET {{baseUrl}}/api/questions?limit=10
+Authorization: Bearer {{token}}
+
+### Create Question (Protected)
+POST {{baseUrl}}/api/questions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "questionText": "What is the capital of Vietnam?",
+  "options": ["Hanoi", "Ho Chi Minh City", "Da Nang", "Hue"],
+  "correctAnswer": 0,
+  "section": "reading",
+  "difficulty": "easy"
+}
+```
+
+### 🚨 Common Issues & Solutions
+
+#### 1. **CORS Error**
+```
+Access to fetch at 'http://localhost:8080' from origin 'http://localhost:3000' has been blocked by CORS policy
+```
+**Solution**: Check CORS configuration trong Spring Boot
+
+#### 2. **401 Unauthorized**
+```
+{
+  "error": "Unauthorized",
+  "message": "JWT token is missing or invalid"
+}
+```
+**Solution**: 
+- Kiểm tra token có đúng không
+- Thêm `Authorization: Bearer <token>` header
+
+#### 3. **500 Internal Server Error**
+**Solution**: 
+- Check server logs
+- Verify database connection
+- Check application.properties
+
+### 📊 Testing Checklist
+
+- [ ] ✅ Health check endpoint works
+- [ ] ✅ User registration works
+- [ ] ✅ User login returns valid JWT
+- [ ] ✅ Protected endpoints reject requests without token
+- [ ] ✅ Protected endpoints work with valid token
+- [ ] ✅ CRUD operations work for questions
+- [ ] ✅ File upload works (if implemented)
+- [ ] ✅ Error handling returns proper status codes
+
 ## 🛠️ Development Scripts
 
 ```bash
