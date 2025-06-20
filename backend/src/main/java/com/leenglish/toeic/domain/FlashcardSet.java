@@ -1,4 +1,3 @@
-
 package com.leenglish.toeic.domain;
 
 import jakarta.persistence.*;

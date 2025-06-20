@@ -61,72 +61,73 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                
+
                 // Authentication and authorization rules
-                .authorizeHttpRequests(authz -> authz
-                        // Public endpoints
+                .authorizeHttpRequests(authz -> authz                        // Public endpoints
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/users/register").permitAll()
-                        .requestMatchers("/api/lessons/free").permitAll()
+                        .requestMatchers("/api/lessons").permitAll() // Allow public access to all lesson endpoints
+
+                        .requestMatchers("/api/lessons/**").permitAll() // Allow public access to all lesson endpoints
+                        .requestMatchers("/api/exercises/**").permitAll() // Allow public access to all exercise endpoints
                         .requestMatchers("/api/exercises/free").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        
+
                         // User endpoints
                         .requestMatchers("/api/users/profile").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/api/progress/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/api/flashcards/**").hasAnyRole("USER", "ADMIN")
-                        
+
                         // Premium content
                         .requestMatchers("/api/lessons/premium/**").hasAnyRole("PREMIUM", "ADMIN")
                         .requestMatchers("/api/exercises/premium/**").hasAnyRole("PREMIUM", "ADMIN")
-                        
+
                         // Admin endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/users/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/lessons/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/exercises/admin/**").hasRole("ADMIN")
-                        
+
                         // All other requests require authentication
                         .anyRequest().authenticated())
-                
+
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }    @Bean
+    }
+
+    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
+
         // Set allowed origins for development and production
         configuration.setAllowedOriginPatterns(Arrays.asList(
                 "http://localhost:3000",
-                "http://localhost:3001", 
+                "http://localhost:3001",
                 "http://127.0.0.1:3000",
-                "http://127.0.0.1:3001"
-        ));
-        
+                "http://127.0.0.1:3001"));
+
         // Set allowed methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        
+
         // Set allowed headers
         configuration.setAllowedHeaders(Arrays.asList(
-                "Authorization", 
-                "Content-Type", 
-                "X-Requested-With", 
-                "Accept", 
-                "Origin", 
-                "Access-Control-Request-Method", 
-                "Access-Control-Request-Headers"
-        ));
-        
+                "Authorization",
+                "Content-Type",
+                "X-Requested-With",
+                "Accept",
+                "Origin",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers"));
+
         // Set exposed headers
         configuration.setExposedHeaders(Arrays.asList(
-                "Access-Control-Allow-Origin", 
-                "Access-Control-Allow-Credentials"
-        ));
-        
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Credentials"));
+
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 

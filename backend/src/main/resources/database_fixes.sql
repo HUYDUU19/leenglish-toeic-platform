@@ -173,4 +173,83 @@ CREATE INDEX `idx_questions_exercise_id` ON `questions` (`exercise_id`);
 CREATE INDEX `idx_users_email` ON `users` (`email`);
 CREATE INDEX `idx_users_username` ON `users` (`username`);
 
+-- ================================================================
+-- THÊM DỮ LIỆU CHO BẢNG LESSONS (ĐANG THIẾU HOÀN TOÀN)
+-- ================================================================
+
+-- Insert dữ liệu lessons với user_id = 1 (admin user)
+INSERT INTO `lessons` (`id`, `user_id`, `title`, `description`, `skill`, `difficulty_level`, `toeic_part`, `image_url`, `audio_url`, `video_url`, `duration_minutes`, `is_premium`, `is_published`, `lesson_order`, `total_exercises`, `completion_rate`, `created_at`, `updated_at`) VALUES
+
+-- Lesson 1: Basic Greetings (BEGINNER level)
+(1, 1, 'Basic Greetings and Introductions', 'Learn essential greetings and how to introduce yourself in English. This lesson covers common phrases used in formal and informal situations.', 'SPEAKING', 'BEGINNER', 'PART1', '/images/lessons/greeting.jpg', '/audio/lessons/greeting-intro.mp3', '/videos/lessons/greeting-basics.mp4', 20, 0, 1, 1, 2, 85.50, NOW(), NOW()),
+
+-- Lesson 2: Present Simple Grammar
+(2, 1, 'Present Simple Tense', 'Understanding and using present simple tense in everyday situations. Learn how to form statements, questions, and negatives.', 'GRAMMAR', 'BEGINNER', 'PART5', '/images/lessons/present-simple.jpg', NULL, '/videos/lessons/present-simple.mp4', 25, 0, 1, 2, 2, 78.25, NOW(), NOW()),
+
+-- Lesson 3: Numbers and Time (Premium)
+(3, 1, 'Numbers and Time', 'Learn numbers, dates, and how to tell time in English. Essential vocabulary for everyday communication.', 'VOCABULARY', 'BEGINNER', 'PART1', '/images/lessons/numbers-time.jpg', '/audio/lessons/numbers.mp3', NULL, 30, 1, 1, 3, 2, 92.30, NOW(), NOW()),
+
+-- Lesson 4: Past Simple Formation
+(4, 1, 'Past Simple Tense', 'Master the past simple tense with regular and irregular verbs. Learn to talk about completed actions in the past.', 'GRAMMAR', 'ELEMENTARY', 'PART5', '/images/lessons/past-simple.jpg', NULL, '/videos/lessons/past-simple.mp4', 35, 0, 1, 4, 2, 70.15, NOW(), NOW()),
+
+-- Lesson 5: Listening Comprehension
+(5, 1, 'Daily Conversations', 'Improve your listening skills with real-world conversations. Practice understanding different accents and speaking speeds.', 'LISTENING', 'INTERMEDIATE', 'PART3', '/images/lessons/conversations.jpg', '/audio/lessons/daily-conversations.mp3', NULL, 40, 1, 1, 5, 2, 65.80, NOW(), NOW()),
+
+-- Lesson 6: Conditionals (Advanced)
+(6, 1, 'Conditional Sentences', 'Learn first, second, and third conditional structures. Express hypothetical situations and their consequences.', 'GRAMMAR', 'INTERMEDIATE', 'PART5', '/images/lessons/conditionals.jpg', NULL, '/videos/lessons/conditionals.mp4', 45, 1, 1, 6, 2, 58.40, NOW(), NOW()),
+
+-- Lesson 7: Business Communication
+(7, 1, 'Business Email Writing', 'Master professional email communication. Learn formal language, proper structure, and business etiquette.', 'WRITING', 'UPPER_INTERMEDIATE', 'PART7', '/images/lessons/business-email.jpg', NULL, '/videos/lessons/business-writing.mp4', 50, 1, 1, 7, 2, 82.70, NOW(), NOW()),
+
+-- Lesson 8: Advanced Vocabulary
+(8, 1, 'Advanced Vocabulary Building', 'Expand your vocabulary with sophisticated words and phrases. Perfect for achieving high TOEIC scores.', 'VOCABULARY', 'ADVANCED', 'PART7', '/images/lessons/advanced-vocab.jpg', '/audio/lessons/advanced-words.mp3', NULL, 55, 1, 1, 8, 2, 45.60, NOW(), NOW()),
+
+-- Lesson 9: Reading Comprehension
+(9, 1, 'Reading Strategies', 'Develop effective reading strategies for TOEIC Part 7. Learn to quickly identify key information and main ideas.', 'READING', 'INTERMEDIATE', 'PART7', '/images/lessons/reading-strategies.jpg', NULL, '/videos/lessons/reading-tips.mp4', 60, 0, 1, 9, 2, 73.90, NOW(), NOW()),
+
+-- Lesson 10: Meeting Vocabulary
+(10, 1, 'Business Meetings', 'Essential vocabulary and phrases for participating in business meetings. Learn to express opinions and make suggestions professionally.', 'SPEAKING', 'ADVANCED', 'PART4', '/images/lessons/meetings.jpg', '/audio/lessons/meeting-phrases.mp3', '/videos/lessons/meeting-skills.mp4', 45, 1, 1, 10, 2, 67.20, NOW(), NOW());
+
+-- ================================================================
+-- Thêm dữ liệu vào bảng `exercise_question` 
+-- (Có vẻ như bảng này duplicate với `questions`, nhưng sẽ thêm để đảm bảo)
+-- ================================================================
+
+-- ================================================================
+-- THÊM DỮ LIỆU CHO BẢNG LESSONS (ĐANG THIẾU HOÀN TOÀN)
+-- ================================================================
+
+-- Insert dữ liệu lessons với user_id = 1 (admin user)
+INSERT INTO `lessons` (`id`, `user_id`, `title`, `description`, `skill`, `difficulty_level`, `toeic_part`, `image_url`, `audio_url`, `video_url`, `duration_minutes`, `is_premium`, `is_published`, `lesson_order`, `total_exercises`, `completion_rate`, `created_at`, `updated_at`) VALUES
+
+-- Lesson 1: Basic Greetings (BEGINNER level)
+(1, 1, 'Basic Greetings and Introductions', 'Learn essential greetings and how to introduce yourself in English. This lesson covers common phrases used in formal and informal situations.', 'SPEAKING', 'BEGINNER', 'PART1', '/images/lessons/greeting.jpg', '/audio/lessons/greeting-intro.mp3', '/videos/lessons/greeting-basics.mp4', 20, 0, 1, 1, 2, 85.50, NOW(), NOW()),
+
+-- Lesson 2: Present Simple Grammar
+(2, 1, 'Present Simple Tense', 'Understanding and using present simple tense in everyday situations. Learn how to form statements, questions, and negatives.', 'GRAMMAR', 'BEGINNER', 'PART5', '/images/lessons/present-simple.jpg', NULL, '/videos/lessons/present-simple.mp4', 25, 0, 1, 2, 2, 78.25, NOW(), NOW()),
+
+-- Lesson 3: Numbers and Time (Premium)
+(3, 1, 'Numbers and Time', 'Learn numbers, dates, and how to tell time in English. Essential vocabulary for everyday communication.', 'VOCABULARY', 'BEGINNER', 'PART1', '/images/lessons/numbers-time.jpg', '/audio/lessons/numbers.mp3', NULL, 30, 1, 1, 3, 2, 92.30, NOW(), NOW()),
+
+-- Lesson 4: Past Simple Formation
+(4, 1, 'Past Simple Tense', 'Master the past simple tense with regular and irregular verbs. Learn to talk about completed actions in the past.', 'GRAMMAR', 'ELEMENTARY', 'PART5', '/images/lessons/past-simple.jpg', NULL, '/videos/lessons/past-simple.mp4', 35, 0, 1, 4, 2, 70.15, NOW(), NOW()),
+
+-- Lesson 5: Listening Comprehension
+(5, 1, 'Daily Conversations', 'Improve your listening skills with real-world conversations. Practice understanding different accents and speaking speeds.', 'LISTENING', 'INTERMEDIATE', 'PART3', '/images/lessons/conversations.jpg', '/audio/lessons/daily-conversations.mp3', NULL, 40, 1, 1, 5, 2, 65.80, NOW(), NOW()),
+
+-- Lesson 6: Conditionals (Advanced)
+(6, 1, 'Conditional Sentences', 'Learn first, second, and third conditional structures. Express hypothetical situations and their consequences.', 'GRAMMAR', 'INTERMEDIATE', 'PART5', '/images/lessons/conditionals.jpg', NULL, '/videos/lessons/conditionals.mp4', 45, 1, 1, 6, 2, 58.40, NOW(), NOW()),
+
+-- Lesson 7: Business Communication
+(7, 1, 'Business Email Writing', 'Master professional email communication. Learn formal language, proper structure, and business etiquette.', 'WRITING', 'UPPER_INTERMEDIATE', 'PART7', '/images/lessons/business-email.jpg', NULL, '/videos/lessons/business-writing.mp4', 50, 1, 1, 7, 2, 82.70, NOW(), NOW()),
+
+-- Lesson 8: Advanced Vocabulary
+(8, 1, 'Advanced Vocabulary Building', 'Expand your vocabulary with sophisticated words and phrases. Perfect for achieving high TOEIC scores.', 'VOCABULARY', 'ADVANCED', 'PART7', '/images/lessons/advanced-vocab.jpg', '/audio/lessons/advanced-words.mp3', NULL, 55, 1, 1, 8, 2, 45.60, NOW(), NOW()),
+
+-- Lesson 9: Reading Comprehension
+(9, 1, 'Reading Strategies', 'Develop effective reading strategies for TOEIC Part 7. Learn to quickly identify key information and main ideas.', 'READING', 'INTERMEDIATE', 'PART7', '/images/lessons/reading-strategies.jpg', NULL, '/videos/lessons/reading-tips.mp4', 60, 0, 1, 9, 2, 73.90, NOW(), NOW()),
+
+-- Lesson 10: Meeting Vocabulary
+(10, 1, 'Business Meetings', 'Essential vocabulary and phrases for participating in business meetings. Learn to express opinions and make suggestions professionally.', 'SPEAKING', 'ADVANCED', 'PART4', '/images/lessons/meetings.jpg', '/audio/lessons/meeting-phrases.mp3', '/videos/lessons/meeting-skills.mp4', 45, 1, 1, 10, 2, 67.20, NOW(), NOW());
+
 COMMIT;
