@@ -1,14 +1,16 @@
 package com.leenglish.toeic.enums;
 
+/**
+ * Exercise types for TOEIC platform
+ */
 public enum ExerciseType {
-    MULTIPLE_CHOICE("Multiple Choice"),
-    FILL_IN_BLANK("Fill in the Blank"),
-    TRUE_FALSE("True/False"),
-    MATCHING("Matching"),
-    LISTENING_COMPREHENSION("Listening Comprehension"),
-    READING_COMPREHENSION("Reading Comprehension"),
-    GRAMMAR_CHECK("Grammar Check"),
-    VOCABULARY_QUIZ("Vocabulary Quiz");
+    LISTENING("Listening"),
+    READING("Reading"),
+    VOCABULARY("Vocabulary"),
+    GRAMMAR("Grammar"),
+    SPEAKING("Speaking"),
+    WRITING("Writing"),
+    MIXED("Mixed");
 
     private final String displayName;
 

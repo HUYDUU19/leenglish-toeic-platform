@@ -1,25 +1,22 @@
 package com.leenglish.toeic.enums;
 
-public enum QuestionDifficulty {
+/**
+ * Difficulty levels for TOEIC exercises
+ */
+public enum Difficulty {
     EASY("Easy"),
-    MEDIUM("Medium"),
-    HARD("Hard");
+    BEGINNER("Beginner"),
+    INTERMEDIATE("Intermediate"),
+    ADVANCED("Advanced"),
+    EXPERT("Expert");
 
     private final String displayName;
 
-    QuestionDifficulty(String displayName) {
+    Difficulty(String displayName) {
         this.displayName = displayName;
     }
 
     public String getDisplayName() {
         return displayName;
-    }
-
-    public int getPoints() {
-        return switch (this) {
-            case EASY -> 3;
-            case MEDIUM -> 5;
-            case HARD -> 7;
-        };
     }
 }

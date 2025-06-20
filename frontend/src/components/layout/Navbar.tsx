@@ -7,10 +7,10 @@
  */
 
 import {
-    Bars3Icon,
-    BellIcon,
-    MagnifyingGlassIcon,
-    UserCircleIcon
+  Bars3Icon,
+  BellIcon,
+  MagnifyingGlassIcon,
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -40,15 +40,15 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, onMenuClick }) => {
         <div className="flex justify-between items-center h-16">
           {/* Left Side */}
           <div className="flex items-center">            {currentUser && (
-              <button
-                onClick={onMenuClick}
-                className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 lg:hidden"
-                aria-label="Open main menu"
-              >
-                <Bars3Icon className="h-6 w-6" />
-              </button>
-            )}
-            
+            <button
+              onClick={onMenuClick}
+              className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 lg:hidden"
+              aria-label="Open main menu"
+            >
+              <Bars3Icon className="h-6 w-6" />
+            </button>
+          )}
+
             <Link to="/" className="flex items-center">
               <div className="text-2xl font-bold text-gradient">
                 LeEnglish
@@ -79,7 +79,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, onMenuClick }) => {
           <div className="flex items-center space-x-4">
             {currentUser ? (
               <>                {/* Notifications */}
-                <button 
+                <button
                   className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                   aria-label="View notifications"
                 >
@@ -87,21 +87,20 @@ const Navbar: React.FC<NavbarProps> = ({ currentUser, onMenuClick }) => {
                 </button>
 
                 {/* Profile Dropdown */}
-                <div className="relative group">
-                  <button className="flex items-center space-x-3 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                    {currentUser.profilePicture ? (
-                      <img 
-                        className="h-8 w-8 rounded-full" 
-                        src={currentUser.profilePicture} 
-                        alt={currentUser.firstName}
-                      />
-                    ) : (
-                      <UserCircleIcon className="h-8 w-8 text-gray-400" />
-                    )}
-                    <span className="hidden md:block text-gray-700 font-medium">
-                      {currentUser.firstName}
-                    </span>
-                  </button>
+                <div className="relative group">                  <button className="flex items-center space-x-3 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                  {currentUser.profilePicture ? (
+                    <img
+                      className="h-8 w-8 rounded-full"
+                      src={currentUser.profilePicture}
+                      alt={currentUser.fullName}
+                    />
+                  ) : (
+                    <UserCircleIcon className="h-8 w-8 text-gray-400" />
+                  )}
+                  <span className="hidden md:block text-gray-700 font-medium">
+                    {currentUser.fullName}
+                  </span>
+                </button>
 
                   {/* Dropdown Menu */}
                   <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">

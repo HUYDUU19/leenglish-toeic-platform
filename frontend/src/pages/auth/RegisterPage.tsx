@@ -34,28 +34,29 @@ const RegisterPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
 
-    setIsLoading(true);
-
-    try {
+    setIsLoading(true); try {
+      // Prepare registration data with fullName constructed from firstName + lastName
+      // This maintains compatibility with the backend User entity structure
       const registerData = {
         username: formData.username,
         email: formData.email,
         password: formData.password,
+        fullName: `${formData.firstName} ${formData.lastName}`.trim(),
         firstName: formData.firstName,
         lastName: formData.lastName,
         gender: formData.gender as Gender,
         phoneNumber: formData.phoneNumber || undefined,
-      };
-
-      await register(registerData);
+      }; await register(registerData);
       toast.success('Registration successful!');
-      navigate('/dashboard');
+      // FIX: Redirect to home page instead of dashboard after successful registration
+      // This provides consistent user experience with login flow
+      navigate('/');
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
     } finally {
@@ -225,7 +226,7 @@ const RegisterPage: React.FC = () => {
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
-                <LoadingSpinner size="sm" variant="white" />
+                <LoadingSpinner size="sm" color="white" />
               ) : (
                 'Create Account'
               )}

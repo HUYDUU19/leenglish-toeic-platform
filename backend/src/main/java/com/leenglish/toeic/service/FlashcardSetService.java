@@ -25,21 +25,31 @@ public class FlashcardSetService {
     private UserRepository userRepository;
 
     public List<FlashcardSetDto> getFlashcardSetsByUser(Long userId) {
-        List<FlashcardSet> flashcardSets = flashcardSetRepository.findByCreatedByIdAndIsActiveTrue(userId);
+        List<FlashcardSet> flashcardSets = flashcardSetRepository.findAll().stream()
+                .filter(set -> set.getCreatedBy() != null &&
+                        userId.equals(set.getCreatedBy().getId()) &&
+                        Boolean.TRUE.equals(set.getIsActive()))
+                .collect(Collectors.toList());
         return flashcardSets.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     public List<FlashcardSetDto> getPublicFlashcardSets() {
-        List<FlashcardSet> flashcardSets = flashcardSetRepository.findByIsPublicTrueAndIsActiveTrue();
+        List<FlashcardSet> flashcardSets = flashcardSetRepository.findAll().stream()
+                .filter(set -> Boolean.TRUE.equals(set.getIsPublic()) && Boolean.TRUE.equals(set.getIsActive()))
+                .collect(Collectors.toList());
         return flashcardSets.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     public List<FlashcardSetDto> getAccessibleFlashcardSets(Long userId) {
-        List<FlashcardSet> flashcardSets = flashcardSetRepository.findAccessibleFlashcardSets(userId);
+        List<FlashcardSet> flashcardSets = flashcardSetRepository.findAll().stream()
+                .filter(set -> Boolean.TRUE.equals(set.getIsActive()) &&
+                        (Boolean.TRUE.equals(set.getIsPublic()) ||
+                                (set.getCreatedBy() != null && userId.equals(set.getCreatedBy().getId()))))
+                .collect(Collectors.toList());
         return flashcardSets.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
@@ -98,7 +108,15 @@ public class FlashcardSetService {
     }
 
     public List<FlashcardSetDto> searchFlashcardSets(String searchTerm, Long userId) {
-        List<FlashcardSet> flashcardSets = flashcardSetRepository.searchFlashcardSets(searchTerm, userId);
+        List<FlashcardSet> flashcardSets = flashcardSetRepository.findAll().stream()
+                .filter(set -> Boolean.TRUE.equals(set.getIsActive()) &&
+                        (Boolean.TRUE.equals(set.getIsPublic()) ||
+                                (set.getCreatedBy() != null && userId.equals(set.getCreatedBy().getId())))
+                        &&
+                        (set.getName() != null && set.getName().toLowerCase().contains(searchTerm.toLowerCase()) ||
+                                set.getDescription() != null
+                                        && set.getDescription().toLowerCase().contains(searchTerm.toLowerCase())))
+                .collect(Collectors.toList());
         return flashcardSets.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());

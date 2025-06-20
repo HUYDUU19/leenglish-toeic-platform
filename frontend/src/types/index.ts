@@ -80,8 +80,9 @@ export interface User {
   id: number;
   username: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
+  firstName?: string;
+  lastName?: string;
   role: Role;
   gender?: Gender;
   birthDate?: string;
@@ -89,27 +90,34 @@ export interface User {
   address?: string;
   targetScore?: number;
   currentLevel?: DifficultyLevel;
-  registrationDate: string;
+  registrationDate?: string;
   lastLoginDate?: string;
-  isActive: boolean;
+  isActive?: boolean;
   profilePicture?: string;
+  isPremium?: boolean;
+  premiumExpiresAt?: string;
+  redirectUrl?: string;
 }
 
 export interface Lesson {
   id: number;
   title: string;
   description: string;
-  lessonType: LessonType;
-  difficulty: DifficultyLevel;
-  skill: Skill;
+  lessonType?: LessonType;
+  difficulty?: DifficultyLevel;
+  level?: string; // A1, A2, B1, B2, C1, C2
+  skill?: Skill;
   toeicPart?: ToeicPart;
-  content: string;
-  duration: number; // in minutes
-  isPublished: boolean;
-  createdDate: string;
-  updatedDate: string;
-  createdBy: User;
+  content?: string;
+  duration?: number; // in minutes
+  isPublished?: boolean;
+  isPremium?: boolean;
+  createdDate?: string;
+  updatedDate?: string;
+  createdBy?: User;
   orderIndex: number;
+  imageUrl?: string;
+  audioUrl?: string;
 }
 
 export interface Exercise {
@@ -217,6 +225,17 @@ export interface Flashcard {
   flashcardSet: FlashcardSet;
 }
 
+export interface Comment {
+  id: number;
+  content: string;
+  createdAt: string;
+  updatedAt?: string;
+  userId: number;
+  lessonId?: number;
+  exerciseId?: number;
+  user?: User;
+}
+
 // ========== API RESPONSE TYPES ==========
 
 export interface ApiResponse<T> {
@@ -254,8 +273,9 @@ export interface RegisterRequest {
   username: string;
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
+  firstName?: string;
+  lastName?: string;
   gender?: Gender;
   birthDate?: string;
   phoneNumber?: string;

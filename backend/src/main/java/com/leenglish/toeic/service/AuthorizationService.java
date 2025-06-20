@@ -2,132 +2,224 @@ package com.leenglish.toeic.service;
 
 import com.leenglish.toeic.domain.User;
 import com.leenglish.toeic.enums.Role;
+import com.leenglish.toeic.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 /**
- * Service xử lý authorization (kiểm tra quyền)
- * Quy định:
- * - ADMIN: Có thể làm tất cả mọi thứ
- * - USER: Chỉ có thể sửa profile của chính mình
+ * ================================================================
+ * AUTHORIZATION SERVICE - LEENGLISH TOEIC PLATFORM
+ * ================================================================
+ * 
+ * Handles Role-Based Access Control (RBAC) for the TOEIC platform
+ * Manages permissions, resource access, and security policies
  */
+
 @Service
 public class AuthorizationService {
 
-    /**
-     * Kiểm tra xem user có quyền sửa profile của target user không
-     * 
-     * @param currentUser  User đang đăng nhập (người thực hiện action)
-     * @param targetUserId ID của user bị sửa (target)
-     * @return true nếu có quyền, false nếu không
-     */
-    public boolean canEditUser(User currentUser, Long targetUserId) {
-        // Nếu currentUser là null thì không có quyền gì
-        if (currentUser == null) {
-            return false;
-        }
+    @Autowired
+    private UserRepository userRepository;
 
-        // CASE 1: Nếu là ADMIN thì được phép sửa bất kỳ ai
-        if (currentUser.getRole() == Role.ADMIN) {
-            return true; // Admin có full quyền
-        }
-
-        // CASE 2: Nếu là USER thì chỉ được sửa chính mình
-        if (currentUser.getRole() == Role.USER || currentUser.getRole() == Role.COLLABORATOR) {
-            // So sánh ID: chỉ được sửa nếu targetUserId = currentUser.getId()
-            return currentUser.getId().equals(targetUserId);
-        }
-
-        // CASE 3: Các role khác (nếu có) thì không có quyền
-        return false;
-    }
+    // ========== USER MANAGEMENT AUTHORIZATION ==========
 
     /**
-     * Kiểm tra xem user có quyền xóa user khác không
-     * 
-     * @param currentUser  User đang đăng nhập
-     * @param targetUserId ID của user bị xóa
-     * @return true nếu có quyền, false nếu không
-     */
-    public boolean canDeleteUser(User currentUser, Long targetUserId) {
-        // Chỉ ADMIN mới được xóa user
-        if (currentUser == null || currentUser.getRole() != Role.ADMIN) {
-            return false;
-        }
-
-        // ADMIN không thể tự xóa chính mình (để tránh lockout)
-        if (currentUser.getId().equals(targetUserId)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Kiểm tra xem user có quyền thay đổi role của user khác không
-     * 
-     * @param currentUser  User đang đăng nhập
-     * @param targetUserId ID của user bị thay đổi role
-     * @param newRole      Role mới muốn set
-     * @return true nếu có quyền, false nếu không
-     */
-    public boolean canChangeUserRole(User currentUser, Long targetUserId, Role newRole) {
-        // Chỉ ADMIN mới được thay đổi role
-        if (currentUser == null || currentUser.getRole() != Role.ADMIN) {
-            return false;
-        }
-
-        // ADMIN không thể thay đổi role của chính mình (để tránh lockout)
-        if (currentUser.getId().equals(targetUserId)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Kiểm tra xem user có quyền xem thông tin của user khác không
-     * 
-     * @param currentUser  User đang đăng nhập
-     * @param targetUserId ID của user muốn xem
-     * @return true nếu có quyền, false nếu không
+     * Check if current user can view target user's profile
      */
     public boolean canViewUser(User currentUser, Long targetUserId) {
-        if (currentUser == null) {
+        if (currentUser == null || targetUserId == null) {
             return false;
         }
 
-        // ADMIN có thể xem tất cả
+        // Admins can view anyone
         if (currentUser.getRole() == Role.ADMIN) {
             return true;
         }
 
-        // USER chỉ có thể xem profile của chính mình
+        // Users can only view their own profile
         return currentUser.getId().equals(targetUserId);
     }
 
     /**
-     * Kiểm tra xem có phải là admin không
-     * 
-     * @param currentUser User cần kiểm tra
-     * @return true nếu là admin
+     * Check if current user can edit target user's profile
      */
-    public boolean isAdmin(User currentUser) {
+    public boolean canEditUser(User currentUser, Long targetUserId) {
+        if (currentUser == null || targetUserId == null) {
+            return false;
+        }
+
+        // Admins can edit anyone
+        if (currentUser.getRole() == Role.ADMIN) {
+            return true;
+        }
+
+        // Users can only edit their own profile
+        return currentUser.getId().equals(targetUserId);
+    }
+
+    /**
+     * Check if current user can delete target user
+     */
+    public boolean canDeleteUser(User currentUser, Long targetUserId) {
+        if (currentUser == null || targetUserId == null) {
+            return false;
+        }
+
+        // Only admins can delete users
+        if (currentUser.getRole() != Role.ADMIN) {
+            return false;
+        }
+
+        // Admins cannot delete themselves (prevent system lockout)
+        if (currentUser.getId().equals(targetUserId)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if current user can change target user's role
+     */
+    public boolean canChangeUserRole(User currentUser, Long targetUserId, Role newRole) {
+        if (currentUser == null || targetUserId == null || newRole == null) {
+            return false;
+        }
+
+        // Only admins can change roles
+        if (currentUser.getRole() != Role.ADMIN) {
+            return false;
+        }
+
+        // Admins cannot demote themselves (prevent system lockout)
+        if (currentUser.getId().equals(targetUserId) && newRole != Role.ADMIN) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if current user can view all users (admin function)
+     */
+    public boolean canViewAllUsers(User currentUser) {
         return currentUser != null && currentUser.getRole() == Role.ADMIN;
     }
 
     /**
-     * Lấy error message phù hợp khi không có quyền
-     * 
-     * @param action          Hành động bị cấm (edit, delete, view)
-     * @param currentUserRole Role hiện tại của user
-     * @return Message lỗi
+     * Check if current user can access admin panel
      */
-    public String getUnauthorizedMessage(String action, Role currentUserRole) {
-        if (currentUserRole == Role.ADMIN) {
-            return "Admin cannot " + action + " themselves to prevent system lockout";
-        } else {
-            return "You don't have permission to " + action + " other users. You can only " + action
-                    + " your own profile.";
+    public boolean canAccessAdminPanel(User currentUser) {
+        return currentUser != null && currentUser.getRole() == Role.ADMIN;
+    }
+
+    /**
+     * Check if current user can create content (lessons/exercises)
+     */
+    public boolean canCreateContent(User currentUser) {
+        if (currentUser == null) {
+            return false;
         }
+
+        return currentUser.getRole() == Role.ADMIN ||
+                currentUser.getRole() == Role.COLLABORATOR;
+    }
+
+    /**
+     * Check if current user can edit content
+     */
+    public boolean canEditContent(User currentUser, Long contentCreatorId) {
+        if (currentUser == null || contentCreatorId == null) {
+            return false;
+        }
+
+        // Admins can edit any content
+        if (currentUser.getRole() == Role.ADMIN) {
+            return true;
+        }
+
+        // Collaborators can edit their own content
+        if (currentUser.getRole() == Role.COLLABORATOR) {
+            return currentUser.getId().equals(contentCreatorId);
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if user exists and is valid
+     */
+    public boolean isValidUser(Long userId) {
+        if (userId == null) {
+            return false;
+        }
+        Optional<User> userOpt = userRepository.findById(userId);
+        return userOpt.isPresent();
+    }
+
+    /**
+     * Get user by ID with existence check
+     */
+    public User getUserById(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        return userRepository.findById(userId).orElse(null);
+    }
+
+    /**
+     * Check if user has specific role
+     */
+    public boolean hasRole(User user, Role requiredRole) {
+        return user != null && user.getRole() == requiredRole;
+    }
+
+    /**
+     * Check if user is admin
+     */
+    public boolean isAdmin(User user) {
+        return hasRole(user, Role.ADMIN);
+    }
+
+    /**
+     * Check if user is collaborator or higher
+     */
+    public boolean isCollaboratorOrAbove(User user) {
+        if (user == null) {
+            return false;
+        }
+        return user.getRole() == Role.ADMIN || user.getRole() == Role.COLLABORATOR;
+    }
+
+    /**
+     * Get unauthorized message for API responses
+     */
+    public String getUnauthorizedMessage(String action, Role requiredRole) {
+        return String.format("Access denied. %s requires %s role or higher.", 
+                           action, requiredRole.name());
+    }
+
+    /**
+     * Check if current user can perform bulk operations
+     */
+    public boolean canPerformBulkOperations(User currentUser) {
+        return currentUser != null && currentUser.getRole() == Role.ADMIN;
+    }
+
+    /**
+     * Check if current user can export data
+     */
+    public boolean canExportData(User currentUser) {
+        return currentUser != null && 
+               (currentUser.getRole() == Role.ADMIN || currentUser.getRole() == Role.COLLABORATOR);
+    }
+
+    /**
+     * Check if current user can view system statistics
+     */
+    public boolean canViewSystemStats(User currentUser) {
+        return currentUser != null && currentUser.getRole() == Role.ADMIN;
     }
 }

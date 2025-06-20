@@ -89,65 +89,113 @@ public class LessonService {
             return true;
         }
         return false;
-    }
+    } // Query methods - using simple fallbacks for now
 
-    // Query methods
     public List<Lesson> getLessonsByLevel(String level) {
-        return lessonRepository.findByLevelAndIsActiveTrue(level);
+        // Fallback: filter all lessons by level in service layer
+        return lessonRepository.findAll().stream()
+                .filter(lesson -> level.equals(lesson.getLevel()) && Boolean.TRUE.equals(lesson.getIsActive()))
+                .collect(Collectors.toList());
     }
 
     public List<Lesson> getActiveLessons() {
-        return lessonRepository.findByIsActiveTrueOrderByOrderIndexAsc();
+        // Fallback: filter all lessons by active status and sort by order index
+        return lessonRepository.findAll().stream()
+                .filter(lesson -> Boolean.TRUE.equals(lesson.getIsActive()))
+                .sorted(Comparator.comparing(lesson -> lesson.getOrderIndex() != null ? lesson.getOrderIndex() : 0))
+                .collect(Collectors.toList());
     }
 
     public List<Lesson> getPremiumLessons() {
-        return lessonRepository.findByIsPremiumAndIsActiveTrue(true);
+        // Fallback: filter all lessons by premium and active status
+        return lessonRepository.findAll().stream()
+                .filter(lesson -> Boolean.TRUE.equals(lesson.getIsPremium())
+                        && Boolean.TRUE.equals(lesson.getIsActive()))
+                .collect(Collectors.toList());
     }
 
     public List<Lesson> getFreeLessons() {
-        return lessonRepository.findByIsPremiumAndIsActiveTrue(false);
+        // Fallback: filter all lessons by non-premium and active status
+        return lessonRepository.findAll().stream()
+                .filter(lesson -> Boolean.FALSE.equals(lesson.getIsPremium())
+                        && Boolean.TRUE.equals(lesson.getIsActive()))
+                .collect(Collectors.toList());
     }
 
     public List<Lesson> searchLessons(String keyword) {
-        return lessonRepository.searchByKeyword(keyword);
+        // Fallback: filter all lessons by keyword in title or description
+        return lessonRepository.findAll().stream()
+                .filter(lesson -> Boolean.TRUE.equals(lesson.getIsActive()) &&
+                        (lesson.getTitle() != null && lesson.getTitle().toLowerCase().contains(keyword.toLowerCase()) ||
+                                lesson.getDescription() != null
+                                        && lesson.getDescription().toLowerCase().contains(keyword.toLowerCase())))
+                .collect(Collectors.toList());
     }
 
     // Replace the searchLessonsByTitle method
     public List<LessonDto> searchLessonsByTitle(String title) {
-        return lessonRepository.findByTitleContaining(title).stream()
+        return lessonRepository.findAll().stream()
+                .filter(lesson -> lesson.getTitle() != null
+                        && lesson.getTitle().toLowerCase().contains(title.toLowerCase()))
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     public List<Lesson> getLessonsWithAudio() {
-        return lessonRepository.findLessonsWithAudio();
+        // Fallback: filter lessons that have audio URL
+        return lessonRepository.findAll().stream()
+                .filter(lesson -> Boolean.TRUE.equals(lesson.getIsActive()) &&
+                        lesson.getAudioUrl() != null && !lesson.getAudioUrl().trim().isEmpty())
+                .collect(Collectors.toList());
     }
 
     public List<Lesson> getLessonsWithImages() {
-        return lessonRepository.findLessonsWithImages();
+        // Fallback: filter lessons that have image URL
+        return lessonRepository.findAll().stream()
+                .filter(lesson -> Boolean.TRUE.equals(lesson.getIsActive()) &&
+                        lesson.getImageUrl() != null && !lesson.getImageUrl().trim().isEmpty())
+                .collect(Collectors.toList());
     }
 
     public List<Lesson> getRandomLessons(String level, int limit) {
-        Pageable pageable = PageRequest.of(0, limit);
-        return lessonRepository.findRandomLessons(level, pageable);
+        // Fallback: get lessons by level and limit the results
+        return getLessonsByLevel(level).stream()
+                .limit(limit)
+                .collect(Collectors.toList());
     }
 
     public List<Lesson> getLessonsOrderByCreatedDate() {
-        return lessonRepository.findActiveOrderByCreatedAtDesc();
+        // Fallback: sort all active lessons by created date descending
+        return lessonRepository.findAll().stream()
+                .filter(lesson -> Boolean.TRUE.equals(lesson.getIsActive()))
+                .sorted(Comparator.comparing(Lesson::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
     }
 
     public List<Lesson> getLessonsOrderByUpdatedDate() {
-        return lessonRepository.findActiveOrderByUpdatedAtDesc();
+        // Fallback: sort all active lessons by updated date descending
+        return lessonRepository.findAll().stream()
+                .filter(lesson -> Boolean.TRUE.equals(lesson.getIsActive()))
+                .sorted(Comparator.comparing(Lesson::getUpdatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
     }
 
     // Advanced search
     public List<Lesson> findByCriteria(String level, Boolean isActive, Boolean isPremium) {
-        return lessonRepository.findByCriteria(level, isActive, isPremium);
+        // Fallback: filter all lessons by criteria
+        return lessonRepository.findAll().stream()
+                .filter(lesson -> (level == null || level.equals(lesson.getLevel())) &&
+                        (isActive == null || isActive.equals(lesson.getIsActive())) &&
+                        (isPremium == null || isPremium.equals(lesson.getIsPremium())))
+                .collect(Collectors.toList());
     }
 
     // Statistics
     public Long countByLevel(String level) {
-        return lessonRepository.countByLevel(level);
+        // Fallback: count lessons by level in service layer
+        return lessonRepository.findAll().stream()
+                .filter(lesson -> level.equals(lesson.getLevel()))
+                .count();
     }
 
     public long getTotalLessonCount() {
@@ -188,11 +236,13 @@ public class LessonService {
     // Validation
     public boolean validateLesson(Lesson lesson) {
         return lesson.isValid();
-    }
+    } // DTO methods for controllers
 
-    // DTO methods for controllers
     public List<LessonDto> getAllActiveLessons() {
-        List<Lesson> lessons = lessonRepository.findByIsActiveTrueOrderByCreatedAtDesc();
+        List<Lesson> lessons = lessonRepository.findAll().stream()
+                .filter(lesson -> Boolean.TRUE.equals(lesson.getIsActive()))
+                .sorted(Comparator.comparing(Lesson::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
         return lessons.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
@@ -204,14 +254,19 @@ public class LessonService {
     }
 
     public List<LessonDto> getLessonsByType(String type) {
-        List<Lesson> lessons = lessonRepository.findByTypeAndIsActiveTrue(type);
+        List<Lesson> lessons = lessonRepository.findAll().stream()
+                .filter(lesson -> type.equals(lesson.getType()) && Boolean.TRUE.equals(lesson.getIsActive()))
+                .collect(Collectors.toList());
         return lessons.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     public List<LessonDto> getLessonsByDifficulty(String difficulty) {
-        List<Lesson> lessons = lessonRepository.findByDifficultyAndIsActiveTrue(difficulty);
+        List<Lesson> lessons = lessonRepository.findAll().stream()
+                .filter(lesson -> difficulty.equals(lesson.getDifficulty())
+                        && Boolean.TRUE.equals(lesson.getIsActive()))
+                .collect(Collectors.toList());
         return lessons.stream()
                 .map(this::convertToDto).collect(Collectors.toList());
     }
@@ -319,7 +374,10 @@ public class LessonService {
     }
 
     public List<LessonDto> getRecentLessons() {
-        List<Lesson> recentLessons = lessonRepository.findTop5ByOrderByCreatedAtDesc();
+        List<Lesson> recentLessons = lessonRepository.findAll().stream()
+                .sorted(Comparator.comparing(Lesson::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(5)
+                .collect(Collectors.toList());
         return recentLessons.stream()
                 .map(this::convertToDto).collect(Collectors.toList());
     }
@@ -342,5 +400,14 @@ public class LessonService {
                     return convertToDto(lessonRepository.save(lesson));
                 })
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
+    }
+
+    /**
+     * Count active lessons
+     */
+    public long countActiveLessons() {
+        return lessonRepository.findAll().stream()
+                .filter(lesson -> Boolean.TRUE.equals(lesson.getIsActive()))
+                .count();
     }
 }

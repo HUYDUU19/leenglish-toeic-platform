@@ -1,27 +1,34 @@
 package com.leenglish.toeic.repository;
 
 import com.leenglish.toeic.domain.FlashcardSet;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface FlashcardSetRepository extends JpaRepository<FlashcardSet, Long> {
 
-    List<FlashcardSet> findByCreatedByIdAndIsActiveTrue(Long userId);
+    // ========== BASIC METHODS ONLY ==========
 
-    List<FlashcardSet> findByIsPublicTrueAndIsActiveTrue();
+    Optional<FlashcardSet> findByName(String name);
 
-    List<FlashcardSet> findByCategoryAndIsActiveTrue(String category);
+    List<FlashcardSet> findByDifficultyLevel(String difficultyLevel);
 
-    List<FlashcardSet> findByLevelAndIsActiveTrue(String level);
+    Page<FlashcardSet> findByDifficultyLevel(String difficultyLevel, Pageable pageable);
 
-    @Query("SELECT fs FROM FlashcardSet fs WHERE (fs.isPublic = true OR fs.createdBy.id = :userId) AND fs.isActive = true ORDER BY fs.createdAt DESC")
-    List<FlashcardSet> findAccessibleFlashcardSets(@Param("userId") Long userId);
+    @Query("SELECT f FROM FlashcardSet f WHERE f.isActive = true")
+    List<FlashcardSet> findActiveFlashcardSets();
 
-    @Query("SELECT fs FROM FlashcardSet fs WHERE LOWER(fs.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(fs.description) LIKE LOWER(CONCAT('%', :searchTerm, '%')) AND fs.isActive = true AND (fs.isPublic = true OR fs.createdBy.id = :userId)")
-    List<FlashcardSet> searchFlashcardSets(@Param("searchTerm") String searchTerm, @Param("userId") Long userId);
+    @Query("SELECT f FROM FlashcardSet f WHERE f.isActive = true")
+    Page<FlashcardSet> findActiveFlashcardSets(Pageable pageable);
+
+    @Query("SELECT COUNT(f) FROM FlashcardSet f WHERE f.isActive = true")
+    long countActiveFlashcardSets();
+
+    long countByDifficultyLevel(String difficultyLevel);
 }

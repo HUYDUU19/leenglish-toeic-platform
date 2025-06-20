@@ -26,7 +26,6 @@ const LoginPage: React.FC = () => {
       [e.target.name]: e.target.value,
     });
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -34,7 +33,9 @@ const LoginPage: React.FC = () => {
     try {
       await login(formData);
       toast.success('Login successful!');
-      navigate('/dashboard');
+      // FIX: Redirect to home page instead of dashboard after successful login
+      // This provides a better user experience by taking users to the main landing page
+      navigate('/');
     } catch (error: any) {
       toast.error(error.message || 'Login failed');
     } finally {
@@ -124,7 +125,7 @@ const LoginPage: React.FC = () => {
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
-                <LoadingSpinner size="sm" variant="white" />
+                <LoadingSpinner size="sm" color="white" />
               ) : (
                 'Sign in'
               )}

@@ -132,7 +132,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, isOpen, onClose }) => {
                   ) : (
                     <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
                       <span className="text-primary-600 font-medium text-lg">
-                        {currentUser.firstName[0]}{currentUser.lastName[0]}
+                        {currentUser.firstName?.[0] || ''}{currentUser.lastName?.[0] || ''}
                       </span>
                     </div>
                   )}

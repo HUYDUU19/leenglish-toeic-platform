@@ -87,13 +87,13 @@ public class UserController {
             @RequestParam(required = false) String country,
             @RequestParam(required = false) Boolean isActive,
             @RequestHeader("Current-User-Id") Long currentUserId) {
-        
+
         try {
             // BƯỚC 1: Lấy thông tin user hiện tại từ database
             Optional<User> currentUserOpt = userService.findById(currentUserId);
             if (currentUserOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("User not found or not authenticated");
+                        .body("User not found or not authenticated");
             }
 
             User currentUser = currentUserOpt.get();
@@ -101,19 +101,19 @@ public class UserController {
             // BƯỚC 2: KIỂM TRA QUYỀN - Chỉ admin mới được xem tất cả users
             if (!authorizationService.isAdmin(currentUser)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("Access denied. Only administrators can view all users.");
+                        .body("Access denied. Only administrators can view all users.");
             }
 
             // BƯỚC 3: Nếu là admin thì cho phép xem tất cả với filtering
             Pageable pageable = PageRequest.of(page, size);
             Page<User> users = userService.findUsersWithFilters(
-                username, email, role, gender, country, isActive, pageable);
-            
+                    username, email, role, gender, country, isActive, pageable);
+
             return ResponseEntity.ok(users);
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error retrieving users: " + e.getMessage());
+                    .body("Error retrieving users: " + e.getMessage());
         }
     }
 
@@ -125,13 +125,13 @@ public class UserController {
     public ResponseEntity<?> getUsersByRole(
             @PathVariable String role,
             @RequestHeader("Current-User-Id") Long currentUserId) {
-        
+
         try {
             // Kiểm tra user hiện tại
             Optional<User> currentUserOpt = userService.findById(currentUserId);
             if (currentUserOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("User not found or not authenticated");
+                        .body("User not found or not authenticated");
             }
 
             User currentUser = currentUserOpt.get();
@@ -139,7 +139,7 @@ public class UserController {
             // KIỂM TRA QUYỀN: Chỉ admin
             if (!authorizationService.isAdmin(currentUser)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body("Access denied. Only administrators can filter users by role.");
+                        .body("Access denied. Only administrators can filter users by role.");
             }
 
             // Validate enum và execute
@@ -149,10 +149,10 @@ public class UserController {
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
-                .body("Invalid role. Valid roles: " + java.util.Arrays.toString(Role.values()));
+                    .body("Invalid role. Valid roles: " + java.util.Arrays.toString(Role.values()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error retrieving users: " + e.getMessage());
+                    .body("Error retrieving users: " + e.getMessage());
         }
     }
 
@@ -169,13 +169,13 @@ public class UserController {
     public ResponseEntity<?> getUserById(
             @PathVariable Long id,
             @RequestHeader("Current-User-Id") Long currentUserId) {
-        
+
         try {
             // BƯỚC 1: Lấy thông tin user hiện tại
             Optional<User> currentUserOpt = userService.findById(currentUserId);
             if (currentUserOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("User not found or not authenticated");
+                        .body("User not found or not authenticated");
             }
 
             User currentUser = currentUserOpt.get();
@@ -184,7 +184,7 @@ public class UserController {
             // Admin xem được tất cả, User chỉ xem được chính mình
             if (!authorizationService.canViewUser(currentUser, id)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(authorizationService.getUnauthorizedMessage("view", currentUser.getRole()));
+                        .body(authorizationService.getUnauthorizedMessage("view", currentUser.getRole()));
             }
 
             // BƯỚC 3: Lấy thông tin user được yêu cầu
@@ -197,7 +197,7 @@ public class UserController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error retrieving user: " + e.getMessage());
+                    .body("Error retrieving user: " + e.getMessage());
         }
     }
 
@@ -211,12 +211,12 @@ public class UserController {
             Optional<User> currentUser = userService.findById(currentUserId);
             if (currentUser.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("User not found or not authenticated");
+                        .body("User not found or not authenticated");
             }
             return ResponseEntity.ok(currentUser.get());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error retrieving profile: " + e.getMessage());
+                    .body("Error retrieving profile: " + e.getMessage());
         }
     }
 
@@ -232,13 +232,13 @@ public class UserController {
             @PathVariable Long id,
             @RequestBody UpdateUserRequest request,
             @RequestHeader("Current-User-Id") Long currentUserId) {
-        
+
         try {
             // BƯỚC 1: Lấy thông tin user hiện tại
             Optional<User> currentUserOpt = userService.findById(currentUserId);
             if (currentUserOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("User not found or not authenticated");
+                        .body("User not found or not authenticated");
             }
 
             User currentUser = currentUserOpt.get();
@@ -247,7 +247,7 @@ public class UserController {
             // Admin sửa được tất cả, User chỉ sửa được chính mình
             if (!authorizationService.canEditUser(currentUser, id)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(authorizationService.getUnauthorizedMessage("edit", currentUser.getRole()));
+                        .body(authorizationService.getUnauthorizedMessage("edit", currentUser.getRole()));
             }
 
             // BƯỚC 3: Lấy user cần cập nhật
@@ -279,19 +279,19 @@ public class UserController {
             // BƯỚC 5: KIỂM TRA ĐẶC BIỆT CHO ROLE - CHỈ ADMIN MỚI ĐƯỢC THAY ĐỔI
             if (request.getRole() != null) {
                 Role newRole = Role.valueOf(request.getRole().toUpperCase());
-                
+
                 // Nếu KHÔNG phải admin thì KHÔNG được đổi role
                 if (!authorizationService.isAdmin(currentUser)) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body("Access denied. Only administrators can change user roles.");
+                            .body("Access denied. Only administrators can change user roles.");
                 }
-                
+
                 // Admin KHÔNG được tự demote chính mình (để tránh lockout hệ thống)
                 if (currentUser.getId().equals(id) && newRole != Role.ADMIN) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body("Admin cannot demote themselves to prevent system lockout.");
+                            .body("Admin cannot demote themselves to prevent system lockout.");
                 }
-                
+
                 targetUser.setRole(newRole);
             }
 
@@ -301,10 +301,10 @@ public class UserController {
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
-                .body("Invalid enum value: " + e.getMessage());
+                    .body("Invalid enum value: " + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error updating user: " + e.getMessage());
+                    .body("Error updating user: " + e.getMessage());
         }
     }
 
@@ -317,7 +317,7 @@ public class UserController {
     public ResponseEntity<?> updateCurrentUserProfile(
             @RequestBody UpdateUserProfileRequest request,
             @RequestHeader("Current-User-Id") Long currentUserId) {
-        
+
         try {
             // Tự động forward request tới endpoint chính với ID = currentUserId
             UpdateUserRequest fullRequest = new UpdateUserRequest();
@@ -327,12 +327,12 @@ public class UserController {
             fullRequest.setGender(request.getGender());
             fullRequest.setCountry(request.getCountry());
             // NOTE: Không set role để đảm bảo user không thể tự thay đổi role
-            
+
             return updateUser(currentUserId, fullRequest, currentUserId);
-            
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error updating profile: " + e.getMessage());
+                    .body("Error updating profile: " + e.getMessage());
         }
     }
 
@@ -348,13 +348,13 @@ public class UserController {
             @PathVariable Long id,
             @RequestParam String newRole,
             @RequestHeader("Current-User-Id") Long currentUserId) {
-        
+
         try {
             // Lấy thông tin user hiện tại
             Optional<User> currentUserOpt = userService.findById(currentUserId);
             if (currentUserOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("User not found or not authenticated");
+                        .body("User not found or not authenticated");
             }
 
             User currentUser = currentUserOpt.get();
@@ -364,10 +364,10 @@ public class UserController {
             if (!authorizationService.canChangeUserRole(currentUser, id, roleEnum)) {
                 if (currentUser.getId().equals(id)) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body("Admin cannot change their own role to prevent system lockout.");
+                            .body("Admin cannot change their own role to prevent system lockout.");
                 } else {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body("Only administrators can change user roles.");
+                            .body("Only administrators can change user roles.");
                 }
             }
 
@@ -377,10 +377,10 @@ public class UserController {
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
-                .body("Invalid role. Valid roles: " + java.util.Arrays.toString(Role.values()));
+                    .body("Invalid role. Valid roles: " + java.util.Arrays.toString(Role.values()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error changing user role: " + e.getMessage());
+                    .body("Error changing user role: " + e.getMessage());
         }
     }
 
@@ -393,13 +393,13 @@ public class UserController {
     public ResponseEntity<?> deleteUser(
             @PathVariable Long id,
             @RequestHeader("Current-User-Id") Long currentUserId) {
-        
+
         try {
             // Lấy thông tin user hiện tại
             Optional<User> currentUserOpt = userService.findById(currentUserId);
             if (currentUserOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("User not found or not authenticated");
+                        .body("User not found or not authenticated");
             }
 
             User currentUser = currentUserOpt.get();
@@ -408,15 +408,13 @@ public class UserController {
             if (!authorizationService.canDeleteUser(currentUser, id)) {
                 if (currentUser.getId().equals(id)) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body("Admin cannot delete themselves to prevent system lockout.");
+                            .body("Admin cannot delete themselves to prevent system lockout.");
                 } else {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body("Only administrators can delete users.");
+                            .body("Only administrators can delete users.");
                 }
-            }
-
-            // Thực hiện xóa (soft delete)
-            boolean deleted = userService.softDeleteById(id);
+            } // Thực hiện xóa (soft delete)
+            boolean deleted = userService.softDeleteUser(id);
             if (deleted) {
                 return ResponseEntity.ok().body("User deleted successfully");
             } else {
@@ -425,7 +423,7 @@ public class UserController {
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error deleting user: " + e.getMessage());
+                    .body("Error deleting user: " + e.getMessage());
         }
     }
 
@@ -436,32 +434,62 @@ public class UserController {
      * Chứa tất cả các field mà user có thể thay đổi
      */
     public static class UpdateUserRequest {
-        private String fullName;      // ✅ User có thể đổi họ tên
-        private String phone;         // ✅ User có thể đổi số điện thoại
-        private java.time.LocalDate dateOfBirth;  // ✅ User có thể đổi ngày sinh
-        private String gender;        // ✅ User có thể đổi giới tính
-        private String country;       // ✅ User có thể đổi quốc gia
-        private String role;          // ⚠️ CHỈ ADMIN mới được đổi role
+        private String fullName; // ✅ User có thể đổi họ tên
+        private String phone; // ✅ User có thể đổi số điện thoại
+        private java.time.LocalDate dateOfBirth; // ✅ User có thể đổi ngày sinh
+        private String gender; // ✅ User có thể đổi giới tính
+        private String country; // ✅ User có thể đổi quốc gia
+        private String role; // ⚠️ CHỈ ADMIN mới được đổi role
 
         // Getters and setters với comments giải thích
-        public String getFullName() { return fullName; }
-        public void setFullName(String fullName) { this.fullName = fullName; }
-        
-        public String getPhone() { return phone; }
-        public void setPhone(String phone) { this.phone = phone; }
-        
-        public java.time.LocalDate getDateOfBirth() { return dateOfBirth; }
-        public void setDateOfBirth(java.time.LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
-        
-        public String getGender() { return gender; }
-        public void setGender(String gender) { this.gender = gender; }
-        
-        public String getCountry() { return country; }
-        public void setCountry(String country) { this.country = country; }
-        
+        public String getFullName() {
+            return fullName;
+        }
+
+        public void setFullName(String fullName) {
+            this.fullName = fullName;
+        }
+
+        public String getPhone() {
+            return phone;
+        }
+
+        public void setPhone(String phone) {
+            this.phone = phone;
+        }
+
+        public java.time.LocalDate getDateOfBirth() {
+            return dateOfBirth;
+        }
+
+        public void setDateOfBirth(java.time.LocalDate dateOfBirth) {
+            this.dateOfBirth = dateOfBirth;
+        }
+
+        public String getGender() {
+            return gender;
+        }
+
+        public void setGender(String gender) {
+            this.gender = gender;
+        }
+
+        public String getCountry() {
+            return country;
+        }
+
+        public void setCountry(String country) {
+            this.country = country;
+        }
+
         // Role field - CHỈ admin mới được set
-        public String getRole() { return role; }
-        public void setRole(String role) { this.role = role; }
+        public String getRole() {
+            return role;
+        }
+
+        public void setRole(String role) {
+            this.role = role;
+        }
     }
 
     /**
@@ -469,27 +497,52 @@ public class UserController {
      * KHÔNG bao gồm role để đảm bảo user không thể tự thay đổi quyền
      */
     public static class UpdateUserProfileRequest {
-        private String fullName;      // ✅ User có thể đổi
-        private String phone;         // ✅ User có thể đổi
-        private java.time.LocalDate dateOfBirth;  // ✅ User có thể đổi
-        private String gender;        // ✅ User có thể đổi
-        private String country;       // ✅ User có thể đổi
+        private String fullName; // ✅ User có thể đổi
+        private String phone; // ✅ User có thể đổi
+        private java.time.LocalDate dateOfBirth; // ✅ User có thể đổi
+        private String gender; // ✅ User có thể đổi
+        private String country; // ✅ User có thể đổi
         // NOTE: KHÔNG có role field để prevent privilege escalation
 
         // Getters and setters
-        public String getFullName() { return fullName; }
-        public void setFullName(String fullName) { this.fullName = fullName; }
-        
-        public String getPhone() { return phone; }
-        public void setPhone(String phone) { this.phone = phone; }
-        
-        public java.time.LocalDate getDateOfBirth() { return dateOfBirth; }
-        public void setDateOfBirth(java.time.LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
-        
-        public String getGender() { return gender; }
-        public void setGender(String gender) { this.gender = gender; }
-        
-        public String getCountry() { return country; }
-        public void setCountry(String country) { this.country = country; }
+        public String getFullName() {
+            return fullName;
+        }
+
+        public void setFullName(String fullName) {
+            this.fullName = fullName;
+        }
+
+        public String getPhone() {
+            return phone;
+        }
+
+        public void setPhone(String phone) {
+            this.phone = phone;
+        }
+
+        public java.time.LocalDate getDateOfBirth() {
+            return dateOfBirth;
+        }
+
+        public void setDateOfBirth(java.time.LocalDate dateOfBirth) {
+            this.dateOfBirth = dateOfBirth;
+        }
+
+        public String getGender() {
+            return gender;
+        }
+
+        public void setGender(String gender) {
+            this.gender = gender;
+        }
+
+        public String getCountry() {
+            return country;
+        }
+
+        public void setCountry(String country) {
+            this.country = country;
+        }
     }
 }

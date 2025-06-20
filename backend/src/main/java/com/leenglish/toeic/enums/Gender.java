@@ -3,8 +3,7 @@ package com.leenglish.toeic.enums;
 public enum Gender {
     MALE("Male"),
     FEMALE("Female"),
-    OTHER("Other"),
-    PREFER_NOT_TO_SAY("Prefer not to say");
+    OTHER("Other");
 
     private final String displayName;
 

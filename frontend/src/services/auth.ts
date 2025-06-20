@@ -8,12 +8,12 @@
  */
 
 import {
-    ApiResponse,
-    AuthResponse,
-    ChangePasswordRequest,
-    LoginRequest,
-    RegisterRequest,
-    User
+  ApiResponse,
+  AuthResponse,
+  ChangePasswordRequest,
+  LoginRequest,
+  RegisterRequest,
+  User
 } from '../types';
 import apiClient, { extractData, handleApiError } from './api';
 
@@ -24,8 +24,19 @@ import apiClient, { extractData, handleApiError } from './api';
  */
 export const login = async (credentials: LoginRequest): Promise<AuthResponse> => {
   try {
-    const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/login', credentials);
-    const authData = extractData(response);
+    const response = await apiClient.post<any>('/auth/login', credentials);
+    const backendData = response.data;
+    
+    if (!backendData.success) {
+      throw new Error(backendData.message || 'Login failed');
+    }
+    
+    // Transform backend response to frontend format
+    const authData: AuthResponse = {
+      token: backendData.accessToken,
+      user: backendData.user,
+      expiresAt: new Date(Date.now() + (backendData.expiresIn * 1000)).toISOString()
+    };
     
     // Store auth data in localStorage
     localStorage.setItem('authToken', authData.token);
@@ -44,8 +55,19 @@ export const login = async (credentials: LoginRequest): Promise<AuthResponse> =>
  */
 export const register = async (userData: RegisterRequest): Promise<AuthResponse> => {
   try {
-    const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/register', userData);
-    const authData = extractData(response);
+    const response = await apiClient.post<any>('/auth/register', userData);
+    const backendData = response.data;
+    
+    if (!backendData.success) {
+      throw new Error(backendData.message || 'Registration failed');
+    }
+    
+    // Transform backend response to frontend format
+    const authData: AuthResponse = {
+      token: backendData.accessToken,
+      user: backendData.user,
+      expiresAt: new Date(Date.now() + (backendData.expiresIn * 1000)).toISOString()
+    };
     
     // Store auth data in localStorage
     localStorage.setItem('authToken', authData.token);

@@ -33,6 +33,7 @@ import HomePage from './pages/HomePage';
 import LessonDetailPage from './pages/lessons/LessonDetailPage';
 import LessonsPage from './pages/lessons/LessonsPage';
 import NotFoundPage from './pages/NotFoundPage';
+import PricingPage from './pages/PricingPage';
 import ProfilePage from './pages/user/ProfilePage';
 import SettingsPage from './pages/user/SettingsPage';
 
@@ -73,9 +74,9 @@ const App: React.FC = () => {
 
   // ========== PROTECTED ROUTE COMPONENT ==========
 
-  const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean }> = ({ 
-    children, 
-    adminOnly = false 
+  const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean }> = ({
+    children,
+    adminOnly = false
   }) => {
     if (!isAuthenticated() || !currentUser) {
       return <Navigate to="/login" replace />;
@@ -93,27 +94,26 @@ const App: React.FC = () => {
   const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar 
-          currentUser={currentUser} 
+        <Navbar
+          currentUser={currentUser}
           onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
         />
-        
+
         <div className="flex">
-          <Sidebar 
+          <Sidebar
             currentUser={currentUser}
             isOpen={isSidebarOpen}
             onClose={() => setIsSidebarOpen(false)}
           />
-          
-          <main className={`flex-1 transition-all duration-300 ${
-            currentUser ? 'lg:ml-64' : ''
-          }`}>
+
+          <main className={`flex-1 transition-all duration-300 ${currentUser ? 'lg:ml-64' : ''
+            }`}>
             <div className="p-4 lg:p-8">
               {children}
             </div>
           </main>
         </div>
-        
+
         <Footer />
       </div>
     );
@@ -151,23 +151,28 @@ const App: React.FC = () => {
 
         <Routes>
           {/* ========== PUBLIC ROUTES ========== */}
-          <Route 
-            path="/" 
-            element={
-              currentUser ? <Navigate to="/dashboard" replace /> : <HomePage />
-            } 
+          {/* FIX: Allow authenticated users to access home page
+               Previously redirected logged-in users to dashboard automatically
+               Now both authenticated and non-authenticated users can view home page */}
+          <Route
+            path="/"
+            element={<HomePage />}
           />
-          <Route 
-            path="/login" 
+          <Route
+            path="/login"
             element={
               currentUser ? <Navigate to="/dashboard" replace /> : <LoginPage />
-            } 
+            }
           />
-          <Route 
-            path="/register" 
+          <Route
+            path="/register"
             element={
               currentUser ? <Navigate to="/dashboard" replace /> : <RegisterPage />
-            } 
+            }
+          />
+          <Route
+            path="/pricing"
+            element={<PricingPage />}
           />
 
           {/* ========== PROTECTED ROUTES ========== */}
@@ -279,13 +284,13 @@ const App: React.FC = () => {
           />
 
           {/* 404 Route */}
-          <Route 
-            path="*" 
+          <Route
+            path="*"
             element={
               <Layout>
                 <NotFoundPage />
               </Layout>
-            } 
+            }
           />
         </Routes>
       </div>
