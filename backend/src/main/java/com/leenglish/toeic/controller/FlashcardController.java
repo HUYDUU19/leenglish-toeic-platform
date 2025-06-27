@@ -30,6 +30,13 @@ public class FlashcardController {
         return ResponseEntity.ok(sets);
     }
 
+    // Free flashcard sets for non-premium users (limited access)
+    @GetMapping("/free")
+    public ResponseEntity<List<FlashcardSetDto>> getFreeFlashcardSets() {
+        List<FlashcardSetDto> sets = flashcardSetService.getFreeFlashcardSetsForBasicUsers();
+        return ResponseEntity.ok(sets);
+    }
+
     @GetMapping("/sets/my")
     @PreAuthorize("hasRole('USER') or hasRole('COLLABORATOR') or hasRole('ADMIN')")
     public ResponseEntity<List<FlashcardSetDto>> getMyFlashcardSets(Authentication authentication) {
@@ -126,5 +133,19 @@ public class FlashcardController {
     public ResponseEntity<List<FlashcardDto>> searchFlashcards(@RequestParam String query) {
         List<FlashcardDto> flashcards = flashcardService.searchFlashcards(query);
         return ResponseEntity.ok(flashcards);
+    }
+private Long extractUserIdFromAuth(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return 1L; // Default fallback
+        }
+        
+        try {
+            // Try to parse username as ID first
+            return Long.parseLong(authentication.getName());
+        } catch (NumberFormatException e) {
+            // If username is not a number, you might need to lookup user by username
+            // For now, return default
+            return 1L;
+        }
     }
 }

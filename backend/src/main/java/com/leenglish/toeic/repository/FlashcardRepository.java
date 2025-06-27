@@ -1,12 +1,13 @@
 package com.leenglish.toeic.repository;
 
-import com.leenglish.toeic.domain.Flashcard;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.leenglish.toeic.domain.Flashcard;
 
 @Repository
 public interface FlashcardRepository extends JpaRepository<Flashcard, Long> {
@@ -24,4 +25,6 @@ public interface FlashcardRepository extends JpaRepository<Flashcard, Long> {
     List<Flashcard> searchFlashcards(@Param("searchTerm") String searchTerm);
 
     Long countByFlashcardSetIdAndIsActiveTrue(Long flashcardSetId);
+
+    List<Flashcard> findByFlashcardSetId(Long flashcardSetId);
 }

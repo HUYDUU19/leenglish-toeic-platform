@@ -121,8 +121,9 @@ class ApiService {
     final queryParams = <String, String>{};
 
     if (type != null) queryParams['type'] = type.toString().split('.').last;
-    if (section != null)
+    if (section != null) {
       queryParams['section'] = section.toString().split('.').last;
+    }
     if (difficulty != null) queryParams['difficulty'] = difficulty.toString();
     if (limit != null) queryParams['limit'] = limit.toString();
 

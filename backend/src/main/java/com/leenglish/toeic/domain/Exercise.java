@@ -76,7 +76,7 @@ public class Exercise {
     private Lesson lesson;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<ExerciseQuestion> questions;
+    private List<Question> questions;
 
     @Column(name = "difficulty")
     private String difficulty;
@@ -254,11 +254,11 @@ public class Exercise {
         this.lesson = lesson;
     }
 
-    public List<ExerciseQuestion> getQuestions() {
+    public List<Question> getQuestions() {
         return questions;
     }
 
-    public void setQuestions(List<ExerciseQuestion> questions) {
+    public void setQuestions(List<Question> questions) {
         this.questions = questions;
     }
 

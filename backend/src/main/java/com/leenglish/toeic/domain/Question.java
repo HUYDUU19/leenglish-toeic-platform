@@ -1,11 +1,21 @@
 package com.leenglish.toeic.domain;
 
-import com.leenglish.toeic.enums.*;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "questions")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Question {
 
     @Id
@@ -16,28 +26,14 @@ public class Question {
     @JoinColumn(name = "exercise_id", nullable = false)
     private Exercise exercise;
 
+    // ================================================================
+    // CỐT LÕI - CHỈ NHỮNG GÌ CẦN THIẾT
+    // ================================================================
+
     @Column(name = "question_text", columnDefinition = "TEXT", nullable = false)
     private String questionText;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "question_type", nullable = false)
-    private ExerciseType questionType;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "difficulty")
-    private Difficulty difficulty = Difficulty.EASY;
-
-    // Media Resources
-    @Column(name = "question_image_url", length = 500)
-    private String questionImageUrl;
-
-    @Column(name = "question_audio_url", length = 500)
-    private String questionAudioUrl;
-
-    @Column(name = "audio_duration")
-    private Integer audioDuration = 0;
-
-    // Answer Options
+    // Answer Options - CHỈ A, B, C, D cho TOEIC
     @Column(name = "option_a", length = 500)
     private String optionA;
 
@@ -50,179 +46,34 @@ public class Question {
     @Column(name = "option_d", length = 500)
     private String optionD;
 
-    @Column(name = "option_e", length = 500)
-    private String optionE;
-
-    // Correct Answer
+    // Correct Answer - CHỈ CẦN THIẾT
     @Column(name = "correct_answer", nullable = false, length = 1)
-    private String correctAnswer;
+    private String correctAnswer; // A, B, C, or D
 
-    @Column(name = "correct_answer_text", columnDefinition = "TEXT")
-    private String correctAnswerText;
-
-    // Explanation & Learning
+    // Explanation - CƠ BẢN
     @Column(name = "explanation", columnDefinition = "TEXT")
     private String explanation;
 
-    @Column(name = "explanation_image_url", length = 500)
-    private String explanationImageUrl;
-
-    @Column(name = "explanation_audio_url", length = 500)
-    private String explanationAudioUrl;
-
-    @Column(name = "learning_tip", columnDefinition = "TEXT")
-    private String learningTip;
-
-    // TOEIC Specific
-    @Enumerated(EnumType.STRING)
-    @Column(name = "toeic_part", nullable = false)
-    private ToeicPart toeicPart;
-
-    @Column(name = "skill_tested", length = 50, nullable = false)
-    private String skillTested;
-
-    // Scoring
+    // Scoring & Order - TỐI THIỂU
     @Column(name = "points")
+    @Builder.Default
     private Integer points = 1;
 
-    @Column(name = "time_limit")
-    private Integer timeLimit = 0;
-
-    // Order and Status
     @Column(name = "question_order")
+    @Builder.Default
     private Integer questionOrder = 0;
 
+    // Status - CẦN THIẾT
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean isActive = true;
 
-    // Statistics
-    @Column(name = "total_attempts")
-    private Integer totalAttempts = 0;
+    // Timestamps - TỰ ĐỘNG
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    @Column(name = "correct_attempts")
-    private Integer correctAttempts = 0;
-
-    // Timestamps
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
-
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt = LocalDateTime.now();
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    // Constructors
-    public Question() {}
-
-    public Question(String questionText, ExerciseType questionType, String correctAnswer, ToeicPart toeicPart, String skillTested) {
-        this.questionText = questionText;
-        this.questionType = questionType;
-        this.correctAnswer = correctAnswer;
-        this.toeicPart = toeicPart;
-        this.skillTested = skillTested;
-    }
-
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public Exercise getExercise() { return exercise; }
-    public void setExercise(Exercise exercise) { this.exercise = exercise; }
-
-    public String getQuestionText() { return questionText; }
-    public void setQuestionText(String questionText) { this.questionText = questionText; }
-
-    public ExerciseType getQuestionType() { return questionType; }
-    public void setQuestionType(ExerciseType questionType) { this.questionType = questionType; }
-
-    public Difficulty getDifficulty() { return difficulty; }
-    public void setDifficulty(Difficulty difficulty) { this.difficulty = difficulty; }
-
-    public String getQuestionImageUrl() { return questionImageUrl; }
-    public void setQuestionImageUrl(String questionImageUrl) { this.questionImageUrl = questionImageUrl; }
-
-    public String getQuestionAudioUrl() { return questionAudioUrl; }
-    public void setQuestionAudioUrl(String questionAudioUrl) { this.questionAudioUrl = questionAudioUrl; }
-
-    public Integer getAudioDuration() { return audioDuration; }
-    public void setAudioDuration(Integer audioDuration) { this.audioDuration = audioDuration; }
-
-    public String getOptionA() { return optionA; }
-    public void setOptionA(String optionA) { this.optionA = optionA; }
-
-    public String getOptionB() { return optionB; }
-    public void setOptionB(String optionB) { this.optionB = optionB; }
-
-    public String getOptionC() { return optionC; }
-    public void setOptionC(String optionC) { this.optionC = optionC; }
-
-    public String getOptionD() { return optionD; }
-    public void setOptionD(String optionD) { this.optionD = optionD; }
-
-    public String getOptionE() { return optionE; }
-    public void setOptionE(String optionE) { this.optionE = optionE; }
-
-    public String getCorrectAnswer() { return correctAnswer; }
-    public void setCorrectAnswer(String correctAnswer) { this.correctAnswer = correctAnswer; }
-
-    public String getCorrectAnswerText() { return correctAnswerText; }
-    public void setCorrectAnswerText(String correctAnswerText) { this.correctAnswerText = correctAnswerText; }
-
-    public String getExplanation() { return explanation; }
-    public void setExplanation(String explanation) { this.explanation = explanation; }
-
-    public String getExplanationImageUrl() { return explanationImageUrl; }
-    public void setExplanationImageUrl(String explanationImageUrl) { this.explanationImageUrl = explanationImageUrl; }
-
-    public String getExplanationAudioUrl() { return explanationAudioUrl; }
-    public void setExplanationAudioUrl(String explanationAudioUrl) { this.explanationAudioUrl = explanationAudioUrl; }
-
-    public String getLearningTip() { return learningTip; }
-    public void setLearningTip(String learningTip) { this.learningTip = learningTip; }
-
-    public ToeicPart getToeicPart() { return toeicPart; }
-    public void setToeicPart(ToeicPart toeicPart) { this.toeicPart = toeicPart; }
-
-    public String getSkillTested() { return skillTested; }
-    public void setSkillTested(String skillTested) { this.skillTested = skillTested; }
-
-    public Integer getPoints() { return points; }
-    public void setPoints(Integer points) { this.points = points; }
-
-    public Integer getTimeLimit() { return timeLimit; }
-    public void setTimeLimit(Integer timeLimit) { this.timeLimit = timeLimit; }
-
-    public Integer getQuestionOrder() { return questionOrder; }
-    public void setQuestionOrder(Integer questionOrder) { this.questionOrder = questionOrder; }
-
-    public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
-
-    public Integer getTotalAttempts() { return totalAttempts; }
-    public void setTotalAttempts(Integer totalAttempts) { this.totalAttempts = totalAttempts; }
-
-    public Integer getCorrectAttempts() { return correctAttempts; }
-    public void setCorrectAttempts(Integer correctAttempts) { this.correctAttempts = correctAttempts; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-
-    // Helper methods
-    public Double getSuccessRate() {
-        if (totalAttempts == 0) return 0.0;
-        return (double) correctAttempts / totalAttempts * 100;
-    }
-
-    public void incrementAttempts(boolean isCorrect) {
-        this.totalAttempts++;
-        if (isCorrect) {
-            this.correctAttempts++;
-        }
-    }
+    private LocalDateTime updatedAt;
 }

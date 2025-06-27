@@ -8,8 +8,9 @@
 
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { useAuth } from '../../contexts/AuthContext';
 import { login } from '../../services/auth';
 
 const LoginPage: React.FC = () => {
@@ -18,7 +19,9 @@ const LoginPage: React.FC = () => {
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const location = useLocation();
   const navigate = useNavigate();
+  const { login: loginWithContext } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -31,11 +34,13 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await login(formData);
+      // Gọi API login, lấy user và token từ backend
+      const { user, accessToken } = await login(formData); // login là hàm gọi API trả về { user, accessToken }
+      // Lưu vào context
+      loginWithContext(user, accessToken);
       toast.success('Login successful!');
-      // FIX: Redirect to home page instead of dashboard after successful login
-      // This provides a better user experience by taking users to the main landing page
-      navigate('/');
+      const redirectTo = location.state?.from || '/';
+      navigate(redirectTo, { replace: true });
     } catch (error: any) {
       toast.error(error.message || 'Login failed');
     } finally {

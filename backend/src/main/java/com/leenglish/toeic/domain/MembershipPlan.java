@@ -1,10 +1,25 @@
 package com.leenglish.toeic.domain;
 
-import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.leenglish.toeic.enums.MembershipType;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "membership_plans")
@@ -22,7 +37,7 @@ public class MembershipPlan {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "duration_in_days")
     private Integer durationInDays;
 
     @Column(name = "plan_type")
@@ -81,6 +96,10 @@ public class MembershipPlan {
     private Boolean hasPremiumContent;
 
     private Boolean hasProgressTracking;
+
+    @Column(name = "membership_type")
+    @Enumerated(EnumType.STRING)
+    private MembershipType membershipType;
 
     // Constructors
     public MembershipPlan() {

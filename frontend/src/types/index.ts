@@ -2,7 +2,7 @@
  * ================================================================
  * TYPESCRIPT TYPES FOR LEENGLISH TOEIC PLATFORM
  * ================================================================
- * 
+ *
  * These types match the backend Java entities and enums
  * Synchronized with backend/src/main/java/com/leenglish/toeic/
  */
@@ -10,68 +10,68 @@
 // ========== ENUMS ==========
 
 export enum Role {
-  USER = 'USER',
-  COLLABORATOR = 'COLLABORATOR',
-  ADMIN = 'ADMIN'
+  USER = "USER",
+  COLLABORATOR = "COLLABORATOR",
+  ADMIN = "ADMIN",
 }
 
 export enum Gender {
-  MALE = 'MALE',
-  FEMALE = 'FEMALE',
-  OTHER = 'OTHER'
+  MALE = "MALE",
+  FEMALE = "FEMALE",
+  OTHER = "OTHER",
 }
 
 export enum Skill {
-  LISTENING = 'LISTENING',
-  READING = 'READING',
-  SPEAKING = 'SPEAKING',
-  WRITING = 'WRITING'
+  LISTENING = "LISTENING",
+  READING = "READING",
+  SPEAKING = "SPEAKING",
+  WRITING = "WRITING",
 }
 
 export enum ToeicPart {
-  PART1 = 'PART1', // Pictures
-  PART2 = 'PART2', // Question-Response
-  PART3 = 'PART3', // Conversations
-  PART4 = 'PART4', // Short Talks
-  PART5 = 'PART5', // Incomplete Sentences
-  PART6 = 'PART6', // Text Completion
-  PART7 = 'PART7'  // Reading Comprehension
+  PART1 = "PART1", // Pictures
+  PART2 = "PART2", // Question-Response
+  PART3 = "PART3", // Conversations
+  PART4 = "PART4", // Short Talks
+  PART5 = "PART5", // Incomplete Sentences
+  PART6 = "PART6", // Text Completion
+  PART7 = "PART7", // Reading Comprehension
 }
 
 export enum DifficultyLevel {
-  BEGINNER = 'BEGINNER',
-  INTERMEDIATE = 'INTERMEDIATE',
-  ADVANCED = 'ADVANCED'
+  BEGINNER = "BEGINNER",
+  INTERMEDIATE = "INTERMEDIATE",
+  ADVANCED = "ADVANCED",
 }
 
 export enum QuestionType {
-  MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
-  TRUE_FALSE = 'TRUE_FALSE',
-  FILL_IN_BLANK = 'FILL_IN_BLANK',
-  LISTENING = 'LISTENING',
-  READING_COMPREHENSION = 'READING_COMPREHENSION'
+  MULTIPLE_CHOICE = "MULTIPLE_CHOICE",
+  TRUE_FALSE = "TRUE_FALSE",
+  FILL_IN_BLANK = "FILL_IN_BLANK",
+  LISTENING = "LISTENING",
+  READING_COMPREHENSION = "READING_COMPREHENSION",
 }
 
 export enum ExerciseType {
-  PRACTICE = 'PRACTICE',
-  MOCK_TEST = 'MOCK_TEST',
-  QUICK_QUIZ = 'QUICK_QUIZ',
-  FULL_TEST = 'FULL_TEST'
+  PRACTICE = "PRACTICE",
+  MOCK_TEST = "MOCK_TEST",
+  QUICK_QUIZ = "QUICK_QUIZ",
+  FULL_TEST = "FULL_TEST",
 }
 
 export enum LessonType {
-  GRAMMAR = 'GRAMMAR',
-  VOCABULARY = 'VOCABULARY',
-  LISTENING = 'LISTENING',
-  READING = 'READING',
-  SPEAKING = 'SPEAKING',
-  WRITING = 'WRITING'
+  GRAMMAR = "GRAMMAR",
+  VOCABULARY = "VOCABULARY",
+  LISTENING = "LISTENING",
+  READING = "READING",
+  SPEAKING = "SPEAKING",
+  WRITING = "WRITING",
 }
 
 export enum ProgressType {
-  NOT_STARTED = 'NOT_STARTED',
-  IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED'
+  NOT_STARTED = "NOT_STARTED",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
 }
 
 // ========== DOMAIN ENTITIES ==========
@@ -83,7 +83,8 @@ export interface User {
   fullName: string;
   firstName?: string;
   lastName?: string;
-  role: Role;
+  role: "ADMIN" | "USER" | "COLLABORATOR";
+  membershipType: "FREE" | "PREMIUM";
   gender?: Gender;
   birthDate?: string;
   phoneNumber?: string;
@@ -103,60 +104,70 @@ export interface Lesson {
   id: number;
   title: string;
   description: string;
-  lessonType?: LessonType;
-  difficulty?: DifficultyLevel;
-  level?: string; // A1, A2, B1, B2, C1, C2
-  skill?: Skill;
-  toeicPart?: ToeicPart;
   content?: string;
-  duration?: number; // in minutes
-  isPublished?: boolean;
-  isPremium?: boolean;
-  createdDate?: string;
-  updatedDate?: string;
-  createdBy?: User;
-  orderIndex: number;
+  level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2"; // CEFR levels
+  isPremium: boolean;
   imageUrl?: string;
   audioUrl?: string;
+  videoUrl?: string;
+  duration?: number; // in minutes
+  orderIndex: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+
+  // Navigation properties
+  exercises?: Exercise[];
+  totalExercises?: number;
+  completedExercises?: number;
+  progress?: number;
 }
 
 export interface Exercise {
   id: number;
   title: string;
   description: string;
-  exerciseType: ExerciseType;
-  difficulty: DifficultyLevel;
-  skill: Skill;
-  toeicPart?: ToeicPart;
-  timeLimit: number; // in minutes
-  passingScore: number;
-  isPublished: boolean;
-  createdDate: string;
-  updatedDate: string;
-  createdBy: User;
-  lesson?: Lesson;
-  questions: Question[];
+  type: "READING" | "LISTENING" | "VOCABULARY" | "GRAMMAR";
+  difficulty: "EASY" | "MEDIUM" | "HARD";
+  timeLimit?: number;
+  orderIndex: number;
+  isActive: boolean;
+  lessonId: number;
+  totalQuestions?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Question {
   id: number;
-  questionText: string;
-  questionType: QuestionType;
-  difficulty: DifficultyLevel;
-  skill: Skill;
-  toeicPart?: ToeicPart;
-  audioUrl?: string;
-  imageUrl?: string;
-  optionA?: string;
-  optionB?: string;
-  optionC?: string;
-  optionD?: string;
+  exerciseId: number;
+  question: string;
+  options: string[];
   correctAnswer: string;
   explanation?: string;
+  imageUrl?: string;
+  audioUrl?: string;
   orderIndex: number;
-  createdDate: string;
-  updatedDate: string;
-  createdBy: User;
+  type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "FILL_BLANK";
+  difficulty: "EASY" | "MEDIUM" | "HARD";
+  points: number;
+}
+
+export interface UserAnswer {
+  questionId: number;
+  selectedAnswer: string | null;
+  isCorrect: boolean;
+  timeSpent: number;
+}
+
+export interface ExerciseSubmission {
+  exerciseId: number;
+  userId: number;
+  answers: UserAnswer[];
+  score: number;
+  timeSpent: number;
+  isCompleted: boolean;
+  submittedAt: Date;
 }
 
 export interface ExerciseQuestion {
@@ -202,27 +213,48 @@ export interface UserQuestionAnswer {
   exercise?: Exercise;
 }
 
-export interface FlashcardSet {
-  id: number;
-  title: string;
-  description: string;
-  difficulty: DifficultyLevel;
-  skill: Skill;
-  isPublished: boolean;
-  createdDate: string;
-  updatedDate: string;
-  createdBy: User;
-  flashcards: Flashcard[];
-}
-
 export interface Flashcard {
   id: number;
-  front: string;
-  back: string;
-  audioUrl?: string;
+  setId: number; // flashcardSet ID (match với backend)
+  frontText: string;
+  backText: string;
+  hint?: string; // ✅ Add hint property
   imageUrl?: string;
+  audioUrl?: string;
   orderIndex: number;
-  flashcardSet: FlashcardSet;
+  difficulty?: "EASY" | "MEDIUM" | "HARD";
+  difficultyLevel?: "BEGINNER" | "INTERMEDIATE" | "ADVANCED"; // ✅ Add for compatibility
+  tags?: string; // ✅ Add tags as comma-separated string
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+
+  // Legacy support (might be used in some places)
+  flashcardSetId?: number; // Alias for setId
+}
+
+export interface FlashcardSet {
+  id: number;
+  name: string;
+  title?: string; // Alias for name
+  description: string;
+  isActive: boolean;
+  isPremium: boolean;
+  isPublic: boolean; // ✅ Required property
+  category?: string;
+  tags?: string;
+  difficultyLevel: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
+  estimatedTimeMinutes: number;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: number;
+  flashcards?: Flashcard[];
+
+  // Computed properties
+  totalCards?: number;
+  completedCards?: number;
+  progress?: number;
 }
 
 export interface Comment {
@@ -375,7 +407,7 @@ export interface QuestionFormData {
 
 // ========== UTILITY TYPES ==========
 
-export type LoadingState = 'idle' | 'loading' | 'success' | 'error';
+export type LoadingState = "idle" | "loading" | "success" | "error";
 
 export interface SelectOption {
   value: string;
@@ -392,7 +424,7 @@ export interface FilterOptions {
 
 export interface SortOptions {
   field: string;
-  direction: 'asc' | 'desc';
+  direction: "asc" | "desc";
 }
 
 export interface PaginationOptions {

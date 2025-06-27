@@ -1,15 +1,19 @@
 package com.leenglish.toeic.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.leenglish.toeic.domain.Exercise;
 import com.leenglish.toeic.dto.ExerciseDto;
 import com.leenglish.toeic.service.ExerciseService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/exercises")
@@ -19,6 +23,7 @@ public class ExerciseController {
     @Autowired
     private ExerciseService exerciseService;
 
+    // Lấy 1 exercise theo id
     @GetMapping("/{id}")
     public ResponseEntity<ExerciseDto> getExercise(@PathVariable Long id) {
         return exerciseService.getExerciseById(id)
@@ -27,24 +32,17 @@ public class ExerciseController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // Lấy tất cả exercise
     @GetMapping
-    public ResponseEntity<List<ExerciseDto>> getAllExercises() {
-        List<Exercise> exercises = exerciseService.getAllExercises();
-        List<ExerciseDto> exerciseDtos = exercises.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(exerciseDtos);
+    public ResponseEntity<?> getAllExercises() {
+        return ResponseEntity.ok(
+                exerciseService.getAllExercises()
+                        .stream()
+                        .map(this::convertToDto)
+                        .toList());
     }
 
-    @GetMapping("/difficulty/{difficulty}")
-    public ResponseEntity<List<ExerciseDto>> getExercisesByDifficulty(@PathVariable String difficulty) {
-        List<Exercise> exercises = exerciseService.getExercisesByDifficulty(difficulty);
-        List<ExerciseDto> exerciseDtos = exercises.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(exerciseDtos);
-    }
-
+    // Tạo mới exercise
     @PostMapping
     public ResponseEntity<ExerciseDto> createExercise(@RequestBody ExerciseDto exerciseDto) {
         Exercise exercise = convertToEntity(exerciseDto);
@@ -52,29 +50,14 @@ public class ExerciseController {
         return ResponseEntity.ok(convertToDto(savedExercise));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ExerciseDto> updateExercise(@PathVariable Long id, @RequestBody ExerciseDto exerciseDto) {
-        Exercise exercise = convertToEntity(exerciseDto);
-        Exercise updatedExercise = exerciseService.updateExercise(id, exercise);
-        return ResponseEntity.ok(convertToDto(updatedExercise));
-    }
-
+    // Xóa exercise
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteExercise(@PathVariable Long id) {
         exerciseService.deleteExercise(id);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<ExerciseDto>> searchExercises(@RequestParam String query) {
-        List<Exercise> exercises = exerciseService.searchExercisesByTitle(query);
-        List<ExerciseDto> exerciseDtos = exercises.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(exerciseDtos);
-    }
-
+    // Chuyển đổi entity sang dto
     private ExerciseDto convertToDto(Exercise exercise) {
         ExerciseDto dto = new ExerciseDto();
         dto.setId(exercise.getId());
@@ -87,6 +70,7 @@ public class ExerciseController {
         return dto;
     }
 
+    // Chuyển đổi dto sang entity
     private Exercise convertToEntity(ExerciseDto dto) {
         Exercise exercise = new Exercise();
         exercise.setId(dto.getId());

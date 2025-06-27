@@ -1,13 +1,26 @@
 package com.leenglish.toeic.domain;
 
-import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import com.leenglish.toeic.enums.Gender;
+import com.leenglish.toeic.enums.MembershipType;
+import com.leenglish.toeic.enums.Role;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import com.leenglish.toeic.enums.Role;
-import com.leenglish.toeic.enums.Gender;
 
 /**
  * ================================================================
@@ -87,6 +100,10 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role = Role.USER;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "membership_type", length = 20)
+    private MembershipType membershipType;
 
     // ========== CONSTRUCTORS ==========
 
@@ -317,6 +334,14 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public MembershipType getMembershipType() {
+        return membershipType;
+    }
+
+    public void setMembershipType(MembershipType membershipType) {
+        this.membershipType = membershipType;
     }
 
     // ========== BUSINESS LOGIC METHODS ==========

@@ -410,4 +410,31 @@ public class LessonService {
                 .filter(lesson -> Boolean.TRUE.equals(lesson.getIsActive()))
                 .count();
     }
+
+    /**
+     * Get free lessons for basic users (only first 2 basic lessons)
+     * Returns lessons with level A1 and isPremium = false, limited to 2 lessons
+     */
+    public List<LessonDto> getFreeLessonsForBasicUsers() {
+        return lessonRepository.findAll().stream()
+                .filter(lesson -> Boolean.TRUE.equals(lesson.getIsActive()))
+                .filter(lesson -> "A1".equals(lesson.getLevel())) // Only A1 level
+                .filter(lesson -> !Boolean.TRUE.equals(lesson.getIsPremium())) // Not premium
+                .sorted(Comparator.comparing(Lesson::getOrderIndex, Comparator.nullsLast(Comparator.naturalOrder())))
+                .limit(2) // Only first 2 lessons
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get a specific free lesson by ID if it's accessible for basic users
+     */
+    public Optional<Lesson> getFreeLessonByIdForBasicUsers(Long id) {
+        return lessonRepository.findById(id)
+                .filter(lesson -> Boolean.TRUE.equals(lesson.getIsActive()))
+                .filter(lesson -> "A1".equals(lesson.getLevel())) // Only A1 level
+                .filter(lesson -> !Boolean.TRUE.equals(lesson.getIsPremium())) // Not premium
+                .filter(lesson -> lesson.getOrderIndex() != null && lesson.getOrderIndex() <= 2); // Only first 2
+                                                                                                  // lessons
+    }
 }

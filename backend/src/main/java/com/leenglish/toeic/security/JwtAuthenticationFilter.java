@@ -36,6 +36,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
 
         final String authorizationHeader = request.getHeader("Authorization");
+        String requestPath = request.getRequestURI();
+        String method = request.getMethod();
+
+        // Log request for debugging
+        logger.info("JWT Filter processing: " + method + " " + requestPath);
 
         String username = null;
         String jwt = null;
@@ -46,9 +51,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 username = jwtService.extractUsername(jwt);
                 role = jwtService.extractRole(jwt);
+                logger.info("JWT extracted - Username: " + username + ", Role: " + role);
             } catch (Exception e) {
                 logger.warn("JWT extraction failed: " + e.getMessage());
             }
+        } else {
+            logger.info("No Authorization header or invalid format for: " + requestPath);
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -79,10 +87,51 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
-        return path.startsWith("/api/auth/") ||
-                path.equals("/api/health") ||
-                path.startsWith("/api/users/register") ||
-                path.startsWith("/api/lessons/free") ||
-                path.startsWith("/api/exercises/free");
+        String method = request.getMethod();
+
+        // Log which paths are being checked
+        logger.info("Checking shouldNotFilter for: " + method + " " + path);
+
+        boolean shouldSkip =
+                // Basic auth endpoints
+                path.startsWith("/api/auth/") ||
+                        path.equals("/api/health") ||
+                        path.startsWith("/api/users/register") ||
+
+                        // Public lesson endpoints
+                        path.startsWith("/api/lessons/free") ||
+                        path.startsWith("/api/exercises/free") ||
+
+                        // ================================================================
+                        // PUBLIC FLASHCARD ENDPOINTS - NEWLY ADDED
+                        // ================================================================
+                        (method.equals("GET") && path.equals("/api/flashcards/sets")) ||
+                        (method.equals("GET") && path.equals("/api/flashcards/free")) ||
+                        (method.equals("GET") && path.startsWith("/api/flashcards/free/")) ||
+                        (method.equals("GET") && path.equals("/api/flashcards/test")) ||
+                        (method.equals("GET") && path.startsWith("/api/flashcards/set/")) ||
+                        (method.equals("GET") && path.startsWith("/api/flashcards/level/")) ||
+                        (method.equals("GET") && path.startsWith("/api/flashcards/category/")) ||
+                        (method.equals("GET") && path.equals("/api/flashcards/search")) ||
+                        (method.equals("GET") && path.equals("/api/flashcards/sets/search")) ||
+
+                        // Test endpoints
+                        path.startsWith("/api/test/") ||
+
+                        // Development tools
+                        path.startsWith("/h2-console/") ||
+                        path.startsWith("/swagger-ui/") ||
+                        path.startsWith("/v3/api-docs/") ||
+
+                        // CORS preflight requests
+                        method.equals("OPTIONS");
+
+        if (shouldSkip) {
+            logger.info("Skipping JWT filter for: " + method + " " + path);
+        } else {
+            logger.info("JWT filter will process: " + method + " " + path);
+        }
+
+        return shouldSkip;
     }
 }

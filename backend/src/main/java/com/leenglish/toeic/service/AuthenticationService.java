@@ -136,9 +136,6 @@ public class AuthenticationService {
 
     /**
      * Generate JWT access token for authenticated user
-     * 
-     * @param user Authenticated user
-     * @return JWT token string
      */
     public String generateAccessToken(User user) {
         Map<String, Object> claims = new HashMap<>();
@@ -153,9 +150,6 @@ public class AuthenticationService {
 
     /**
      * Generate JWT refresh token for token renewal
-     * 
-     * @param user Authenticated user
-     * @return Refresh token string
      */
     public String generateRefreshToken(User user) {
         Map<String, Object> claims = new HashMap<>();

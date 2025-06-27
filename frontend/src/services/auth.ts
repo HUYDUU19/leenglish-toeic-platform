@@ -2,266 +2,358 @@
  * ================================================================
  * AUTHENTICATION SERVICE
  * ================================================================
- * 
  * Handles user authentication, registration, and session management
  * Integrates with Spring Boot backend auth endpoints
  */
 
-import {
-  ApiResponse,
-  AuthResponse,
-  ChangePasswordRequest,
-  LoginRequest,
-  RegisterRequest,
-  User
-} from '../types';
-import apiClient, { extractData, handleApiError } from './api';
+import { LoginRequest, RegisterRequest, User } from "../types";
+import api from "./api";
 
-// ========== AUTHENTICATION ENDPOINTS ==========
+// ================================================================
+// CONSTANTS
+// ================================================================
 
-/**
- * Login user with username/password
- */
-export const login = async (credentials: LoginRequest): Promise<AuthResponse> => {
+const TOKEN_KEY = "toeic_access_token";
+const REFRESH_TOKEN_KEY = "toeic_refresh_token";
+const USER_KEY = "toeic_current_user";
+
+// ================================================================
+// TYPES
+// ================================================================
+
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken?: string;
+  user: User;
+  expiresIn?: number;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+  expiresAt: string;
+}
+
+// ================================================================
+// TOKEN MANAGEMENT
+// ================================================================
+
+export const setToken = (token: string): void => {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem("authToken", token); // For backward compatibility
+};
+
+export const getToken = (): string | null => {
+  return localStorage.getItem(TOKEN_KEY) || localStorage.getItem("authToken");
+};
+
+export const setRefreshToken = (refreshToken: string): void => {
+  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+};
+
+export const getRefreshToken = (): string | null => {
+  return localStorage.getItem(REFRESH_TOKEN_KEY);
+};
+
+export const removeToken = (): void => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem("authToken"); // For backward compatibility
+  localStorage.removeItem("currentUser"); // For backward compatibility
+  localStorage.removeItem("tokenExpiry"); // For backward compatibility
+};
+
+// ================================================================
+// USER MANAGEMENT
+// ================================================================
+
+export const setCurrentUser = (user: User): void => {
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+  localStorage.setItem("currentUser", JSON.stringify(user)); // For backward compatibility
+};
+
+export const getCurrentUser = (): User | null => {
   try {
-    const response = await apiClient.post<any>('/auth/login', credentials);
-    const backendData = response.data;
-    
-    if (!backendData.success) {
-      throw new Error(backendData.message || 'Login failed');
-    }
-    
-    // Transform backend response to frontend format
-    const authData: AuthResponse = {
-      token: backendData.accessToken,
-      user: backendData.user,
-      expiresAt: new Date(Date.now() + (backendData.expiresIn * 1000)).toISOString()
+    // Ưu tiên lấy từ key mới
+    const userStr =
+      localStorage.getItem("toeic_current_user") ||
+      localStorage.getItem("currentUser");
+    if (!userStr) return null;
+
+    const user = JSON.parse(userStr);
+
+    // Add computed isPremium property
+    return {
+      ...user,
+      isPremium: user.membershipType === "PREMIUM" || user.role === "ADMIN",
     };
-    
-    // Store auth data in localStorage
-    localStorage.setItem('authToken', authData.token);
-    localStorage.setItem('currentUser', JSON.stringify(authData.user));
-    localStorage.setItem('tokenExpiry', authData.expiresAt);
-    
-    return authData;
-  } catch (error: any) {
-    const errorInfo = handleApiError(error);
-    throw new Error(errorInfo.message);
+  } catch (error) {
+    console.error("Error parsing user from localStorage:", error);
+    localStorage.removeItem("toeic_current_user");
+    localStorage.removeItem("currentUser");
+    return null;
   }
 };
 
-/**
- * Register new user
- */
-export const register = async (userData: RegisterRequest): Promise<AuthResponse> => {
+export const removeCurrentUser = (): void => {
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem("currentUser"); // For backward compatibility
+};
+
+// ================================================================
+// AUTHENTICATION STATUS
+// ================================================================
+
+export const isAuthenticated = (): boolean => {
+  const token = getToken();
+  const user = getCurrentUser();
+
+  if (!token || !user) {
+    return false;
+  }
+
+  // Check if token is expired (basic check)
   try {
-    const response = await apiClient.post<any>('/auth/register', userData);
-    const backendData = response.data;
-    
-    if (!backendData.success) {
-      throw new Error(backendData.message || 'Registration failed');
+    const tokenPayload = JSON.parse(atob(token.split(".")[1]));
+    const currentTime = Date.now() / 1000;
+
+    if (tokenPayload.exp && tokenPayload.exp < currentTime) {
+      console.warn("🔑 Token expired, removing authentication");
+      removeToken();
+      return false;
     }
-    
-    // Transform backend response to frontend format
-    const authData: AuthResponse = {
-      token: backendData.accessToken,
-      user: backendData.user,
-      expiresAt: new Date(Date.now() + (backendData.expiresIn * 1000)).toISOString()
-    };
-    
-    // Store auth data in localStorage
-    localStorage.setItem('authToken', authData.token);
-    localStorage.setItem('currentUser', JSON.stringify(authData.user));
-    localStorage.setItem('tokenExpiry', authData.expiresAt);
-    
-    return authData;
-  } catch (error: any) {
-    const errorInfo = handleApiError(error);
-    throw new Error(errorInfo.message);
+
+    return true;
+  } catch (error) {
+    console.error("🔑 Error checking token validity:", error);
+    // Don't clear token on parse error, just return true if we have token and user
+    return !!(token && user);
   }
 };
 
-/**
- * Logout user and clear session
- */
+export const isTokenExpiringSoon = (): boolean => {
+  const token = getToken();
+  if (!token) return false;
+
+  try {
+    const tokenPayload = JSON.parse(atob(token.split(".")[1]));
+    const currentTime = Date.now() / 1000;
+    const fiveMinutesFromNow = currentTime + 5 * 60; // 5 minutes
+
+    return tokenPayload.exp && tokenPayload.exp <= fiveMinutesFromNow;
+  } catch (error) {
+    console.error("Error checking token expiry:", error);
+    return false;
+  }
+};
+
+// ================================================================
+// AUTH ACTIONS
+// ================================================================
+
+export const login = async (
+  credentials: LoginRequest
+): Promise<LoginResponse> => {
+  try {
+    console.log("🔐 Attempting login for:", credentials.username);
+
+    const response = await api.post("/auth/login", credentials);
+    const loginData = response.data;
+
+    console.log("✅ Login response received:", {
+      hasAccessToken: !!loginData.accessToken,
+      hasUser: !!loginData.user,
+      username: loginData.user?.username,
+    });
+
+    // Store authentication data
+    if (loginData.accessToken) {
+      setToken(loginData.accessToken);
+      console.log("✅ Access token stored");
+    }
+
+    if (loginData.refreshToken) {
+      setRefreshToken(loginData.refreshToken);
+      console.log("✅ Refresh token stored");
+    }
+
+    if (loginData.user) {
+      setCurrentUser(loginData.user);
+      console.log("✅ User data stored:", loginData.user.username);
+    }
+
+    console.log("✅ Login successful and data persisted");
+    return loginData;
+  } catch (error: any) {
+    console.error("❌ Login failed:", error);
+
+    // Handle different error types
+    if (error.message?.includes("timeout")) {
+      throw new Error(
+        "Login request timed out. Please check your internet connection and try again."
+      );
+    }
+
+    if (error.response?.status === 401) {
+      throw new Error("Invalid username or password");
+    }
+
+    if (error.response?.status === 404) {
+      throw new Error(
+        "Login service not found. Please check if the backend server is running."
+      );
+    }
+
+    if (error.code === "ERR_NETWORK") {
+      throw new Error(
+        "Cannot connect to server. Please check if the backend is running on http://localhost:8080"
+      );
+    }
+
+    throw new Error(
+      error.response?.data?.message || error.message || "Login failed"
+    );
+  }
+};
+
+export const register = async (userData: RegisterRequest): Promise<User> => {
+  try {
+    console.log("📝 Attempting registration for:", userData.username);
+
+    const response = await api.post("/auth/register", userData);
+    const registrationData = response.data;
+
+    console.log("✅ Registration successful:", registrationData);
+    return registrationData.user || registrationData;
+  } catch (error: any) {
+    console.error("❌ Registration failed:", error);
+    throw new Error(
+      error.response?.data?.message || error.message || "Registration failed"
+    );
+  }
+};
+
 export const logout = async (): Promise<void> => {
   try {
-    // Call backend logout endpoint
-    await apiClient.post('/auth/logout');
-  } catch (error) {
-    // Continue with local logout even if backend call fails
-    console.warn('Backend logout failed, continuing with local logout');
+    console.log("🚪 Logging out...");
+
+    // Try to call logout endpoint (if available)
+    try {
+      await api.post("/auth/logout");
+      console.log("✅ Server logout successful");
+    } catch (error) {
+      console.warn("⚠️ Server logout failed, but clearing local data anyway");
+    }
   } finally {
-    // Clear local storage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('tokenExpiry');
-    
-    // Redirect to login page
-    window.location.href = '/login';
+    // Always clear local storage
+    removeToken();
+    removeCurrentUser();
+    console.log("✅ Local data cleared");
   }
 };
 
-/**
- * Refresh authentication token
- */
-export const refreshToken = async (): Promise<AuthResponse> => {
-  try {
-    const response = await apiClient.post<ApiResponse<AuthResponse>>('/auth/refresh');
-    const authData = extractData(response);
-    
-    // Update stored auth data
-    localStorage.setItem('authToken', authData.token);
-    localStorage.setItem('currentUser', JSON.stringify(authData.user));
-    localStorage.setItem('tokenExpiry', authData.expiresAt);
-    
-    return authData;
-  } catch (error: any) {
-    // If refresh fails, logout user
-    logout();
-    const errorInfo = handleApiError(error);
-    throw new Error(errorInfo.message);
-  }
-};
+// ================================================================
+// TOKEN REFRESH
+// ================================================================
 
-/**
- * Change user password
- */
-export const changePassword = async (passwordData: ChangePasswordRequest): Promise<void> => {
+export const refreshAuthToken = async (): Promise<string | null> => {
   try {
-    await apiClient.put<ApiResponse<void>>('/auth/change-password', passwordData);
-  } catch (error: any) {
-    const errorInfo = handleApiError(error);
-    throw new Error(errorInfo.message);
-  }
-};
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+      throw new Error("No refresh token available");
+    }
 
-/**
- * Request password reset
- */
-export const requestPasswordReset = async (email: string): Promise<void> => {
-  try {
-    await apiClient.post<ApiResponse<void>>('/auth/forgot-password', { email });
-  } catch (error: any) {
-    const errorInfo = handleApiError(error);
-    throw new Error(errorInfo.message);
-  }
-};
-
-/**
- * Reset password with token
- */
-export const resetPassword = async (token: string, newPassword: string): Promise<void> => {
-  try {
-    await apiClient.post<ApiResponse<void>>('/auth/reset-password', { 
-      token, 
-      newPassword 
+    console.log("🔄 Refreshing auth token...");
+    const response = await api.post("/auth/refresh", {
+      refreshToken: refreshToken,
     });
-  } catch (error: any) {
-    const errorInfo = handleApiError(error);
-    throw new Error(errorInfo.message);
-  }
-};
 
-// ========== SESSION MANAGEMENT ==========
+    const newToken = response.data.accessToken;
+    if (newToken) {
+      setToken(newToken);
+      console.log("✅ Token refreshed successfully");
+      return newToken;
+    }
 
-/**
- * Check if user is currently authenticated
- */
-export const isAuthenticated = (): boolean => {
-  const token = localStorage.getItem('authToken');
-  const expiry = localStorage.getItem('tokenExpiry');
-  
-  if (!token || !expiry) {
-    return false;
-  }
-  
-  // Check if token is expired
-  const expiryDate = new Date(expiry);
-  const now = new Date();
-  
-  if (now >= expiryDate) {
-    // Token expired, clear storage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('tokenExpiry');
-    return false;
-  }
-  
-  return true;
-};
-
-/**
- * Get current authenticated user
- */
-export const getCurrentUser = (): User | null => {
-  const userData = localStorage.getItem('currentUser');
-  
-  if (!userData || !isAuthenticated()) {
     return null;
-  }
-  
-  try {
-    return JSON.parse(userData) as User;
   } catch (error) {
-    console.error('Failed to parse user data:', error);
-    localStorage.removeItem('currentUser');
+    console.error("❌ Token refresh failed:", error);
+    removeToken(); // Clear invalid tokens
     return null;
   }
 };
 
-/**
- * Update current user data in localStorage
- */
-export const updateCurrentUser = (user: User): void => {
-  localStorage.setItem('currentUser', JSON.stringify(user));
+// ================================================================
+// INITIALIZATION
+// ================================================================
+
+export function initializeAuth() {
+  const userStr = localStorage.getItem("currentUser");
+  if (userStr) {
+    try {
+      return JSON.parse(userStr);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+// ================================================================
+// ROLE-BASED UTILITIES
+// ================================================================
+
+export const isCurrentUserAdmin = (): boolean => {
+  const user = getCurrentUser();
+  return user?.role === "ADMIN";
 };
 
-/**
- * Check if token is about to expire (within 5 minutes)
- */
-export const isTokenExpiringSoon = (): boolean => {
-  const expiry = localStorage.getItem('tokenExpiry');
-  
-  if (!expiry) {
+export const canCurrentUserEditContent = (): boolean => {
+  const user = getCurrentUser();
+  return user?.role === "ADMIN" || user?.role === "COLLABORATOR";
+};
+
+export const canEditUserProfile = (targetUserId: number): boolean => {
+  const currentUser = getCurrentUser();
+
+  if (!currentUser) {
     return false;
   }
-  
-  const expiryDate = new Date(expiry);
-  const now = new Date();
-  const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
-  
-  return expiryDate <= fiveMinutesFromNow;
+
+  // Admin can edit anyone
+  if (currentUser.role === "ADMIN") {
+    return true;
+  }
+
+  // Users can only edit their own profile
+  return currentUser.id === targetUserId;
 };
 
-// ========== AUTO REFRESH MECHANISM ==========
+// ================================================================
+// AUTO REFRESH MECHANISM
+// ================================================================
 
 let refreshInterval: NodeJS.Timeout | null = null;
 
-/**
- * Start automatic token refresh
- */
 export const startAutoRefresh = (): void => {
   if (refreshInterval) {
     clearInterval(refreshInterval);
   }
-  
+
   refreshInterval = setInterval(async () => {
     if (isAuthenticated() && isTokenExpiringSoon()) {
       try {
-        await refreshToken();
-        console.log('🔄 Token refreshed automatically');
+        await refreshAuthToken();
+        console.log("🔄 Token refreshed automatically");
       } catch (error) {
-        console.error('❌ Failed to refresh token:', error);
-        logout();
+        console.error("❌ Failed to refresh token automatically:", error);
+        // Don't auto-logout here, let user handle it
       }
     }
   }, 60000); // Check every minute
 };
 
-/**
- * Stop automatic token refresh
- */
 export const stopAutoRefresh = (): void => {
   if (refreshInterval) {
     clearInterval(refreshInterval);
@@ -269,39 +361,50 @@ export const stopAutoRefresh = (): void => {
   }
 };
 
-// ========== ROLE-BASED UTILITIES ==========
+// ================================================================
+// PASSWORD MANAGEMENT
+// ================================================================
 
-/**
- * Check if current user has admin role
- */
-export const isCurrentUserAdmin = (): boolean => {
-  const user = getCurrentUser();
-  return user?.role === 'ADMIN';
+export const changePassword = async (
+  currentPassword: string,
+  newPassword: string
+): Promise<void> => {
+  try {
+    await api.put("/auth/change-password", {
+      currentPassword,
+      newPassword,
+    });
+    console.log("✅ Password changed successfully");
+  } catch (error: any) {
+    console.error("❌ Password change failed:", error);
+    throw new Error(error.response?.data?.message || "Password change failed");
+  }
 };
 
-/**
- * Check if current user can edit content (ADMIN or COLLABORATOR)
- */
-export const canCurrentUserEditContent = (): boolean => {
-  const user = getCurrentUser();
-  return user?.role === 'ADMIN' || user?.role === 'COLLABORATOR';
+export const requestPasswordReset = async (email: string): Promise<void> => {
+  try {
+    await api.post("/auth/forgot-password", { email });
+    console.log("✅ Password reset requested");
+  } catch (error: any) {
+    console.error("❌ Password reset request failed:", error);
+    throw new Error(
+      error.response?.data?.message || "Password reset request failed"
+    );
+  }
 };
 
-/**
- * Check if current user can edit specific user profile
- */
-export const canEditUserProfile = (targetUserId: number): boolean => {
-  const currentUser = getCurrentUser();
-  
-  if (!currentUser) {
-    return false;
+export const resetPassword = async (
+  token: string,
+  newPassword: string
+): Promise<void> => {
+  try {
+    await api.post("/auth/reset-password", {
+      token,
+      newPassword,
+    });
+    console.log("✅ Password reset successful");
+  } catch (error: any) {
+    console.error("❌ Password reset failed:", error);
+    throw new Error(error.response?.data?.message || "Password reset failed");
   }
-  
-  // Admin can edit anyone
-  if (currentUser.role === 'ADMIN') {
-    return true;
-  }
-  
-  // Users can only edit their own profile
-  return currentUser.id === targetUserId;
 };

@@ -91,4 +91,25 @@ public class LessonController {
     public ResponseEntity<List<LessonDto>> getRecentLessons() {
         return ResponseEntity.ok().body(lessonService.getRecentLessons());
     }
+
+    /**
+     * Get free lessons for non-premium users (only first 2 basic lessons)
+     * This endpoint is accessible without authentication
+     */
+    @GetMapping("/free")
+    public ResponseEntity<List<LessonDto>> getFreeLessons() {
+        List<LessonDto> freeLessons = lessonService.getFreeLessonsForBasicUsers();
+        return ResponseEntity.ok(freeLessons);
+    }
+
+    /**
+     * Check if a specific lesson is accessible for basic users
+     */
+    @GetMapping("/free/{id}")
+    public ResponseEntity<LessonDto> getFreeLessonById(@PathVariable Long id) {
+        return lessonService.getFreeLessonByIdForBasicUsers(id)
+                .map(lessonService::convertToDto)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 }

@@ -1,0 +1,20 @@
+# Media Assets Generator Requirements
+# For LeEnglish TOEIC Platform Backend
+
+# Image generation and manipulation
+Pillow>=10.0.0
+
+# Text-to-speech for audio generation
+gTTS>=2.3.0
+
+# Audio processing and manipulation
+pydub>=0.25.1
+
+# Optional: For advanced image processing
+# opencv-python>=4.8.0
+
+# Optional: For downloading remote assets
+requests>=2.31.0
+
+# Optional: For audio format conversion
+# ffmpeg-python>=0.2.0

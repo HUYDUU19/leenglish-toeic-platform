@@ -5,16 +5,20 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { useAuth } from '../../contexts/AuthContext';
 import { lessonService } from '../../services/lessons';
 import { Lesson } from '../../types';
 
 const LessonDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [startingLesson, setStartingLesson] = useState(false);
+  const { currentUser, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const fetchLesson = async () => {
@@ -23,7 +27,6 @@ const LessonDetailPage: React.FC = () => {
         setLoading(false);
         return;
       }
-
       try {
         setLoading(true);
         const lessonData = await lessonService.getLessonById(parseInt(id));
@@ -36,9 +39,37 @@ const LessonDetailPage: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchLesson();
   }, [id]);
+
+  const handleStartLesson = async () => {
+    if (!lesson) return;
+
+    if (lesson.isPremium && (!currentUser || !currentUser.isPremium)) {
+      alert('This is a premium lesson. Please upgrade your account to access premium content.');
+      return;
+    }
+
+    if (!currentUser && lesson.id && lesson.id > 2) {
+      alert('Please register and log in to access more lessons. Free users can only access the first 2 basic lessons.');
+      return;
+    }
+
+    setStartingLesson(true);
+
+    try {
+      navigate(`/lessons/${lesson.id}/exercises`);
+    } catch (error) {
+      console.error('Error starting lesson:', error);
+      alert('Failed to start lesson. Please try again.');
+    } finally {
+      setStartingLesson(false);
+    }
+  };
+
+  const handleTakeNotes = () => {
+    alert('Notes feature coming soon! You can use a separate note-taking app for now.');
+  };
 
   if (loading) {
     return (
@@ -75,6 +106,22 @@ const LessonDetailPage: React.FC = () => {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">{lesson.title}</h1>
         <p className="mt-2 text-gray-600">Level: {lesson.level} {lesson.isPremium && '🔒 Premium'}</p>
+
+        {lesson.isPremium && (!currentUser || !currentUser.isPremium) && (
+          <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-yellow-800 text-sm">
+              🔒 This is a premium lesson. Upgrade your account to access premium content.
+            </p>
+          </div>
+        )}
+
+        {!currentUser && lesson.id && lesson.id > 2 && (
+          <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-blue-800 text-sm">
+              ℹ️ Please register and log in to access more lessons. Free users can access the first 2 basic lessons.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="card">
@@ -118,10 +165,24 @@ const LessonDetailPage: React.FC = () => {
           )}
 
           <div className="flex gap-4 pt-4">
-            <button className="btn btn-primary">
-              Start Lesson
+            <button
+              className="btn btn-primary flex items-center justify-center"
+              onClick={handleStartLesson}
+              disabled={startingLesson}
+            >
+              {startingLesson ? (
+                <>
+                  <LoadingSpinner size="sm" color="white" />
+                  <span className="ml-2">Starting...</span>
+                </>
+              ) : (
+                'Start Lesson'
+              )}
             </button>
-            <button className="btn btn-secondary">
+            <button
+              className="btn btn-secondary"
+              onClick={handleTakeNotes}
+            >
               Take Notes
             </button>
           </div>

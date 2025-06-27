@@ -9,12 +9,12 @@ class QuestionWidget extends StatefulWidget {
   final Answer? selectedAnswer;
 
   const QuestionWidget({
-    Key? key,
+    super.key,
     required this.question,
     required this.onAnswerSelected,
     this.showResult = false,
     this.selectedAnswer,
-  }) : super(key: key);
+  });
 
   @override
   _QuestionWidgetState createState() => _QuestionWidgetState();
@@ -133,7 +133,7 @@ class _QuestionWidgetState extends State<QuestionWidget> {
                 .asMap()
                 .entries
                 .map((entry) => _buildAnswerOption(entry.value))
-                .toList(),
+                ,
 
             // Result display
             if (widget.showResult) _buildResultDisplay(),

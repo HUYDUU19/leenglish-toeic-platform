@@ -1,7 +1,21 @@
 package com.leenglish.toeic.domain;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "flashcards")
@@ -10,71 +24,107 @@ public class Flashcard {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String frontText;
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String backText;
-
-    @Column(columnDefinition = "TEXT")
-    private String hint;
-
-    @Column(columnDefinition = "TEXT")
-    private String explanation;
-
-    private String imageUrl;
-    private String audioUrl;
-
-    @Column(nullable = false)
-    private String category;
-
-    private String tags;
-
-    private Boolean isActive = true;
-    private Boolean isPublic = true;
-
-    private Integer viewCount = 0;
-    private Integer correctCount = 0;
-    private Integer incorrectCount = 0;
-
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by")
-    private User createdBy;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "flashcard_set_id")
+    @JoinColumn(name = "flashcard_set_id", nullable = false)
     private FlashcardSet flashcardSet;
 
-    // Additional fields
+    @Column(name = "front_text", nullable = false, length = 1000)
+    private String frontText;
+
+    @Column(name = "back_text", nullable = false, length = 2000)
+    private String backText;
+
+    // ✅ Add hint field to match frontend
+    @Column(name = "hint", length = 500)
+    private String hint;
+
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Column(name = "audio_url")
+    private String audioUrl;
+
+    @Column(name = "order_index", nullable = false)
+    private Integer orderIndex;
+
+    @Column(name = "difficulty")
+    @Enumerated(EnumType.STRING)
+    private Difficulty difficulty;
+
+    // ✅ Add difficultyLevel to match frontend
+    @Column(name = "difficulty_level")
+    @Enumerated(EnumType.STRING)
+    private DifficultyLevel difficultyLevel;
+
+    // ✅ Add tags field to match frontend
+    @Column(name = "tags", length = 500)
+    private String tags;
+
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+
+    @CreationTimestamp
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "term")
     private String term;
+
+    @Column(name = "definition")
     private String definition;
+
+    @Column(name = "example")
     private String example;
+
+    @Column(name = "level")
     private String level;
 
-    // Constructors
+    @Column(name = "category")
+    private String category;
+
+    // ✅ Add enums for difficulty
+    public enum Difficulty {
+        EASY, MEDIUM, HARD
+    }
+
+    public enum DifficultyLevel {
+        BEGINNER, INTERMEDIATE, ADVANCED
+    }
+
+    // ========== CONSTRUCTORS ==========
     public Flashcard() {
     }
 
-    public Flashcard(String frontText, String backText, String category) {
+    public Flashcard(FlashcardSet flashcardSet, String frontText, String backText) {
+        this.flashcardSet = flashcardSet;
         this.frontText = frontText;
         this.backText = backText;
-        this.category = category;
-        this.isActive = true;
-        this.isPublic = true;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
 
-    // Getters and Setters
+    // ========== GETTERS AND SETTERS ==========
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public FlashcardSet getFlashcardSet() {
+        return flashcardSet;
+    }
+
+    public void setFlashcardSet(FlashcardSet flashcardSet) {
+        this.flashcardSet = flashcardSet;
+    }
+
+    // ✅ Add convenience method to get setId for frontend compatibility
+    public Long getSetId() {
+        return flashcardSet != null ? flashcardSet.getId() : null;
     }
 
     public String getFrontText() {
@@ -93,20 +143,13 @@ public class Flashcard {
         this.backText = backText;
     }
 
+    // ✅ Hint getter/setter
     public String getHint() {
         return hint;
     }
 
     public void setHint(String hint) {
         this.hint = hint;
-    }
-
-    public String getExplanation() {
-        return explanation;
-    }
-
-    public void setExplanation(String explanation) {
-        this.explanation = explanation;
     }
 
     public String getImageUrl() {
@@ -125,14 +168,32 @@ public class Flashcard {
         this.audioUrl = audioUrl;
     }
 
-    public String getCategory() {
-        return category;
+    public Integer getOrderIndex() {
+        return orderIndex;
     }
 
-    public void setCategory(String category) {
-        this.category = category;
+    public void setOrderIndex(Integer orderIndex) {
+        this.orderIndex = orderIndex;
     }
 
+    public Difficulty getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(Difficulty difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    // ✅ DifficultyLevel getter/setter
+    public DifficultyLevel getDifficultyLevel() {
+        return difficultyLevel;
+    }
+
+    public void setDifficultyLevel(DifficultyLevel difficultyLevel) {
+        this.difficultyLevel = difficultyLevel;
+    }
+
+    // ✅ Tags getter/setter
     public String getTags() {
         return tags;
     }
@@ -147,38 +208,6 @@ public class Flashcard {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
-    }
-
-    public Boolean getIsPublic() {
-        return isPublic;
-    }
-
-    public void setIsPublic(Boolean isPublic) {
-        this.isPublic = isPublic;
-    }
-
-    public Integer getViewCount() {
-        return viewCount;
-    }
-
-    public void setViewCount(Integer viewCount) {
-        this.viewCount = viewCount;
-    }
-
-    public Integer getCorrectCount() {
-        return correctCount;
-    }
-
-    public void setCorrectCount(Integer correctCount) {
-        this.correctCount = correctCount;
-    }
-
-    public Integer getIncorrectCount() {
-        return incorrectCount;
-    }
-
-    public void setIncorrectCount(Integer incorrectCount) {
-        this.incorrectCount = incorrectCount;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -197,22 +226,7 @@ public class Flashcard {
         this.updatedAt = updatedAt;
     }
 
-    public User getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public FlashcardSet getFlashcardSet() {
-        return flashcardSet;
-    }
-
-    public void setFlashcardSet(FlashcardSet flashcardSet) {
-        this.flashcardSet = flashcardSet;
-    }
-
+    // Getter & Setter cho term
     public String getTerm() {
         return term;
     }
@@ -221,6 +235,7 @@ public class Flashcard {
         this.term = term;
     }
 
+    // Getter & Setter cho definition
     public String getDefinition() {
         return definition;
     }
@@ -229,6 +244,7 @@ public class Flashcard {
         this.definition = definition;
     }
 
+    // Getter & Setter cho example
     public String getExample() {
         return example;
     }
@@ -237,6 +253,7 @@ public class Flashcard {
         this.example = example;
     }
 
+    // Getter & Setter cho level
     public String getLevel() {
         return level;
     }
@@ -245,75 +262,28 @@ public class Flashcard {
         this.level = level;
     }
 
-    // Business Logic Methods
-    public boolean hasAudio() {
-        return audioUrl != null && !audioUrl.trim().isEmpty();
+    // Getter & Setter cho category
+    public String getCategory() {
+        return category;
     }
 
-    public boolean hasImage() {
-        return imageUrl != null && !imageUrl.trim().isEmpty();
+    public void setCategory(String category) {
+        this.category = category;
     }
 
-    public boolean hasHint() {
-        return hint != null && !hint.trim().isEmpty();
-    }
-
-    public boolean hasExplanation() {
-        return explanation != null && !explanation.trim().isEmpty();
-    }
-
-    public void incrementViewCount() {
-        this.viewCount = (this.viewCount != null ? this.viewCount : 0) + 1;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public void incrementCorrectCount() {
-        this.correctCount = (this.correctCount != null ? this.correctCount : 0) + 1;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public void incrementIncorrectCount() {
-        this.incorrectCount = (this.incorrectCount != null ? this.incorrectCount : 0) + 1;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public double getAccuracyRate() {
-        int total = (correctCount != null ? correctCount : 0) + (incorrectCount != null ? incorrectCount : 0);
-        if (total == 0)
-            return 0.0;
-        return (double) (correctCount != null ? correctCount : 0) / total * 100;
-    }
-
-    public int getTotalAttempts() {
-        return (correctCount != null ? correctCount : 0) + (incorrectCount != null ? incorrectCount : 0);
-    }
-
-    public boolean isValid() {
-        return frontText != null && !frontText.trim().isEmpty() &&
-                backText != null && !backText.trim().isEmpty() &&
-                category != null && !category.trim().isEmpty();
-    }
-
-    // Lifecycle Methods
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-
-        if (isActive == null)
-            isActive = true;
-        if (isPublic == null)
-            isPublic = true;
-        if (viewCount == null)
-            viewCount = 0;
-        if (correctCount == null)
-            correctCount = 0;
-        if (incorrectCount == null)
-            incorrectCount = 0;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+    // ========== UTILITY METHODS ==========
+    @Override
+    public String toString() {
+        return "Flashcard{" +
+                "id=" + id +
+                ", frontText='" + frontText + '\'' +
+                ", backText='" + backText + '\'' +
+                ", hint='" + hint + '\'' +
+                ", orderIndex=" + orderIndex +
+                ", difficulty=" + difficulty +
+                ", difficultyLevel=" + difficultyLevel +
+                ", tags='" + tags + '\'' +
+                ", isActive=" + isActive +
+                '}';
     }
 }
