@@ -1,23 +1,22 @@
 package com.leenglish.toeic.service;
 
-import com.leenglish.toeic.domain.User;
-import com.leenglish.toeic.dto.UserDto;
-import com.leenglish.toeic.enums.Role;
-import com.leenglish.toeic.enums.Gender;
-import com.leenglish.toeic.repository.UserRepository;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.leenglish.toeic.domain.User;
+import com.leenglish.toeic.dto.UserDto;
+import com.leenglish.toeic.enums.Gender;
+import com.leenglish.toeic.enums.Role;
+import com.leenglish.toeic.repository.UserRepository;
+
 import jakarta.persistence.EntityNotFoundException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 /**
  * ================================================================
@@ -98,7 +97,7 @@ public class UserService {
         user.setRole(role != null ? role : Role.USER);
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-
+        user.setIsActive(true); // Đảm bảo user luôn active khi tạo mới
         return userRepository.save(user);
     }
 
@@ -196,6 +195,20 @@ public class UserService {
     public boolean userExistsAndActive(Long userId) {
         Optional<User> user = userRepository.findById(userId);
         return user.isPresent() && user.get().getIsActive();
+    }
+
+    /**
+     * Check if username exists
+     */
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    /**
+     * Check if email exists
+     */
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 
     // ========== USER STATISTICS METHODS ==========
@@ -375,5 +388,18 @@ public class UserService {
         return userRepository.findAll().stream()
                 .filter(user -> Boolean.TRUE.equals(user.getIsActive()))
                 .count();
+    }
+
+    /**
+     * Reset password for user (admin function)
+     */
+    public void resetPassword(String username, String newPassword) {
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setPasswordHash(passwordEncoder.encode(newPassword));
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+        }
     }
 }

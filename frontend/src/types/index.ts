@@ -39,6 +39,9 @@ export enum ToeicPart {
 }
 
 export enum DifficultyLevel {
+  EASY = "EASY",
+  MEDIUM = "MEDIUM",
+  HARD = "HARD",
   BEGINNER = "BEGINNER",
   INTERMEDIATE = "INTERMEDIATE",
   ADVANCED = "ADVANCED",
@@ -139,18 +142,37 @@ export interface Exercise {
 }
 
 export interface Question {
+  // Primary fields (match database exactly)
   id: number;
   exerciseId: number;
-  question: string;
-  options: string[];
-  correctAnswer: string;
+  questionText: string; // Primary field name from backend
+  questionType: QuestionType; // Use enum instead of string literals
+  optionA?: string;
+  optionB?: string;
+  optionC?: string;
+  optionD?: string;
+  correctAnswer: string; // A, B, C, or D
   explanation?: string;
+  points: number; // Make required (default 10 in backend)
+  questionOrder?: number; // Backend field name
+  isActive: boolean; // Required in backend
+  createdAt: string; // ISO string from backend
+  updatedAt: string; // ISO string from backend
+
+  // Optional media fields
   imageUrl?: string;
   audioUrl?: string;
-  orderIndex: number;
-  type: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "FILL_BLANK";
-  difficulty: "EASY" | "MEDIUM" | "HARD";
-  points: number;
+
+  // Enum fields (match backend exactly)
+  difficulty?: "EASY" | "MEDIUM" | "HARD"; // Could be enum later
+
+  // Computed/Helper fields for frontend
+  options?: string[]; // Computed from optionA, optionB, optionC, optionD
+
+  // Legacy compatibility (deprecated)
+  question?: string; // @deprecated Use questionText instead
+  orderIndex?: number; // @deprecated Use questionOrder instead
+  type?: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "FILL_BLANK"; // @deprecated Use questionType instead
 }
 
 export interface UserAnswer {
@@ -403,6 +425,16 @@ export interface QuestionFormData {
   correctAnswer: string;
   explanation?: string;
   orderIndex: number;
+}
+
+// ========== REQUEST/RESPONSE TYPES ==========
+
+export interface QuestionAnswerRequest {
+  questionId: number;
+  selectedAnswer: string; // A, B, C, or D
+  timeTaken?: number; // in seconds
+  isConfident?: boolean;
+  userNote?: string;
 }
 
 // ========== UTILITY TYPES ==========

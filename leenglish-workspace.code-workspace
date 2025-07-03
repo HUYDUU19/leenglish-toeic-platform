@@ -54,5 +54,12 @@
       "redhat.java",
       "pivotal.vscode-spring-boot"
     ]
+  },
+  "mcp": {
+    "servers": {
+      "my-mcp-server-aa48e7d7": {
+        "url": "localhost:3000"
+      }
+    }
   }
 }

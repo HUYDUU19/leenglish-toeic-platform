@@ -75,7 +75,7 @@ public class Exercise {
     @JsonBackReference
     private Lesson lesson;
 
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "exercise", fetch = FetchType.EAGER)
     private List<Question> questions;
 
     @Column(name = "difficulty")

@@ -19,7 +19,17 @@
 ```
 backend/
 ├── src/main/java/com/           # Mã nguồn chính
-├── src/main/resources/          # File cấu hình
+├── src/main/resources/
+│   ├── audio/
+│   │   ├── lesson/              # Audio cho lesson
+│   │   ├── exercise/            # Audio cho exercise
+│   │   ├── flashcard/           # Audio cho flashcard
+│   │   └── question/            # Audio cho question
+│   └── images/
+│       ├── lesson/              # Ảnh cho lesson
+│       ├── exercise/            # Ảnh cho exercise
+│       ├── flashcard/           # Ảnh cho flashcard
+│       └── question/            # Ảnh cho question
 ├── src/routes/                  # API Routes (TypeScript)
 ├── pom.xml                      # Maven dependencies
 └── target/                      # File đã build

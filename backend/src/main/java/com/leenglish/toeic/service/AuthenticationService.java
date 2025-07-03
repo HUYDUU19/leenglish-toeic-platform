@@ -1,23 +1,26 @@
 package com.leenglish.toeic.service;
 
-import com.leenglish.toeic.domain.User;
-import com.leenglish.toeic.enums.Role;
-import com.leenglish.toeic.repository.UserRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.leenglish.toeic.domain.User;
+import com.leenglish.toeic.enums.Role;
+import com.leenglish.toeic.repository.UserRepository;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 
 /**
  * ================================================================
@@ -70,7 +73,8 @@ public class AuthenticationService {
             Optional<User> userOpt = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail);
 
             if (userOpt.isEmpty()) {
-                return null; // User not found
+                // Không tìm thấy user trong DB, trả về null (không cho đăng nhập)
+                return null;
             }
 
             User user = userOpt.get();

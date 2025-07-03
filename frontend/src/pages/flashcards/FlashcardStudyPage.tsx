@@ -24,43 +24,62 @@ const FlashcardStudyPage: React.FC = () => {
 
     useEffect(() => {
         const fetchFlashcardSet = async () => {
-            if (!setId) {
-                setError('Invalid flashcard set ID');
-                setLoading(false);
-                return;
-            }
-
             try {
                 setLoading(true);
                 setError(null);
 
-                // Strategy 1: Try authenticated endpoint first
-                if (isAuthenticated) {
-                    try {
-                        console.log(`Fetching flashcard set ${setId} for authenticated user...`);
-                        const response = await apiClient.get(`/flashcards/sets/${setId}`);
+                console.log(`🔍 Fetching flashcard set ${setId}...`);
+
+                // Strategy 1: Try to get flashcard set with flashcards from backend
+                try {
+                    // First get the flashcard set info
+                    const setResponse = await apiClient.get(`/flashcards/sets/${setId}`);
+                    console.log('✅ Flashcard set response:', setResponse.data);
+
+                    // Then get the flashcards for this set
+                    const flashcardsResponse = await apiClient.get(`/flashcards/sets/${setId}/flashcards`);
+                    console.log('✅ Flashcards response:', flashcardsResponse.data);
+
+                    // Combine set info with flashcards
+                    const completeSet = {
+                        ...setResponse.data,
+                        flashcards: flashcardsResponse.data || []
+                    };
+
+                    if (completeSet.flashcards && completeSet.flashcards.length > 0) {
+                        console.log(`✅ Found ${completeSet.flashcards.length} flashcards for set ${setId}`);
+                        setFlashcardSet(completeSet);
+                        return;
+                    } else {
+                        console.warn(`⚠️ No flashcards found for set ${setId}, trying alternative endpoints...`);
+                    }
+                } catch (apiError: any) {
+                    console.error('❌ API Error:', apiError.response?.status, apiError.message);
+                }
+
+                // Strategy 2: Try free endpoint if authenticated endpoint fails
+                try {
+                    console.log(`🔓 Trying free flashcard set ${setId}...`);
+                    const response = await apiClient.get(`/flashcards/free/${setId}`);
+
+                    if (response.data && response.data.flashcards && response.data.flashcards.length > 0) {
+                        console.log(`✅ Found free set with ${response.data.flashcards.length} flashcards`);
                         setFlashcardSet(response.data);
                         return;
-                    } catch (authError: any) {
-                        console.warn('Failed to fetch authenticated set:', authError.response?.status);
-                        // Continue to free endpoint
                     }
+                } catch (freeError: any) {
+                    console.warn('❌ Free endpoint also failed:', freeError.response?.status);
                 }
 
-                // Strategy 2: Try free endpoint
-                try {
-                    console.log(`Fetching free flashcard set ${setId}...`);
-                    const response = await apiClient.get(`/flashcards/free/${setId}`);
-                    setFlashcardSet(response.data);
-                    return;
-                } catch (freeError: any) {
-                    console.warn('Failed to fetch free set:', freeError.response?.status);
-                    throw new Error('Flashcard set not found or requires premium access');
-                }
+                // Strategy 3: Only use fallback if NO data from backend
+                console.log('⚠️ Using fallback data - please check if database has flashcards for set', setId);
+                throw new Error('No flashcards found in database - using demo data');
 
             } catch (err: any) {
-                console.error('Error fetching flashcard set:', err);
-                setError(err.message || 'Failed to load flashcard set');
+                console.error('❌ All strategies failed, using fallback data:', err.message);
+                setError('Using demo data - database connection issue');
+
+                // Fallback data (keep existing fallback logic)...
 
                 // ✅ Updated fallback data with all required properties
                 const fallbackFlashcards: Flashcard[] = [
@@ -70,8 +89,8 @@ const FlashcardStudyPage: React.FC = () => {
                         frontText: 'Hello',
                         backText: 'A greeting used when meeting someone',
                         hint: 'A common greeting', // ✅ Now hint is allowed
-                        imageUrl: '/images/flashcards/hello.jpg',
-                        audioUrl: '/audio/flashcards/hello.mp3',
+                        imageUrl: '/images/hello.jpg',
+                        audioUrl: '/audio/hello.mp3',
                         difficultyLevel: 'BEGINNER',
                         tags: 'greeting,basic,conversation', // ✅ Now tags is allowed
                         orderIndex: 1,
@@ -86,6 +105,8 @@ const FlashcardStudyPage: React.FC = () => {
                         frontText: 'Thank you',
                         backText: 'An expression of gratitude',
                         hint: 'Used to show appreciation', // ✅ Now hint is allowed
+                        imageUrl: '/images/thankyou.jpg',
+                        audioUrl: '/audio/thankyou.mp3',
                         difficultyLevel: 'BEGINNER',
                         tags: 'politeness,basic,gratitude', // ✅ Now tags is allowed
                         orderIndex: 2,
@@ -100,6 +121,8 @@ const FlashcardStudyPage: React.FC = () => {
                         frontText: 'Goodbye',
                         backText: 'A farewell expression',
                         hint: 'Used when leaving or ending a conversation', // ✅ Now hint is allowed
+                        imageUrl: '/images/goodbye.jpg',
+                        audioUrl: '/audio/goodbye.mp3',
                         difficultyLevel: 'BEGINNER',
                         tags: 'farewell,basic,conversation', // ✅ Now tags is allowed
                         orderIndex: 3,
@@ -199,6 +222,15 @@ const FlashcardStudyPage: React.FC = () => {
     const currentCard = flashcardSet.flashcards[currentCardIndex];
     const progress = ((currentCardIndex + 1) / flashcardSet.flashcards.length) * 100;
 
+    // Debug: Log current card media URLs
+    console.log('🎯 Current card media:', {
+        frontText: currentCard.frontText,
+        imageUrl: currentCard.imageUrl,
+        audioUrl: currentCard.audioUrl,
+        fullImagePath: currentCard.imageUrl ? `http://localhost:8080${currentCard.imageUrl}` : null,
+        fullAudioPath: currentCard.audioUrl ? `http://localhost:8080${currentCard.audioUrl}` : null
+    });
+
 
     return (
         <div className="max-w-4xl mx-auto p-6">
@@ -267,12 +299,15 @@ const FlashcardStudyPage: React.FC = () => {
                                     </h2>
                                     {currentCard.imageUrl && (
                                         <img
-                                            src={currentCard.imageUrl}
+                                            src={`http://localhost:8080${currentCard.imageUrl}`}
                                             alt={currentCard.frontText}
-                                            className="max-w-xs mx-auto rounded-lg"
+                                            className="max-w-xs mx-auto rounded-lg mb-4"
                                             onError={(e) => {
-                                                // Hide image if failed to load
+                                                console.warn('Failed to load image:', currentCard.imageUrl);
                                                 e.currentTarget.style.display = 'none';
+                                            }}
+                                            onLoad={() => {
+                                                console.log('Image loaded successfully:', currentCard.imageUrl);
                                             }}
                                         />
                                     )}
@@ -294,12 +329,40 @@ const FlashcardStudyPage: React.FC = () => {
                                         {currentCard.backText}
                                     </p>
 
-                                    {/* Audio */}
+                                    {/* Audio Player */}
                                     {currentCard.audioUrl && (
-                                        <audio controls className="mx-auto mb-4">
-                                            <source src={currentCard.audioUrl} type="audio/mpeg" />
-                                            Your browser does not support audio playback.
-                                        </audio>
+                                        <div className="mb-4">
+                                            <audio 
+                                                controls 
+                                                className="mx-auto"
+                                                preload="none"
+                                                onError={(e) => {
+                                                    console.warn('Failed to load audio:', currentCard.audioUrl);
+                                                }}
+                                                onLoadedData={() => {
+                                                    console.log('Audio loaded successfully:', currentCard.audioUrl);
+                                                }}
+                                            >
+                                                <source src={`http://localhost:8080${currentCard.audioUrl}`} type="audio/mpeg" />
+                                                <source src={`http://localhost:8080${currentCard.audioUrl}`} type="audio/wav" />
+                                                <source src={`http://localhost:8080${currentCard.audioUrl}`} type="audio/ogg" />
+                                                Your browser does not support audio playback.
+                                            </audio>
+                                            <p className="text-xs text-gray-500 mt-1 text-center">🔊 Click play to hear pronunciation</p>
+                                        </div>
+                                    )}
+
+                                    {/* Back side image (if different from front) */}
+                                    {currentCard.imageUrl && (
+                                        <img
+                                            src={`http://localhost:8080${currentCard.imageUrl}`}
+                                            alt={currentCard.backText}
+                                            className="max-w-xs mx-auto rounded-lg mb-4"
+                                            onError={(e) => {
+                                                console.warn('Failed to load back image:', currentCard.imageUrl);
+                                                e.currentTarget.style.display = 'none';
+                                            }}
+                                        />
                                     )}
 
                                     {/* ✅ Tags access is now safe */}

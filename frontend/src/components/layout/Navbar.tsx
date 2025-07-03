@@ -6,155 +6,171 @@
  * Main navigation bar with user profile, search, and menu
  */
 
-import {
-  Bars3Icon,
-  BellIcon,
-  MagnifyingGlassIcon,
-  UserCircleIcon
-} from '@heroicons/react/24/outline';
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { logout } from '../../services/auth';
-import { User } from '../../types';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
-interface NavbarProps {
-  currentUser: User | null;
-  onMenuClick: () => void;
-}
-
-const Navbar: React.FC<NavbarProps> = ({ currentUser, onMenuClick }) => {
+const Navbar: React.FC = () => {
+  // Fix: Use the correct property name from AuthContext
+  const { currentUser, logout } = useAuth(); // Changed from 'user' to 'currentUser'
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+  // Check if current page is a question/exercise page
+  const isQuestionPage = location.pathname.includes('/questions') ||
+    location.pathname.includes('/exercises');
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
+  // Compact navbar for question pages
+  if (isQuestionPage) {
+    return (
+      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-12"> {/* Reduced height from 16 to 12 */}
+            {/* Logo - Compact version */}
+            <Link to="/dashboard" className="flex items-center space-x-2">
+              <span className="text-lg font-bold text-blue-600">LeEnglish</span>
+              <span className="text-xs text-gray-500">TOEIC Platform</span>
+            </Link>
+
+            {/* Quick actions */}
+            <div className="flex items-center space-x-3">
+              {/* Search - Hidden on mobile */}
+              <div className="hidden md:block">
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="w-48 px-3 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* User menu - Compact */}
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-700 hidden sm:block">
+                  {currentUser?.username || currentUser?.email || 'User'}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm text-gray-600 hover:text-gray-900 px-2 py-1 rounded"
+                  aria-label="Logout"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+  }
+
+  // Full navbar for other pages
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200 fixed w-full top-0 z-50">
+    <nav className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Left Side */}
-          <div className="flex items-center">            {currentUser && (
-            <button
-              onClick={onMenuClick}
-              className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 lg:hidden"
-              aria-label="Open main menu"
-            >
-              <Bars3Icon className="h-6 w-6" />
-            </button>
-          )}
+          {/* Logo */}
+          <Link to="/dashboard" className="flex items-center space-x-3">
+            <div className="flex-shrink-0">
+              <span className="text-2xl font-bold text-blue-600">LeEnglish</span>
+            </div>
+            <span className="text-sm text-gray-500">TOEIC Platform</span>
+          </Link>
 
-            <Link to="/" className="flex items-center">
-              <div className="text-2xl font-bold text-gradient">
-                LeEnglish
-              </div>
-              <span className="ml-2 text-sm text-gray-500 hidden sm:block">
-                TOEIC Platform
-              </span>
+          {/* Navigation links */}
+          <div className="hidden md:flex items-center space-x-8">
+            <Link
+              to="/dashboard"
+              className={`text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium ${location.pathname === '/dashboard' ? 'text-blue-600 bg-blue-50' : ''
+                }`}
+            >
+              Dashboard
+            </Link>
+            <Link
+              to="/lessons"
+              className={`text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium ${location.pathname.includes('/lessons') ? 'text-blue-600 bg-blue-50' : ''
+                }`}
+            >
+              Lessons
+            </Link>
+            <Link
+              to="/flashcards"
+              className={`text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium ${location.pathname.includes('/flashcards') ? 'text-blue-600 bg-blue-50' : ''
+                }`}
+            >
+              Flashcards
+            </Link>
+            <Link
+              to="/progress"
+              className={`text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium ${location.pathname.includes('/progress') ? 'text-blue-600 bg-blue-50' : ''
+                }`}
+            >
+              Progress
             </Link>
           </div>
 
-          {/* Center - Search */}
-          {currentUser && (
-            <div className="flex-1 max-w-lg mx-4">
+          {/* Search and user menu */}
+          <div className="flex items-center space-x-4">
+            {/* Search */}
+            <div className="hidden md:block">
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-                </div>
                 <input
                   type="text"
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Search lessons, exercises..."
+                  className="w-64 px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+                <svg
+                  className="absolute left-3 top-2.5 h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
               </div>
             </div>
-          )}
 
-          {/* Right Side */}
-          <div className="flex items-center space-x-4">
-            {currentUser ? (
-              <>                {/* Notifications */}
-                <button
-                  className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                  aria-label="View notifications"
-                >
-                  <BellIcon className="h-6 w-6" />
-                </button>
+            {/* Notifications */}
+            <button
+              className="relative text-gray-600 hover:text-gray-900 p-2"
+              aria-label="View notifications"
+              title="Notifications"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5-5v-5a3 3 0 00-6 0v5l-5 5h5a3 3 0 006 0z" />
+              </svg>
+              {/* Notification badge */}
+              <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                3
+              </span>
+            </button>
 
-                {/* Profile Dropdown */}
-                <div className="relative group">                  <button className="flex items-center space-x-3 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                  {currentUser.profilePicture ? (
-                    <img
-                      className="h-8 w-8 rounded-full"
-                      src={currentUser.profilePicture}
-                      alt={currentUser.fullName}
-                    />
-                  ) : (
-                    <UserCircleIcon className="h-8 w-8 text-gray-400" />
-                  )}
-                  <span className="hidden md:block text-gray-700 font-medium">
-                    {currentUser.fullName}
+            {/* User menu */}
+            <div className="flex items-center space-x-3">
+              {/* User avatar */}
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">
+                    {currentUser?.username?.[0]?.toUpperCase() || currentUser?.email?.[0]?.toUpperCase() || 'U'}
                   </span>
-                </button>
-
-                  {/* Dropdown Menu */}
-                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                    <div className="py-1">
-                      <Link
-                        to="/profile"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Your Profile
-                      </Link>
-                      <Link
-                        to="/settings"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Settings
-                      </Link>
-                      {currentUser.role === 'ADMIN' && (
-                        <>
-                          <div className="border-t border-gray-100"></div>
-                          <Link
-                            to="/admin/users"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            Admin Panel
-                          </Link>
-                        </>
-                      )}
-                      <div className="border-t border-gray-100"></div>
-                      <button
-                        onClick={handleLogout}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Sign out
-                      </button>
-                    </div>
-                  </div>
                 </div>
-              </>
-            ) : (
-              <div className="flex items-center space-x-4">
-                <Link
-                  to="/login"
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  to="/register"
-                  className="btn-primary"
-                >
-                  Get started
-                </Link>
+                <span className="text-sm text-gray-700 hidden sm:block">
+                  {currentUser?.username || currentUser?.email || 'User'}
+                </span>
               </div>
-            )}
+
+              <button
+                onClick={handleLogout}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                aria-label="Logout from account"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </div>

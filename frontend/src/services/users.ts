@@ -2,20 +2,24 @@
  * ================================================================
  * USER SERVICE
  * ================================================================
- * 
+ *
  * Handles user-related API operations
  * Implements RBAC authorization checks
  */
 
 import {
-    ApiResponse,
-    DifficultyLevel,
-    Gender,
-    PaginatedResponse,
-    Role,
-    User
-} from '../types';
-import apiClient, { buildQueryParams, extractData, handleApiError } from './api';
+  ApiResponse,
+  DifficultyLevel,
+  Gender,
+  PaginatedResponse,
+  Role,
+  User,
+} from "../types";
+import apiClient, {
+  buildQueryParams,
+  extractData,
+  handleApiError,
+} from "./api";
 
 // ========== USER CRUD OPERATIONS ==========
 
@@ -31,7 +35,9 @@ export const getUsers = async (params: {
 }): Promise<PaginatedResponse<User>> => {
   try {
     const queryParams = buildQueryParams(params);
-    const response = await apiClient.get<ApiResponse<PaginatedResponse<User>>>(`/users${queryParams}`);
+    const response = await apiClient.get<ApiResponse<PaginatedResponse<User>>>(
+      `/users${queryParams}`
+    );
     return extractData(response);
   } catch (error: any) {
     const errorInfo = handleApiError(error);
@@ -56,20 +62,26 @@ export const getUserById = async (id: number): Promise<User> => {
  * Update user profile
  * Users can only update their own profile, admins can update any user
  */
-export const updateUser = async (id: number, userData: {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  gender?: Gender;
-  birthDate?: string;
-  phoneNumber?: string;
-  address?: string;
-  targetScore?: number;
-  currentLevel?: DifficultyLevel;
-  profilePicture?: string;
-}): Promise<User> => {
+export const updateUser = async (
+  id: number,
+  userData: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    gender?: Gender;
+    birthDate?: string;
+    phoneNumber?: string;
+    address?: string;
+    targetScore?: number;
+    currentLevel?: DifficultyLevel;
+    profilePicture?: string;
+  }
+): Promise<User> => {
   try {
-    const response = await apiClient.put<ApiResponse<User>>(`/users/${id}`, userData);
+    const response = await apiClient.put<ApiResponse<User>>(
+      `/users/${id}`,
+      userData
+    );
     return extractData(response);
   } catch (error: any) {
     const errorInfo = handleApiError(error);
@@ -82,7 +94,10 @@ export const updateUser = async (id: number, userData: {
  */
 export const updateUserRole = async (id: number, role: Role): Promise<User> => {
   try {
-    const response = await apiClient.put<ApiResponse<User>>(`/users/${id}/role`, { role });
+    const response = await apiClient.put<ApiResponse<User>>(
+      `/users/${id}/role`,
+      { role }
+    );
     return extractData(response);
   } catch (error: any) {
     const errorInfo = handleApiError(error);
@@ -93,9 +108,15 @@ export const updateUserRole = async (id: number, role: Role): Promise<User> => {
 /**
  * Activate/deactivate user (ADMIN only)
  */
-export const toggleUserStatus = async (id: number, isActive: boolean): Promise<User> => {
+export const toggleUserStatus = async (
+  id: number,
+  isActive: boolean
+): Promise<User> => {
   try {
-    const response = await apiClient.put<ApiResponse<User>>(`/users/${id}/status`, { isActive });
+    const response = await apiClient.put<ApiResponse<User>>(
+      `/users/${id}/status`,
+      { isActive }
+    );
     return extractData(response);
   } catch (error: any) {
     const errorInfo = handleApiError(error);
@@ -120,10 +141,15 @@ export const deleteUser = async (id: number): Promise<void> => {
 /**
  * Search users by name or email
  */
-export const searchUsers = async (query: string, limit: number = 10): Promise<User[]> => {
+export const searchUsers = async (
+  query: string,
+  limit: number = 10
+): Promise<User[]> => {
   try {
     const params = buildQueryParams({ q: query, limit });
-    const response = await apiClient.get<ApiResponse<User[]>>(`/users/search${params}`);
+    const response = await apiClient.get<ApiResponse<User[]>>(
+      `/users/search${params}`
+    );
     return extractData(response);
   } catch (error: any) {
     const errorInfo = handleApiError(error);
@@ -136,7 +162,9 @@ export const searchUsers = async (query: string, limit: number = 10): Promise<Us
  */
 export const getUsersByRole = async (role: Role): Promise<User[]> => {
   try {
-    const response = await apiClient.get<ApiResponse<User[]>>(`/users/role/${role}`);
+    const response = await apiClient.get<ApiResponse<User[]>>(
+      `/users/role/${role}`
+    );
     return extractData(response);
   } catch (error: any) {
     const errorInfo = handleApiError(error);
@@ -155,7 +183,7 @@ export const getEnums = async (): Promise<{
   difficultyLevels: Array<{ value: DifficultyLevel; label: string }>;
 }> => {
   try {
-    const response = await apiClient.get<ApiResponse<any>>('/users/enums');
+    const response = await apiClient.get<ApiResponse<any>>("/users/enums");
     return extractData(response);
   } catch (error: any) {
     const errorInfo = handleApiError(error);
@@ -168,21 +196,24 @@ export const getEnums = async (): Promise<{
 /**
  * Upload profile picture
  */
-export const uploadProfilePicture = async (id: number, file: File): Promise<string> => {
+export const uploadProfilePicture = async (
+  id: number,
+  file: File
+): Promise<string> => {
   try {
     const formData = new FormData();
-    formData.append('file', file);
-    
+    formData.append("file", file);
+
     const response = await apiClient.post<ApiResponse<{ url: string }>>(
-      `/users/${id}/profile-picture`,
+      `/api/users/${id}/profile-picture`,
       formData,
       {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       }
     );
-    
+
     const result = extractData(response);
     return result.url;
   } catch (error: any) {
@@ -208,7 +239,9 @@ export const deleteProfilePicture = async (id: number): Promise<void> => {
 /**
  * Get user learning statistics
  */
-export const getUserStats = async (id: number): Promise<{
+export const getUserStats = async (
+  id: number
+): Promise<{
   totalLessonsCompleted: number;
   totalExercisesCompleted: number;
   averageScore: number;
@@ -221,7 +254,10 @@ export const getUserStats = async (id: number): Promise<{
   partBreakdown: any;
 }> => {
   try {
-    const response = await apiClient.get<ApiResponse<any>>(`/users/${id}/stats`);
+    // Use a consistent API path
+    const response = await apiClient.get<ApiResponse<any>>(
+      `/api/users/${id}/stats`
+    );
     return extractData(response);
   } catch (error: any) {
     const errorInfo = handleApiError(error);
@@ -234,14 +270,17 @@ export const getUserStats = async (id: number): Promise<{
 /**
  * Bulk update users (ADMIN only)
  */
-export const bulkUpdateUsers = async (userIds: number[], updates: {
-  role?: Role;
-  isActive?: boolean;
-}): Promise<User[]> => {
+export const bulkUpdateUsers = async (
+  userIds: number[],
+  updates: {
+    role?: Role;
+    isActive?: boolean;
+  }
+): Promise<User[]> => {
   try {
-    const response = await apiClient.put<ApiResponse<User[]>>('/users/bulk', {
+    const response = await apiClient.put<ApiResponse<User[]>>("/users/bulk", {
       userIds,
-      updates
+      updates,
     });
     return extractData(response);
   } catch (error: any) {
@@ -255,8 +294,8 @@ export const bulkUpdateUsers = async (userIds: number[], updates: {
  */
 export const bulkDeleteUsers = async (userIds: number[]): Promise<void> => {
   try {
-    await apiClient.delete<ApiResponse<void>>('/users/bulk', {
-      data: { userIds }
+    await apiClient.delete<ApiResponse<void>>("/users/bulk", {
+      data: { userIds },
     });
   } catch (error: any) {
     const errorInfo = handleApiError(error);
@@ -278,7 +317,7 @@ export const exportUsers = async (filters?: {
   try {
     const queryParams = buildQueryParams(filters || {});
     const response = await apiClient.get(`/users/export${queryParams}`, {
-      responseType: 'blob'
+      responseType: "blob",
     });
     return response.data;
   } catch (error: any) {
@@ -292,7 +331,9 @@ export const exportUsers = async (filters?: {
 /**
  * Check if username is available
  */
-export const checkUsernameAvailability = async (username: string): Promise<boolean> => {
+export const checkUsernameAvailability = async (
+  username: string
+): Promise<boolean> => {
   try {
     const response = await apiClient.get<ApiResponse<{ available: boolean }>>(
       `/users/check-username?username=${encodeURIComponent(username)}`
@@ -308,13 +349,55 @@ export const checkUsernameAvailability = async (username: string): Promise<boole
 /**
  * Check if email is available
  */
-export const checkEmailAvailability = async (email: string): Promise<boolean> => {
+export const checkEmailAvailability = async (
+  email: string
+): Promise<boolean> => {
   try {
     const response = await apiClient.get<ApiResponse<{ available: boolean }>>(
       `/users/check-email?email=${encodeURIComponent(email)}`
     );
     const result = extractData(response);
     return result.available;
+  } catch (error: any) {
+    const errorInfo = handleApiError(error);
+    throw new Error(errorInfo.message);
+  }
+};
+
+/**
+ * Get user profile by ID
+ */
+export const getUserProfile = async (id: number): Promise<User> => {
+  try {
+    const response = await apiClient.get<ApiResponse<User>>(`/api/users/${id}`);
+    return extractData(response);
+  } catch (error: any) {
+    const errorInfo = handleApiError(error);
+    throw new Error(errorInfo.message);
+  }
+};
+
+/**
+ * Update user profile with simplified data
+ */
+export const updateUserProfile = async (
+  id: number,
+  profileData: {
+    fullName?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phoneNumber?: string;
+    address?: string;
+    targetScore?: number;
+  }
+): Promise<User> => {
+  try {
+    const response = await apiClient.put<ApiResponse<User>>(
+      `/api/users/${id}`,
+      profileData
+    );
+    return extractData(response);
   } catch (error: any) {
     const errorInfo = handleApiError(error);
     throw new Error(errorInfo.message);

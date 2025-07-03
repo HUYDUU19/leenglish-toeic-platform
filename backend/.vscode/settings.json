@@ -6,5 +6,6 @@
         "**/.project": true,
         "**/.settings": true,
         "**/.factorypath": true
-    }
+    },
+    "cmake.ignoreCMakeListsMissing": true
 }

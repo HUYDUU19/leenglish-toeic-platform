@@ -16,6 +16,8 @@ import api from "./api";
 const TOKEN_KEY = "toeic_access_token";
 const REFRESH_TOKEN_KEY = "toeic_refresh_token";
 const USER_KEY = "toeic_current_user";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/api";
 
 // ================================================================
 // TYPES
@@ -35,6 +37,12 @@ export interface AuthResponse {
 }
 
 // ================================================================
+// GLOBAL VARIABLES
+// ================================================================
+
+let refreshInterval: NodeJS.Timeout | null = null;
+
+// ================================================================
 // TOKEN MANAGEMENT
 // ================================================================
 
@@ -44,15 +52,28 @@ export const setToken = (token: string): void => {
 };
 
 export const getToken = (): string | null => {
-  return localStorage.getItem(TOKEN_KEY) || localStorage.getItem("authToken");
+  // Try new key first, then fallback to old keys
+  const token =
+    localStorage.getItem(TOKEN_KEY) ||
+    localStorage.getItem("authToken") ||
+    localStorage.getItem("accessToken");
+
+  if (token) {
+    console.log("🎫 Retrieved token from localStorage");
+  }
+  return token;
 };
 
 export const setRefreshToken = (refreshToken: string): void => {
   localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+  localStorage.setItem("refreshToken", refreshToken); // For compatibility
 };
 
 export const getRefreshToken = (): string | null => {
-  return localStorage.getItem(REFRESH_TOKEN_KEY);
+  return (
+    localStorage.getItem(REFRESH_TOKEN_KEY) ||
+    localStorage.getItem("refreshToken")
+  );
 };
 
 export const removeToken = (): void => {
@@ -61,6 +82,9 @@ export const removeToken = (): void => {
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem("authToken"); // For backward compatibility
   localStorage.removeItem("currentUser"); // For backward compatibility
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("user");
   localStorage.removeItem("tokenExpiry"); // For backward compatibility
 };
 
@@ -75,13 +99,14 @@ export const setCurrentUser = (user: User): void => {
 
 export const getCurrentUser = (): User | null => {
   try {
-    // Ưu tiên lấy từ key mới
+    // Try new key first, then fallback to old key
     const userStr =
-      localStorage.getItem("toeic_current_user") ||
-      localStorage.getItem("currentUser");
+      localStorage.getItem(USER_KEY) || localStorage.getItem("currentUser");
+
     if (!userStr) return null;
 
     const user = JSON.parse(userStr);
+    console.log("📱 Retrieved user from localStorage:", user);
 
     // Add computed isPremium property
     return {
@@ -89,8 +114,8 @@ export const getCurrentUser = (): User | null => {
       isPremium: user.membershipType === "PREMIUM" || user.role === "ADMIN",
     };
   } catch (error) {
-    console.error("Error parsing user from localStorage:", error);
-    localStorage.removeItem("toeic_current_user");
+    console.error("❌ Error parsing user from localStorage:", error);
+    localStorage.removeItem(USER_KEY);
     localStorage.removeItem("currentUser");
     return null;
   }
@@ -124,6 +149,7 @@ export const isAuthenticated = (): boolean => {
       return false;
     }
 
+    console.log("🔍 Authentication check: true");
     return true;
   } catch (error) {
     console.error("🔑 Error checking token validity:", error);
@@ -149,71 +175,137 @@ export const isTokenExpiringSoon = (): boolean => {
 };
 
 // ================================================================
+// AUTO REFRESH MECHANISM
+// ================================================================
+
+export const startAutoRefresh = (): void => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+  }
+
+  console.log("🔄 Starting auto-refresh timer");
+
+  // Refresh token every 55 minutes (tokens usually expire in 1 hour)
+  refreshInterval = setInterval(async () => {
+    try {
+      console.log("🔄 Auto-refreshing token...");
+      await refreshAuthToken();
+    } catch (error) {
+      console.error("❌ Auto-refresh failed:", error);
+      // If refresh fails, user will be logged out on next API call
+    }
+  }, 55 * 60 * 1000); // 55 minutes
+};
+
+export const stopAutoRefresh = (): void => {
+  if (refreshInterval) {
+    console.log("⏹️ Stopping auto-refresh timer");
+    clearInterval(refreshInterval);
+    refreshInterval = null;
+  }
+};
+
+// ================================================================
+// TOKEN REFRESH
+// ================================================================
+
+export const refreshAuthToken = async (): Promise<string | null> => {
+  try {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+      throw new Error("No refresh token available");
+    }
+
+    console.log("🔄 Refreshing auth token...");
+
+    const response = await api.post("/auth/refresh", {
+      refreshToken: refreshToken,
+    });
+
+    if (response.data && response.data.accessToken) {
+      // Update stored tokens
+      setToken(response.data.accessToken);
+
+      if (response.data.refreshToken) {
+        setRefreshToken(response.data.refreshToken);
+      }
+
+      console.log("✅ Token refreshed successfully");
+      return response.data.accessToken;
+    } else {
+      throw new Error("Invalid refresh response - missing accessToken");
+    }
+  } catch (error: any) {
+    console.error("❌ Token refresh error:", error);
+    removeToken(); // Clear invalid tokens
+    throw error;
+  }
+};
+
+// ================================================================
 // AUTH ACTIONS
 // ================================================================
 
+// ✅ SỬA: Hàm login chính - sử dụng LoginRequest interface
 export const login = async (
   credentials: LoginRequest
 ): Promise<LoginResponse> => {
   try {
-    console.log("🔐 Attempting login for:", credentials.username);
+    // Only log in development mode
+    if (process.env.NODE_ENV === "development") {
+      console.log("� Login attempt for:", credentials.username);
+    }
 
     const response = await api.post("/auth/login", credentials);
     const loginData = response.data;
 
-    console.log("✅ Login response received:", {
-      hasAccessToken: !!loginData.accessToken,
-      hasUser: !!loginData.user,
-      username: loginData.user?.username,
-    });
-
     // Store authentication data
     if (loginData.accessToken) {
       setToken(loginData.accessToken);
-      console.log("✅ Access token stored");
+      if (process.env.NODE_ENV === "development") {
+        console.log("✅ Login successful");
+      }
     }
 
     if (loginData.refreshToken) {
       setRefreshToken(loginData.refreshToken);
-      console.log("✅ Refresh token stored");
     }
 
     if (loginData.user) {
       setCurrentUser(loginData.user);
-      console.log("✅ User data stored:", loginData.user.username);
     }
 
-    console.log("✅ Login successful and data persisted");
     return loginData;
   } catch (error: any) {
     console.error("❌ Login failed:", error);
 
-    // Handle different error types
-    if (error.message?.includes("timeout")) {
+    // ✅ SỬA: Better error handling with specific messages
+    if (error.response) {
+      const status = error.response.status;
+      const message = error.response.data?.message || "Login failed";
+
+      console.error(`❌ Server error ${status}:`, message);
+
+      if (status === 401) {
+        throw new Error("Tên đăng nhập hoặc mật khẩu không đúng");
+      } else if (status === 404) {
+        throw new Error(
+          "Dịch vụ đăng nhập không tìm thấy. Vui lòng kiểm tra server backend."
+        );
+      } else if (status === 500) {
+        throw new Error("Lỗi server nội bộ. Vui lòng thử lại sau.");
+      } else {
+        throw new Error(message);
+      }
+    } else if (error.request) {
+      console.error("❌ Network error:", error.request);
       throw new Error(
-        "Login request timed out. Please check your internet connection and try again."
+        "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng."
       );
+    } else {
+      console.error("❌ Unknown error:", error.message);
+      throw new Error("Đã xảy ra lỗi không mong muốn");
     }
-
-    if (error.response?.status === 401) {
-      throw new Error("Invalid username or password");
-    }
-
-    if (error.response?.status === 404) {
-      throw new Error(
-        "Login service not found. Please check if the backend server is running."
-      );
-    }
-
-    if (error.code === "ERR_NETWORK") {
-      throw new Error(
-        "Cannot connect to server. Please check if the backend is running on http://localhost:8080"
-      );
-    }
-
-    throw new Error(
-      error.response?.data?.message || error.message || "Login failed"
-    );
   }
 };
 
@@ -249,38 +341,10 @@ export const logout = async (): Promise<void> => {
     // Always clear local storage
     removeToken();
     removeCurrentUser();
-    console.log("✅ Local data cleared");
-  }
-};
-
-// ================================================================
-// TOKEN REFRESH
-// ================================================================
-
-export const refreshAuthToken = async (): Promise<string | null> => {
-  try {
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) {
-      throw new Error("No refresh token available");
-    }
-
-    console.log("🔄 Refreshing auth token...");
-    const response = await api.post("/auth/refresh", {
-      refreshToken: refreshToken,
-    });
-
-    const newToken = response.data.accessToken;
-    if (newToken) {
-      setToken(newToken);
-      console.log("✅ Token refreshed successfully");
-      return newToken;
-    }
-
-    return null;
-  } catch (error) {
-    console.error("❌ Token refresh failed:", error);
-    removeToken(); // Clear invalid tokens
-    return null;
+    stopAutoRefresh();
+    // Force reload to reset app state and AuthContext
+    window.location.href = "/auth/login";
+    console.log("✅ Local data cleared and redirected to login");
   }
 };
 
@@ -331,37 +395,6 @@ export const canEditUserProfile = (targetUserId: number): boolean => {
 };
 
 // ================================================================
-// AUTO REFRESH MECHANISM
-// ================================================================
-
-let refreshInterval: NodeJS.Timeout | null = null;
-
-export const startAutoRefresh = (): void => {
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
-  }
-
-  refreshInterval = setInterval(async () => {
-    if (isAuthenticated() && isTokenExpiringSoon()) {
-      try {
-        await refreshAuthToken();
-        console.log("🔄 Token refreshed automatically");
-      } catch (error) {
-        console.error("❌ Failed to refresh token automatically:", error);
-        // Don't auto-logout here, let user handle it
-      }
-    }
-  }, 60000); // Check every minute
-};
-
-export const stopAutoRefresh = (): void => {
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
-    refreshInterval = null;
-  }
-};
-
-// ================================================================
 // PASSWORD MANAGEMENT
 // ================================================================
 
@@ -407,4 +440,29 @@ export const resetPassword = async (
     console.error("❌ Password reset failed:", error);
     throw new Error(error.response?.data?.message || "Password reset failed");
   }
+};
+
+// ================================================================
+// UTILITY FUNCTIONS
+// ================================================================
+
+// Logout helper
+export const clearAuthData = () => {
+  console.log("🧹 Clearing auth data...");
+  removeToken();
+  removeCurrentUser();
+  stopAutoRefresh();
+};
+
+// Export commonly used functions for backward compatibility
+export {
+  // Main auth functions
+  login as authenticateUser,
+  // Token functions
+  getToken as getAuthToken,
+  // User functions
+  getCurrentUser as getUser,
+  setToken as setAuthToken,
+  setCurrentUser as setUser,
+  logout as signOut,
 };

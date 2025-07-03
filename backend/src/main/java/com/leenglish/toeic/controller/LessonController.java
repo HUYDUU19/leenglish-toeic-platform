@@ -1,16 +1,29 @@
 package com.leenglish.toeic.controller;
 
-import com.leenglish.toeic.domain.Lesson;
-import com.leenglish.toeic.dto.LessonDto;
-import com.leenglish.toeic.service.LessonService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.leenglish.toeic.domain.Exercise;
+import com.leenglish.toeic.domain.Lesson;
+import com.leenglish.toeic.dto.ExerciseDto;
+import com.leenglish.toeic.dto.LessonDto;
+import com.leenglish.toeic.service.LessonService;
 
 @RestController
 @RequestMapping("/api/lessons")
@@ -29,8 +42,9 @@ public class LessonController {
     }
 
     @GetMapping
-    public ResponseEntity<List<LessonDto>> getAllLessons() {
-        return ResponseEntity.ok().body(lessonService.findAllLessonsAsDto());
+    public ResponseEntity<List<Lesson>> getAllLessons() {
+        List<Lesson> lessons = lessonService.getAllLessons();
+        return ResponseEntity.ok(lessons);
     }
 
     @PostMapping
@@ -111,5 +125,61 @@ public class LessonController {
                 .map(lessonService::convertToDto)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{lessonId}/exercises")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<ExerciseDto>> getExercisesByLessonId(@PathVariable Long lessonId) {
+        List<Exercise> exercises = lessonService.getExercisesByLessonId(lessonId);
+        List<ExerciseDto> exerciseDtos = exercises.stream()
+                .map(this::convertExerciseToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(exerciseDtos);
+    }
+
+    @GetMapping("/{lessonId}/exercises/{exerciseId}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<ExerciseDto> getExerciseById(@PathVariable Long lessonId, @PathVariable Long exerciseId) {
+        List<Exercise> exercises = lessonService.getExercisesByLessonId(lessonId);
+        Exercise exercise = exercises.stream()
+                .filter(ex -> ex.getId().equals(exerciseId))
+                .findFirst()
+                .orElse(null);
+
+        if (exercise == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(convertExerciseToDto(exercise));
+    }
+
+    private ExerciseDto convertExerciseToDto(Exercise exercise) {
+        ExerciseDto dto = new ExerciseDto();
+        dto.setId(exercise.getId());
+        dto.setTitle(exercise.getTitle());
+        dto.setDescription(exercise.getDescription());
+        dto.setType(exercise.getType());
+        dto.setDifficulty(exercise.getDifficulty() != null ? exercise.getDifficulty() : exercise.getDifficultyLevel());
+
+        // Convert timeLimitSeconds to minutes for duration
+        if (exercise.getTimeLimitSeconds() != null) {
+            dto.setDuration(exercise.getTimeLimitSeconds() / 60);
+        } else {
+            dto.setDuration(30); // Default 30 minutes
+        }
+
+        dto.setQuestionsCount(exercise.getQuestions() != null ? exercise.getQuestions().size() : 0);
+        dto.setIsCompleted(false); // TODO: Implement user progress tracking
+        dto.setIsLocked(false); // TODO: Implement exercise locking logic
+        dto.setPoints(exercise.getPoints() != null ? exercise.getPoints() : 0);
+
+        // Also set the original DTO fields for compatibility
+        dto.setTimeLimit(dto.getDuration());
+        dto.setTotalQuestions(dto.getQuestionsCount());
+        dto.setIsActive(exercise.getIsActive());
+        dto.setCreatedAt(exercise.getCreatedAt());
+        dto.setUpdatedAt(exercise.getUpdatedAt());
+
+        return dto;
     }
 }

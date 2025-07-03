@@ -1,22 +1,33 @@
 package com.leenglish.toeic.controller;
 
-import com.leenglish.toeic.domain.User;
-import com.leenglish.toeic.service.UserService;
-import com.leenglish.toeic.service.AuthorizationService;
-import com.leenglish.toeic.enums.Role;
-import com.leenglish.toeic.enums.Gender;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Map;
-import java.util.HashMap;
+import com.leenglish.toeic.domain.User;
+import com.leenglish.toeic.enums.Gender;
+import com.leenglish.toeic.enums.Role;
+import com.leenglish.toeic.service.AuthorizationService;
+import com.leenglish.toeic.service.UserService;
 
 /**
  * ================================================================
@@ -543,6 +554,78 @@ public class UserController {
 
         public void setCountry(String country) {
             this.country = country;
+        }
+    }
+    
+
+    /**
+     * POST /api/users/register - Đăng ký tài khoản mới
+     * PUBLIC: Ai cũng có thể đăng ký
+     */
+    @PostMapping("/register")
+    public ResponseEntity<?> registerUser(@RequestBody RegisterUserRequest request) {
+        try {
+            // Kiểm tra username/email đã tồn tại chưa
+            if (userService.existsByUsername(request.getUsername())) {
+                return ResponseEntity.badRequest().body("Username already exists");
+            }
+            if (userService.existsByEmail(request.getEmail())) {
+                return ResponseEntity.badRequest().body("Email already exists");
+            }
+
+            // Tạo user mới với role USER mặc định
+            User newUser = userService.createUser(
+                    request.getUsername(),
+                    request.getEmail(),
+                    request.getPassword(),
+                    request.getFullName(),
+                    Role.USER);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error registering user: " + e.getMessage());
+        }
+    }
+
+    // DTO cho đăng ký user
+    public static class RegisterUserRequest {
+        private String username;
+        private String email;
+        private String password;
+        private String fullName;
+
+        // Getters/setters
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getFullName() {
+            return fullName;
+        }
+
+        public void setFullName(String fullName) {
+            this.fullName = fullName;
         }
     }
 }

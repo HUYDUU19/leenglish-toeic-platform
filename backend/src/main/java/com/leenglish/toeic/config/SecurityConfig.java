@@ -1,7 +1,5 @@
 package com.leenglish.toeic.config;
 
-import java.util.Arrays;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,9 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.leenglish.toeic.security.JwtAuthenticationEntryPoint;
 import com.leenglish.toeic.security.JwtAuthenticationFilter;
@@ -32,13 +28,17 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final UserDetailsService userDetailsService;
+    private final CorsConfigurationSource corsConfigurationSource;
 
     @Autowired
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
-            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint, UserDetailsService userDetailsService) {
+            JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,
+            UserDetailsService userDetailsService,
+            CorsConfigurationSource corsConfigurationSource) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
         this.userDetailsService = userDetailsService;
+        this.corsConfigurationSource = corsConfigurationSource;
     }
 
     @Bean
@@ -62,7 +62,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
@@ -71,6 +71,13 @@ public class SecurityConfig {
                         // ================================================================
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/audio/**").permitAll() // Audio files
+                        .requestMatchers("/images/**").permitAll() // Image files
+                        .requestMatchers("/static/**").permitAll() // Static files
+                        // ✅ MEDIA FILES - Make them public
+                        .requestMatchers(HttpMethod.GET, "/files/**").permitAll()
+                        .requestMatchers(HttpMethod.HEAD, "/files/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/files/**").permitAll()
                         .requestMatchers("/api/users/register").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
@@ -101,6 +108,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/flashcards/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/flashcards/test").permitAll()
 
+                        // Public flashcard-sets endpoints - OPEN FOR PUBLIC ACCESS
+                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets/**").permitAll()
+
                         // Legacy public endpoints (for backward compatibility)
                         .requestMatchers(HttpMethod.GET, "/api/flashcards/sets").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/flashcards/sets/search").permitAll()
@@ -130,20 +141,16 @@ public class SecurityConfig {
                         .authenticated()
 
                         // ================================================================
-                        // AUTHENTICATED FLASHCARD ENDPOINTS (NEW)
+                        // AUTHENTICATED FLASHCARD ENDPOINTS (SPECIFIC ACTIONS ONLY)
                         // ================================================================
-                        // Flashcard sets
-                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets/{id}").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets/{id}/flashcards").authenticated()
+                        // Only specific actions that require authentication
                         .requestMatchers(HttpMethod.POST, "/api/flashcard-sets/{id}/view").authenticated() // Track
                                                                                                            // views
+                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets/my").authenticated() // User's own sets
+                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets/accessible").authenticated() // Accessible
+                                                                                                           // sets
 
-                        // User's flashcard sets
-                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets/my").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/flashcard-sets/accessible").authenticated()
-
-                        // Flashcard study endpoints
+                        // Flashcard study endpoints (require authentication)
                         .requestMatchers(HttpMethod.GET, "/api/flashcards/study/{setId}").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/flashcards/study/{setId}/answer").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/flashcards/study/{setId}/progress").authenticated()
@@ -194,10 +201,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/progress/**").hasAnyRole("USER", "ADMIN")
 
                         // Legacy catch-all patterns (maintain backward compatibility)
-                        .requestMatchers("/api/lessons/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/exercises/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/questions/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/flashcards/**").hasAnyRole("USER", "ADMIN")
+                        // .requestMatchers("/api/lessons/**").hasAnyRole("USER", "ADMIN")
+                        // .requestMatchers("/api/exercises/**").hasAnyRole("USER", "ADMIN")
+                        // .requestMatchers("/api/questions/**").hasAnyRole("USER", "ADMIN")
+                        // .requestMatchers("/api/flashcards/**").hasAnyRole("USER", "ADMIN")
 
                         // All other requests require authentication
                         .anyRequest().authenticated())
@@ -205,30 +212,5 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:3000",
-                "http://localhost:3001",
-                "http://127.0.0.1:3000",
-                "http://127.0.0.1:3001"));
-
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-
-        configuration.setExposedHeaders(Arrays.asList(
-                "Access-Control-Allow-Origin",
-                "Access-Control-Allow-Credentials"));
-
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
     }
 }

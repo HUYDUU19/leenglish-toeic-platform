@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 const UpgradePremiumPage: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { user: currentUser } = useAuth();
+    const {  currentUser } = useAuth();
 
     const state = location.state as { from?: string; requestedLesson?: any };
 

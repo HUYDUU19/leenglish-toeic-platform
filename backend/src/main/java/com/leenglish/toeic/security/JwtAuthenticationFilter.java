@@ -1,13 +1,9 @@
 package com.leenglish.toeic.security;
 
-import com.leenglish.toeic.service.JwtService;
-import com.leenglish.toeic.service.UserService;
-import com.leenglish.toeic.domain.User;
-import com.leenglish.toeic.dto.UserDto;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,9 +13,14 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Optional;
+import com.leenglish.toeic.dto.UserDto;
+import com.leenglish.toeic.service.JwtService;
+import com.leenglish.toeic.service.UserService;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -89,12 +90,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
 
+        // Chỉ skip JWT filter cho các endpoint public
+        if ((method.equals("POST") && path.equals("/api/auth/login")) ||
+                (method.equals("POST") && path.equals("/api/auth/register"))) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Skipping JWT filter for: " + method + " " + path);
+            }
+            return true;
+        }
+
         // Log which paths are being checked
         logger.info("Checking shouldNotFilter for: " + method + " " + path);
 
         boolean shouldSkip =
-                // Basic auth endpoints
-                path.startsWith("/api/auth/") ||
+                // Static files - SKIP JWT FILTER
+                path.startsWith("/audio/") ||
+                        path.startsWith("/images/") ||
+                        path.startsWith("/files/") ||
+                        path.startsWith("/static/") ||
+
+                        // Basic auth endpoints
+                        path.startsWith("/api/auth/") ||
                         path.equals("/api/health") ||
                         path.startsWith("/api/users/register") ||
 
@@ -102,13 +118,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         path.startsWith("/api/lessons/free") ||
                         path.startsWith("/api/exercises/free") ||
 
-                        // ================================================================
-                        // PUBLIC FLASHCARD ENDPOINTS - NEWLY ADDED
-                        // ================================================================
+                        // PUBLIC FLASHCARD ENDPOINTS
                         (method.equals("GET") && path.equals("/api/flashcards/sets")) ||
                         (method.equals("GET") && path.equals("/api/flashcards/free")) ||
                         (method.equals("GET") && path.startsWith("/api/flashcards/free/")) ||
                         (method.equals("GET") && path.equals("/api/flashcards/test")) ||
+                        (method.equals("GET") && path.equals("/api/flashcard-sets")) ||
+                        (method.equals("GET") && path.startsWith("/api/flashcard-sets/")) ||
+                        (method.equals("GET") && path.equals("/api/flashcard-sets/public")) ||
+                        (method.equals("GET") && path.startsWith("/api/flashcard-sets/public/")) ||
+                        (method.equals("GET") && path.startsWith("/api/flashcard-sets/search")) ||
+                        (method.equals("GET") && path.startsWith("/api/flashcard-sets/category/")) ||
+                        (method.equals("GET") && path.startsWith("/api/flashcard-sets/difficulty/")) ||
                         (method.equals("GET") && path.startsWith("/api/flashcards/set/")) ||
                         (method.equals("GET") && path.startsWith("/api/flashcards/level/")) ||
                         (method.equals("GET") && path.startsWith("/api/flashcards/category/")) ||

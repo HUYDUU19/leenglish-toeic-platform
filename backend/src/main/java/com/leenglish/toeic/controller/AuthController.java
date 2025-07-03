@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,8 +17,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import com.leenglish.toeic.dto.RegisterRequest;
+
 import com.leenglish.toeic.domain.User;
+import com.leenglish.toeic.dto.RegisterRequest;
 import com.leenglish.toeic.enums.Role;
 import com.leenglish.toeic.service.JwtService;
 import com.leenglish.toeic.service.UserService;
@@ -46,7 +46,6 @@ public class AuthController {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            // Use either username or email for login
             String loginIdentifier = username != null ? username : email;
 
             if (loginIdentifier == null || password == null) {
@@ -55,62 +54,60 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            // Authenticate user
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginIdentifier, password)); // Get user details
+            // Lấy user từ DB (phải đúng username/email)
             Optional<User> userOptional = username != null
                     ? userService.findUserByUsername(username)
                     : userService.findUserByEmail(email);
 
-            if (userOptional.isPresent()) {
-                User user = userOptional.get();
-
-                // Check if user is active
-                if (!user.isActiveUser()) {
-                    response.put("success", false);
-                    response.put("message", "Account is not active");
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-                }
-
-                // Generate tokens
-                String accessToken = jwtService.generateAccessToken(user);
-                String refreshToken = jwtService.generateRefreshToken(user);
-                response.put("success", true);
-                response.put("message", "Login successful");
-                response.put("accessToken", accessToken);
-                response.put("refreshToken", refreshToken);
-                response.put("tokenType", "Bearer");
-                response.put("expiresIn", jwtService.getAccessTokenExpiration());
-
-                // User info with role-based redirect URL
-                Map<String, Object> userInfo = new HashMap<>();
-                userInfo.put("id", user.getId());
-                userInfo.put("username", user.getUsername());
-                userInfo.put("email", user.getEmail());
-                userInfo.put("fullName", user.getFullName());
-                userInfo.put("role", user.getRole().name());
-
-                // Add redirect URL based on role
-                String redirectUrl = "/dashboard"; // Default user dashboard
-                if ("ADMIN".equals(user.getRole().name())) {
-                    redirectUrl = "/admin/dashboard";
-                } else if ("USER".equals(user.getRole().name())) {
-                    redirectUrl = "/user/dashboard";
-                }
-                userInfo.put("redirectUrl", redirectUrl);
-
-                response.put("user", userInfo);
-
-                return ResponseEntity.ok(response);
-            } else {
+            if (userOptional.isEmpty()) {
                 response.put("success", false);
                 response.put("message", "User not found");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
+            User user = userOptional.get();
+
+            // Check if user is active
+            if (!user.isActiveUser()) {
+                response.put("success", false);
+                response.put("message", "Account is not active");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            // Authenticate user (sẽ throw nếu sai password)
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginIdentifier, password));
+
+            // Nếu tới đây là đúng password
+            String accessToken = jwtService.generateAccessToken(user);
+            String refreshToken = jwtService.generateRefreshToken(user);
+
+            response.put("success", true);
+            response.put("message", "Login successful");
+            response.put("accessToken", accessToken);
+            response.put("refreshToken", refreshToken);
+            response.put("tokenType", "Bearer");
+            response.put("expiresIn", jwtService.getAccessTokenExpiration());
+
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("id", user.getId());
+            userInfo.put("username", user.getUsername());
+            userInfo.put("email", user.getEmail());
+            userInfo.put("fullName", user.getFullName());
+            userInfo.put("role", user.getRole().name());
+            String redirectUrl = "/dashboard";
+            if ("ADMIN".equals(user.getRole().name())) {
+                redirectUrl = "/admin/dashboard";
+            } else if ("USER".equals(user.getRole().name())) {
+                redirectUrl = "/user/dashboard";
+            }
+            userInfo.put("redirectUrl", redirectUrl);
+            response.put("user", userInfo);
+
+            return ResponseEntity.ok(response);
         } catch (BadCredentialsException e) {
             response.put("success", false);
-            response.put("message", "Invalid credentials");
+            response.put("message", "Invalid username or password");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         } catch (AuthenticationException e) {
             response.put("success", false);
@@ -140,7 +137,7 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            // Check if user already exists
+            // Check if user already exists (case-insensitive)
             if (userService.findUserByUsername(username).isPresent()) {
                 response.put("success", false);
                 response.put("message", "Username already exists");
@@ -151,7 +148,13 @@ public class AuthController {
                 response.put("success", false);
                 response.put("message", "Email already exists");
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-            } // Create new user (only USER role allowed for registration)
+            }
+
+            // DEBUG: Log all existing usernames and emails for troubleshooting
+            System.out.println("DEBUG: Existing usernames:");
+            userService.getAllUsers().forEach(u -> System.out.println(u.getUsername() + " / " + u.getEmail()));
+
+            // Create new user (only USER role allowed for registration)
             User newUser = userService.createUser(
                     req.getUsername(),
                     req.getEmail(),
@@ -159,6 +162,13 @@ public class AuthController {
                     req.getFullName(),
                     Role.USER // Add the default role
             );
+
+            // Đảm bảo user đã được lưu vào DB
+            if (newUser == null || newUser.getId() == null) {
+                response.put("success", false);
+                response.put("message", "Failed to save user to database");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
 
             // Generate tokens
             String accessToken = jwtService.generateAccessToken(newUser);

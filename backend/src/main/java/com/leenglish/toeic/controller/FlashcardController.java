@@ -1,16 +1,27 @@
 package com.leenglish.toeic.controller;
 
-import com.leenglish.toeic.dto.FlashcardDto;
-import com.leenglish.toeic.dto.FlashcardSetDto;
-import com.leenglish.toeic.service.FlashcardService;
-import com.leenglish.toeic.service.FlashcardSetService;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.leenglish.toeic.dto.FlashcardDto;
+import com.leenglish.toeic.dto.FlashcardSetDto;
+import com.leenglish.toeic.service.FlashcardService;
+import com.leenglish.toeic.service.FlashcardSetService;
 
 @RestController
 @RequestMapping("/api/flashcards")
@@ -40,8 +51,8 @@ public class FlashcardController {
     @GetMapping("/sets/my")
     @PreAuthorize("hasRole('USER') or hasRole('COLLABORATOR') or hasRole('ADMIN')")
     public ResponseEntity<List<FlashcardSetDto>> getMyFlashcardSets(Authentication authentication) {
-        // Extract user ID from authentication
-        Long userId = 1L; // This should be extracted from the authenticated user
+        // Thay vì hardcode userId = 1L, sử dụng phương thức đã định nghĩa
+        Long userId = extractUserIdFromAuth(authentication);
         List<FlashcardSetDto> sets = flashcardSetService.getFlashcardSetsByUser(userId);
         return ResponseEntity.ok(sets);
     }
@@ -134,11 +145,32 @@ public class FlashcardController {
         List<FlashcardDto> flashcards = flashcardService.searchFlashcards(query);
         return ResponseEntity.ok(flashcards);
     }
-private Long extractUserIdFromAuth(Authentication authentication) {
+
+    // Lấy flashcard set (bao gồm flashcards) cho user đã đăng nhập
+    @GetMapping("/sets/{id}")
+    public ResponseEntity<FlashcardSetDto> getFlashcardSetById(@PathVariable Long id, Authentication authentication) {
+        FlashcardSetDto set = flashcardSetService.getFlashcardSetWithFlashcardsById(id, authentication);
+        if (set == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(set);
+    }
+
+    // Lấy flashcard set free (bao gồm flashcards) cho guest
+    @GetMapping("/free/{id}")
+    public ResponseEntity<FlashcardSetDto> getFreeFlashcardSetById(@PathVariable Long id) {
+        FlashcardSetDto set = flashcardSetService.getFreeFlashcardSetById(id);
+        if (set == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(set);
+    }
+
+    private Long extractUserIdFromAuth(Authentication authentication) {
         if (authentication == null || authentication.getName() == null) {
             return 1L; // Default fallback
         }
-        
+
         try {
             // Try to parse username as ID first
             return Long.parseLong(authentication.getName());
@@ -148,4 +180,51 @@ private Long extractUserIdFromAuth(Authentication authentication) {
             return 1L;
         }
     }
+
+    @GetMapping("/sets/all")
+    public ResponseEntity<List<FlashcardSetDto>> getAllFlashcardSets() {
+        try {
+            List<FlashcardSetDto> flashcardSets = flashcardSetService.getAllFlashcardSets();
+            System.out.println("📚 Returning " + flashcardSets.size() + " flashcard sets");
+            return ResponseEntity.ok(flashcardSets);
+        } catch (Exception e) {
+            System.err.println("❌ Error fetching flashcard sets: " + e.getMessage());
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+    }
+
+    // Get flashcards by set ID
+    @GetMapping("/sets/{id}/flashcards")
+    public ResponseEntity<List<FlashcardDto>> getFlashcardsBySetId(@PathVariable Long id) {
+        try {
+            List<com.leenglish.toeic.domain.Flashcard> flashcards = flashcardSetService.getFlashcardsBySetId(id);
+            List<FlashcardDto> flashcardDtos = flashcards.stream()
+                    .map(this::convertToDto)
+                    .collect(java.util.stream.Collectors.toList());
+            System.out.println("📚 Returning " + flashcardDtos.size() + " flashcards for set " + id);
+            return ResponseEntity.ok(flashcardDtos);
+        } catch (Exception e) {
+            System.err.println("❌ Error fetching flashcards for set " + id + ": " + e.getMessage());
+            return ResponseEntity.ok(new ArrayList<>());
+        }
+    }
+
+    // Convert Flashcard entity to DTO
+    private FlashcardDto convertToDto(com.leenglish.toeic.domain.Flashcard flashcard) {
+        FlashcardDto dto = new FlashcardDto();
+        dto.setId(flashcard.getId());
+        dto.setTerm(flashcard.getFrontText());
+        dto.setDefinition(flashcard.getBackText());
+        dto.setExample(flashcard.getExample());
+        dto.setAudioUrl(flashcard.getAudioUrl());
+        dto.setImageUrl(flashcard.getImageUrl());
+        dto.setLevel(flashcard.getDifficultyLevel() != null ? flashcard.getDifficultyLevel().toString() : "BEGINNER");
+        dto.setCategory(flashcard.getCategory());
+        dto.setIsActive(flashcard.getIsActive());
+        dto.setFlashcardSetId(flashcard.getFlashcardSet() != null ? flashcard.getFlashcardSet().getId() : null);
+        dto.setCreatedAt(flashcard.getCreatedAt());
+        dto.setUpdatedAt(flashcard.getUpdatedAt());
+        return dto;
+    }
+
 }

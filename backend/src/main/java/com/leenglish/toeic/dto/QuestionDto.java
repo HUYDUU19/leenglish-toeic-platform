@@ -25,6 +25,8 @@ public class QuestionDto {
     @NotBlank(message = "Question text is required")
     private String questionText;
 
+    private String questionType; // NEW FIELD
+
     // Answer Options - CHỈ A, B, C, D cho TOEIC
     private String optionA;
     private String optionB;
@@ -40,6 +42,8 @@ public class QuestionDto {
     private Integer points;
     private Integer questionOrder;
 
-    // Note: Không cần isActive, createdAt, updatedAt trong DTO
+    private Boolean isActive; // NEW FIELD
+
+    // Note: Không cần createdAt, updatedAt trong DTO
     // Chỉ dành cho internal entity management
 }

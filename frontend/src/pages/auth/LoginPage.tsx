@@ -35,12 +35,18 @@ const LoginPage: React.FC = () => {
 
     try {
       // Gọi API login, lấy user và token từ backend
-      const { user, accessToken } = await login(formData); // login là hàm gọi API trả về { user, accessToken }
-      // Lưu vào context
-      loginWithContext(user, accessToken);
-      toast.success('Login successful!');
-      const redirectTo = location.state?.from || '/';
-      navigate(redirectTo, { replace: true });
+      const result = await login(formData);
+
+      // Check if result has user and accessToken properties
+      if (result && result.user && result.accessToken) {
+        // Lưu user và token vào context
+        loginWithContext(result.user, result.accessToken);
+        toast.success('Login successful!');
+        const redirectTo = location.state?.from || '/';
+        navigate(redirectTo, { replace: true });
+      } else {
+        throw new Error('Invalid login response');
+      }
     } catch (error: any) {
       toast.error(error.message || 'Login failed');
     } finally {
@@ -127,7 +133,7 @@ const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <LoadingSpinner size="sm" color="white" />

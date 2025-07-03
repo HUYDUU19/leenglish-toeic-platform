@@ -1,14 +1,5 @@
 package com.leenglish.toeic.service;
 
-import com.leenglish.toeic.domain.Lesson;
-import com.leenglish.toeic.dto.LessonDto;
-import com.leenglish.toeic.repository.LessonRepository;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,14 +7,27 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.leenglish.toeic.domain.Exercise;
+import com.leenglish.toeic.domain.Lesson;
+import com.leenglish.toeic.dto.LessonDto;
+import com.leenglish.toeic.repository.ExerciseRepository;
+import com.leenglish.toeic.repository.LessonRepository;
+
+import jakarta.persistence.EntityNotFoundException;
+
 @Service
 public class LessonService {
 
     private final LessonRepository lessonRepository;
+    private final ExerciseRepository exerciseRepository;
 
     @Autowired
-    public LessonService(LessonRepository lessonRepository) {
+    public LessonService(LessonRepository lessonRepository, ExerciseRepository exerciseRepository) {
         this.lessonRepository = lessonRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     // Basic CRUD operations
@@ -436,5 +440,17 @@ public class LessonService {
                 .filter(lesson -> !Boolean.TRUE.equals(lesson.getIsPremium())) // Not premium
                 .filter(lesson -> lesson.getOrderIndex() != null && lesson.getOrderIndex() <= 2); // Only first 2
                                                                                                   // lessons
+    }
+
+    /**
+     * Get exercises for a specific lesson
+     */
+    public List<Exercise> getExercisesByLessonId(Long lessonId) {
+        // First verify lesson exists
+        if (!lessonRepository.existsById(lessonId)) {
+            return new ArrayList<>();
+        }
+        // Get exercises by lesson ID
+        return exerciseRepository.findByLessonIdAndIsActiveTrue(lessonId);
     }
 }

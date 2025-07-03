@@ -9,16 +9,50 @@
 import { Exercise, Lesson } from "../types";
 import api from "./api";
 
+// ✅ Helper function to process media URLs
+const processLessonMediaUrls = (lesson: Lesson): Lesson => {
+  const API_BASE_URL =
+    process.env.REACT_APP_API_BASE_URL || "http://localhost:8080";
+
+  // Process image URL
+  if (lesson.imageUrl) {
+    if (!lesson.imageUrl.startsWith("http")) {
+      lesson.imageUrl = `${API_BASE_URL}/files/images/${lesson.imageUrl}`;
+    }
+  }
+
+  // Process audio URL
+  if (lesson.audioUrl) {
+    if (!lesson.audioUrl.startsWith("http")) {
+      lesson.audioUrl = `${API_BASE_URL}/files/audio/${lesson.audioUrl}`;
+    }
+  }
+
+  // Only log in development and only once per lesson
+  if (process.env.NODE_ENV === "development") {
+    if (!lesson.imageUrl && !lesson.audioUrl) {
+      console.warn(`📋 Lesson ${lesson.id} has no media files`);
+    }
+  }
+
+  return lesson;
+};
+
 export const lessonService = {
   /**
    * Get all free lessons (public access)
    */
   getFreeLessons: async (): Promise<Lesson[]> => {
     try {
-      console.log("🔍 Fetching free lessons...");
       const response = await api.get("/lessons/free");
-      console.log("✅ Free lessons response:", response);
-      console.log("✅ Free lessons data:", response.data);
+      // Only log important events in development
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          "✅ Free lessons loaded:",
+          response.data?.length || 0,
+          "lessons"
+        );
+      }
 
       // Ensure we return an array
       if (!response.data) {
@@ -31,7 +65,10 @@ export const lessonService = {
         return [];
       }
 
-      return response.data;
+      // ✅ Process media URLs for each lesson
+      return response.data.map((lesson: Lesson) =>
+        processLessonMediaUrls(lesson)
+      );
     } catch (error: any) {
       console.error("❌ Error fetching free lessons:", error);
       console.error("❌ Error response:", error.response?.data);
@@ -44,10 +81,15 @@ export const lessonService = {
    */
   getAllLessons: async (): Promise<Lesson[]> => {
     try {
-      console.log("🔍 Fetching all lessons...");
       const response = await api.get("/lessons");
-      console.log("✅ All lessons response:", response);
-      console.log("✅ All lessons data:", response.data);
+      // Only log important events in development
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          "✅ All lessons loaded:",
+          response.data?.length || 0,
+          "lessons"
+        );
+      }
 
       // Ensure we return an array
       if (!response.data) {
@@ -60,7 +102,10 @@ export const lessonService = {
         return [];
       }
 
-      return response.data;
+      // ✅ Process media URLs for each lesson
+      return response.data.map((lesson: Lesson) =>
+        processLessonMediaUrls(lesson)
+      );
     } catch (error: any) {
       console.error("❌ Error fetching all lessons:", error);
       console.error("❌ Error response:", error.response?.data);
@@ -76,23 +121,21 @@ export const lessonService = {
       console.log(`🔍 Fetching lesson ${id}...`);
       // Try free endpoint first
       const response = await api.get(`/lessons/free/${id}`);
-      console.log(`✅ Lesson ${id} response:`, response);
-      return response.data;
+
+      // ✅ Process media URLs
+      const lesson = response.data;
+      return processLessonMediaUrls(lesson);
     } catch (error: any) {
-      console.log(
-        `⚠️ Free lesson ${id} failed, trying authenticated endpoint...`
-      );
       // If free fails, try authenticated endpoint
       if (error.response?.status === 404 || error.response?.status === 403) {
         try {
           const response = await api.get(`/lessons/${id}`);
-          console.log(`✅ Authenticated lesson ${id} response:`, response);
-          return response.data;
+
+          // ✅ Process media URLs
+          const lesson = response.data;
+          return processLessonMediaUrls(lesson);
         } catch (authError: any) {
-          console.error(
-            `❌ Authenticated lesson ${id} also failed:`,
-            authError
-          );
+          console.error(`❌ Error fetching lesson ${id}:`, authError);
           throw authError;
         }
       }

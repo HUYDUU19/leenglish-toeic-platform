@@ -15,6 +15,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import { useAuth } from '../contexts/AuthContext'; // Use AuthContext instead of direct service
+import { flashcardService } from '../services/flashcards'; // Thêm dòng này nếu chưa có
 import { lessonService } from '../services/lessons'; // Named import, not default
 import { FlashcardSet, Lesson } from '../types';
 
@@ -54,10 +55,14 @@ const HomePage: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        console.log('🔄 Fetching homepage data...');
+        // Only log in development mode
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔄 Loading homepage data...');
+        }
 
         // Fetch lessons based on authentication status
         let lessonsData: Lesson[] = [];
+        let flashcardsData: FlashcardSet[] = [];
 
         try {
           if (isAuthenticated) {
@@ -69,7 +74,6 @@ const HomePage: React.FC = () => {
           }
         } catch (error: any) {
           console.error('❌ Error fetching lessons:', error);
-          // Try fallback to free lessons
           try {
             lessonsData = await lessonService.getFreeLessons();
           } catch (fallbackError) {
@@ -78,76 +82,23 @@ const HomePage: React.FC = () => {
           }
         }
 
-        // Mock flashcards data để match backend structure
-        const flashcardsData: FlashcardSet[] = [
-          {
-            id: 1,
-            name: "Business Vocabulary", // ✅ Sử dụng name như backend
-            description: "Essential words for workplace communication",
-            difficultyLevel: 'INTERMEDIATE',
-            isPremium: false,
-            isActive: true,
-            isPublic: true,
-            estimatedTimeMinutes: 15,
-            tags: "business,vocabulary,workplace",
-            viewCount: 127,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            createdBy: 1,
-            flashcards: Array(20).fill(null),
-            title: "Business Vocabulary", // Alias for compatibility
-            totalCards: 20,
-            completedCards: 0,
-            progress: 0
-          },
-          {
-            id: 2,
-            name: "Travel & Tourism",
-            description: "Vocabulary for travel scenarios",
-            difficultyLevel: 'BEGINNER',
-            isPremium: false,
-            isActive: true,
-            isPublic: true,
-            estimatedTimeMinutes: 10,
-            tags: "travel,tourism,vacation",
-            viewCount: 89,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            createdBy: 1,
-            flashcards: Array(15).fill(null),
-            title: "Travel & Tourism",
-            totalCards: 15,
-            completedCards: 0,
-            progress: 0
-          },
-          {
-            id: 3,
-            name: "Academic English",
-            description: "Advanced vocabulary for academic contexts",
-            difficultyLevel: 'ADVANCED',
-            isPremium: true,
-            isActive: true,
-            isPublic: true,
-            estimatedTimeMinutes: 25,
-            tags: "academic,advanced,university",
-            viewCount: 45,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            createdBy: 1,
-            flashcards: Array(30).fill(null),
-            title: "Academic English",
-            totalCards: 30,
-            completedCards: 0,
-            progress: 0
-          }
-        ];
+        // Lấy flashcard sets từ backend thay vì mock
+        try {
+          flashcardsData = await flashcardService.getAllFlashcardSets();
+          console.log('✅ Flashcard sets loaded:', flashcardsData);
+        } catch (error) {
+          console.error('❌ Error fetching flashcard sets:', error);
+          flashcardsData = [];
+        }
 
-        setLessons(lessonsData);
-        setFlashcards(flashcardsData);
+        setLessons(Array.isArray(lessonsData) ? lessonsData : []);
+        setFlashcards(Array.isArray(flashcardsData) ? flashcardsData : []);
 
         console.log('✅ Homepage data loaded:', {
           lessonsCount: lessonsData.length,
-          flashcardsCount: flashcardsData.length
+          flashcardsCount: flashcardsData.length,
+          lessonsData,
+          flashcardsData,
         });
 
       } catch (error) {
@@ -158,7 +109,7 @@ const HomePage: React.FC = () => {
     };
 
     fetchData();
-  }, [isAuthenticated]); // Depend on isAuthenticated from context
+  }, [isAuthenticated, currentUser]); // Proper dependencies
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -238,22 +189,11 @@ const HomePage: React.FC = () => {
   };
 
   const handleStudyFlashcards = (setId: number) => {
-    if (!isAuthenticated) {
-      navigate('/auth/login', {
-        state: {
-          message: 'Please log in to study flashcards',
-          from: `/flashcards/study/${setId}`
-        }
-      });
-      return;
-    }
+    // Chỉ chuyển hướng sang trang study, không kiểm tra đăng nhập, không redirect login
     navigate(`/flashcards/study/${setId}`);
   };
 
-  // Handler for mobile menu click
-  const handleMenuClick = () => {
-    console.log('Menu clicked');
-  };
+  // Handler for mobile menu click is now handled in Navbar internally
 
   // Helper function to format lesson level
   const formatLessonLevel = (level: string): string => {
@@ -284,6 +224,11 @@ const HomePage: React.FC = () => {
     }
   };
 
+  // Only log in development mode when needed
+  if (process.env.NODE_ENV === 'development' && loading) {
+    console.log("🏠 HomePage loading...");
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -302,7 +247,7 @@ const HomePage: React.FC = () => {
 
   return (
     <>
-      <Navbar currentUser={currentUser} onMenuClick={handleMenuClick} />
+      <Navbar />
       <motion.div
         className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50"
         variants={containerVariants}
@@ -544,7 +489,7 @@ const HomePage: React.FC = () => {
                 <BookOpenIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No lessons available</h3>
                 <p className="text-gray-600">
-                  Lessons are being prepared. Please check back later!
+                  Lessons are being prepared. Please check back later or contact admin if this is unexpected.
                 </p>
               </motion.div>
             )}
@@ -582,7 +527,7 @@ const HomePage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <AnimatePresence>
-                {flashcards.slice(0, 3).map((set, index) => (
+                {(Array.isArray(flashcards) ? flashcards : []).slice(0, 3).map((set, index) => (
                   <motion.div
                     key={set.id}
                     className="bg-white rounded-lg shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow"
@@ -625,6 +570,7 @@ const HomePage: React.FC = () => {
                       <motion.div
                         className="flex items-center text-purple-600 font-medium hover:text-purple-700"
                         whileHover={{ x: 5 }}
+                        onClick={e => { e.stopPropagation(); handleStudyFlashcards(set.id); }}
                       >
                         Study Now
                         <ArrowRightIcon className="w-4 h-4 ml-1" />

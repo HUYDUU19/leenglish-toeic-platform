@@ -14,7 +14,7 @@ import { Lesson } from '../../types';
 
 const LessonsPage: React.FC = () => {
   const navigate = useNavigate();
-  const {  currentUser, isAuthenticated } = useAuth();
+  const { currentUser, isAuthenticated } = useAuth();
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,12 +23,14 @@ const LessonsPage: React.FC = () => {
   const [levelFilter, setLevelFilter] = useState<'ALL' | 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'>('ALL');
 
   // Utility functions
+  // Chỉ coi B2, C1, C2 là premium
   const isLessonPremium = (level: string): boolean => {
-    return ['B1', 'B2', 'C1', 'C2'].includes(level);
+    return ['B2', 'C1', 'C2'].includes(level);
   };
 
+  // A1, A2, B1 là basic cho user thường
   const isBasicLevel = (level: string): boolean => {
-    return ['A1', 'A2'].includes(level);
+    return ['A1', 'A2', 'B1'].includes(level);
   };
 
   const canAccessLesson = (lesson: Lesson): boolean => {
@@ -42,14 +44,14 @@ const LessonsPage: React.FC = () => {
       return true;
     }
 
-    // Free users (registered) can access A1-A2 lessons
+    // Free users (registered) có thể truy cập A1-B1
     if (currentUser && currentUser.membershipType === 'FREE') {
       return isBasicLevel(lesson.level);
     }
 
-    // Unregistered users can only access first 2 A1-A2 lessons
+    // Unregistered users chỉ truy cập được 2 bài đầu A1-A2
     if (!currentUser) {
-      return isBasicLevel(lesson.level) && lesson.orderIndex <= 2;
+      return ['A1', 'A2'].includes(lesson.level) && lesson.orderIndex <= 2;
     }
 
     return false;
@@ -79,73 +81,12 @@ const LessonsPage: React.FC = () => {
   };
 
   useEffect(() => {
-    const fetchLessons = async () => {
-      try {
-        setLoading(true);
-        console.log('🔄 Fetching lessons...');
-        console.log('👤 Current user:', currentUser?.username || 'guest');
-        console.log('🎫 Membership:', currentUser?.membershipType || 'none');
-
-        let allLessons: Lesson[] = [];
-
-        // Always try to get free lessons first
-        try {
-          console.log('📚 Fetching free lessons...');
-          const freeLessons = await lessonService.getFreeLessons();
-          allLessons = [...freeLessons];
-        } catch (error: any) {
-          console.error('❌ Could not fetch free lessons:', error);
-        }
-
-        // If user is authenticated, try to get all lessons
-        if (isAuthenticated) {
-          try {
-            console.log('🔐 User authenticated, fetching all lessons...');
-            const authenticatedLessons = await lessonService.getAllLessons();
-
-            // Merge and deduplicate lessons based on ID
-            const lessonMap = new Map();
-            [...allLessons, ...authenticatedLessons].forEach(lesson => {
-              lessonMap.set(lesson.id, lesson);
-            });
-            allLessons = Array.from(lessonMap.values());
-          } catch (error: any) {
-            console.error('❌ Could not fetch authenticated lessons:', error);
-          }
-        }
-
-        // Mark lessons as premium based on level
-        allLessons = allLessons.map(lesson => ({
-          ...lesson,
-          isPremium: isLessonPremium(lesson.level)
-        }));
-
-        // Sort lessons by level first, then by orderIndex
-        allLessons.sort((a, b) => {
-          const levelOrder = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-          const aLevelIndex = levelOrder.indexOf(a.level);
-          const bLevelIndex = levelOrder.indexOf(b.level);
-
-          if (aLevelIndex !== bLevelIndex) {
-            return aLevelIndex - bLevelIndex;
-          }
-
-          return a.orderIndex - b.orderIndex;
-        });
-
-        console.log('✅ Final lessons:', allLessons);
-        setLessons(allLessons);
-        setError(null);
-      } catch (err: any) {
-        console.error('❌ Error fetching lessons:', err);
-        setError(err.message || 'Failed to load lessons');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLessons();
-  }, [currentUser, isAuthenticated]);
+    setLoading(true);
+    lessonService.getAllLessons()
+      .then(data => setLessons(data))
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [isAuthenticated]);
 
   // Filter lessons
   const filteredLessons = lessons.filter(lesson => {
@@ -362,8 +303,8 @@ const LessonsPage: React.FC = () => {
                 <article
                   key={lesson.id}
                   className={`card transition-all duration-200 ${hasAccess
-                      ? 'hover:shadow-lg cursor-pointer'
-                      : 'opacity-75 cursor-not-allowed'
+                    ? 'hover:shadow-lg cursor-pointer'
+                    : 'opacity-75 cursor-not-allowed'
                     }`}
                   onClick={() => handleLessonClick(lesson)}
                 >
@@ -376,8 +317,8 @@ const LessonsPage: React.FC = () => {
                       <div className="flex flex-col gap-1">
                         {/* Level badge */}
                         <span className={`text-xs px-2 py-1 rounded-full font-medium ${isBasicLevel(lesson.level)
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-purple-100 text-purple-800'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-purple-100 text-purple-800'
                           }`}>
                           {lesson.level}
                         </span>
@@ -441,8 +382,8 @@ const LessonsPage: React.FC = () => {
                     {/* Action button */}
                     <button
                       className={`w-full text-sm ${hasAccess
-                          ? 'btn btn-primary'
-                          : 'btn btn-outline opacity-50'
+                        ? 'btn btn-primary'
+                        : 'btn btn-outline opacity-50'
                         }`}
                       onClick={(e) => {
                         e.stopPropagation();

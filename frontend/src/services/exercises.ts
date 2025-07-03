@@ -25,7 +25,7 @@ export const exerciseService = {
    */
   getExerciseQuestions: async (exerciseId: number): Promise<Question[]> => {
     try {
-      const response = await api.get(`/exercises/${exerciseId}/questions`);
+      const response = await api.get(`/questions/exercise/${exerciseId}`);
       return response.data || [];
     } catch (error: any) {
       console.error(
@@ -39,9 +39,12 @@ export const exerciseService = {
   /**
    * Submit exercise answers
    */
-  submitExercise: async (submissionData: any): Promise<any> => {
+  submitExercise: async (exerciseId: number, answers: any[]): Promise<any> => {
     try {
-      const response = await api.post("/exercises/submit", submissionData);
+      const response = await api.post(
+        `/questions/exercise/${exerciseId}/submit-all`,
+        answers
+      );
       return response.data;
     } catch (error: any) {
       console.error("Error submitting exercise:", error);

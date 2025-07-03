@@ -16,6 +16,13 @@ public class ExerciseDto {
     private LocalDateTime updatedAt;
     private List<QuestionDto> questions;
 
+    // Additional fields for frontend
+    private Integer duration; // in minutes (same as timeLimit but different name for frontend)
+    private Integer questionsCount; // same as totalQuestions but different name
+    private Boolean isCompleted;
+    private Boolean isLocked;
+    private Integer points;
+
     public ExerciseDto() {
     }
 
@@ -121,5 +128,46 @@ public class ExerciseDto {
 
     public void setQuestions(List<QuestionDto> questions) {
         this.questions = questions;
+    }
+
+    // Additional getters and setters for frontend fields
+    public Integer getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Integer duration) {
+        this.duration = duration;
+    }
+
+    public Integer getQuestionsCount() {
+        return questionsCount;
+    }
+
+    public void setQuestionsCount(Integer questionsCount) {
+        this.questionsCount = questionsCount;
+    }
+
+    public Boolean getIsCompleted() {
+        return isCompleted;
+    }
+
+    public void setIsCompleted(Boolean isCompleted) {
+        this.isCompleted = isCompleted;
+    }
+
+    public Boolean getIsLocked() {
+        return isLocked;
+    }
+
+    public void setIsLocked(Boolean isLocked) {
+        this.isLocked = isLocked;
+    }
+
+    public Integer getPoints() {
+        return points;
+    }
+
+    public void setPoints(Integer points) {
+        this.points = points;
     }
 }

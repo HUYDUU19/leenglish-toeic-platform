@@ -1,7 +1,6 @@
 package com.leenglish.toeic.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,22 +45,21 @@ public class ExerciseService {
     }
 
     public Optional<Exercise> getExerciseById(Long id) {
-        // TODO: Thay bằng logic thật nếu cần
-        return Optional.empty();
+        return exerciseRepository.findById(id);
     }
 
     public List<Exercise> getAllExercises() {
-        // TODO: Thay bằng logic thật nếu cần
-        return new ArrayList<>();
+        return exerciseRepository.findAll();
     }
 
     public Exercise createExercise(Exercise exercise) {
-        // TODO: Thay bằng logic thật nếu cần
-        return exercise;
+        exercise.setCreatedAt(LocalDateTime.now());
+        exercise.setUpdatedAt(LocalDateTime.now());
+        return exerciseRepository.save(exercise);
     }
 
     public void deleteExercise(Long id) {
-        // TODO: Thay bằng logic thật nếu cần
+        exerciseRepository.deleteById(id);
     }
 
     public long getTotalExerciseCount() {

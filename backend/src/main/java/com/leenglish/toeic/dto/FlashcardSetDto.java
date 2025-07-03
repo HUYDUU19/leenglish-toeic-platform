@@ -7,11 +7,12 @@ public class FlashcardSetDto {
     private Long id;
     private String name;
     private String description;
-    private String category;
-    private String level;
     private Boolean isPublic;
     private Boolean isActive;
-    private Integer cardCount;
+    // Nếu có các trường sau thì thêm getter/setter:
+    private String title;
+    private Boolean isPremium;
+    private Integer estimatedTimeMinutes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long createdBy; // User ID
@@ -20,17 +21,17 @@ public class FlashcardSetDto {
     public FlashcardSetDto() {
     }
 
-    public FlashcardSetDto(Long id, String name, String description, String category,
-            String level, Boolean isPublic, Boolean isActive, Integer cardCount,
+    public FlashcardSetDto(Long id, String name, String description, Boolean isPublic, Boolean isActive,
+            String title, Boolean isPremium, Integer estimatedTimeMinutes,
             LocalDateTime createdAt, LocalDateTime updatedAt, Long createdBy) {
         this.id = id;
         this.name = name;
         this.description = description;
-        this.category = category;
-        this.level = level;
         this.isPublic = isPublic;
         this.isActive = isActive;
-        this.cardCount = cardCount;
+        this.title = title;
+        this.isPremium = isPremium;
+        this.estimatedTimeMinutes = estimatedTimeMinutes;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.createdBy = createdBy;
@@ -61,22 +62,6 @@ public class FlashcardSetDto {
         this.description = description;
     }
 
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public String getLevel() {
-        return level;
-    }
-
-    public void setLevel(String level) {
-        this.level = level;
-    }
-
     public Boolean getIsPublic() {
         return isPublic;
     }
@@ -93,12 +78,28 @@ public class FlashcardSetDto {
         this.isActive = isActive;
     }
 
-    public Integer getCardCount() {
-        return cardCount;
+    public String getTitle() {
+        return title;
     }
 
-    public void setCardCount(Integer cardCount) {
-        this.cardCount = cardCount;
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public Boolean getIsPremium() {
+        return isPremium;
+    }
+
+    public void setIsPremium(Boolean isPremium) {
+        this.isPremium = isPremium;
+    }
+
+    public Integer getEstimatedTimeMinutes() {
+        return estimatedTimeMinutes;
+    }
+
+    public void setEstimatedTimeMinutes(Integer estimatedTimeMinutes) {
+        this.estimatedTimeMinutes = estimatedTimeMinutes;
     }
 
     public LocalDateTime getCreatedAt() {

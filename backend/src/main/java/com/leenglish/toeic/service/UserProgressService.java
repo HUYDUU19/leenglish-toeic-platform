@@ -1,21 +1,27 @@
 package com.leenglish.toeic.service;
 
-import com.leenglish.toeic.domain.UserLessonProgress;
-import com.leenglish.toeic.domain.User;
-import com.leenglish.toeic.domain.Lesson;
-import com.leenglish.toeic.dto.UserProgressDto;
-import com.leenglish.toeic.repository.UserLessonProgressRepository;
-import com.leenglish.toeic.repository.UserRepository;
-import com.leenglish.toeic.repository.LessonRepository;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.leenglish.toeic.domain.Lesson;
+import com.leenglish.toeic.domain.User;
+import com.leenglish.toeic.domain.UserLessonProgress;
+import com.leenglish.toeic.dto.UserProgressDto;
+import com.leenglish.toeic.repository.LessonRepository;
+import com.leenglish.toeic.repository.UserLessonProgressRepository;
+import com.leenglish.toeic.repository.UserRepository;
 
 @Service
 @Transactional
@@ -99,48 +105,54 @@ public class UserProgressService {
         if (days == null)
             days = 7; // Default 7 days
 
-        LocalDateTime startDate = LocalDateTime.now().minusDays(days);
+        try {
+            LocalDateTime startDate = LocalDateTime.now().minusDays(days);
 
-        List<UserLessonProgress> recentProgress = userLessonProgressRepository
-                .findByUserIdOrderByLastAccessedAtDesc(userId).stream()
-                .filter(progress -> progress.getLastAccessedAt() != null &&
-                        progress.getLastAccessedAt().isAfter(startDate))
-                .collect(Collectors.toList());
+            List<UserLessonProgress> recentProgress = userLessonProgressRepository
+                    .findByUserIdOrderByLastAccessedAtDesc(userId).stream()
+                    .filter(progress -> progress.getLastAccessedAt() != null &&
+                            progress.getLastAccessedAt().isAfter(startDate))
+                    .collect(Collectors.toList());
 
-        // Group by date and calculate daily metrics
-        Map<String, List<UserLessonProgress>> dailyGroups = recentProgress.stream()
-                .collect(Collectors.groupingBy(
-                        progress -> progress.getLastAccessedAt().toLocalDate().toString()));
+            // Group by date and calculate daily metrics
+            Map<String, List<UserLessonProgress>> dailyGroups = recentProgress.stream()
+                    .collect(Collectors.groupingBy(
+                            progress -> progress.getLastAccessedAt().toLocalDate().toString()));
 
-        Map<String, Map<String, Object>> dailyActivity = new LinkedHashMap<>();
-        for (Map.Entry<String, List<UserLessonProgress>> entry : dailyGroups.entrySet()) {
-            String date = entry.getKey();
-            List<UserLessonProgress> dayProgress = entry.getValue();
+            Map<String, Map<String, Object>> dailyActivity = new LinkedHashMap<>();
+            for (Map.Entry<String, List<UserLessonProgress>> entry : dailyGroups.entrySet()) {
+                String date = entry.getKey();
+                List<UserLessonProgress> dayProgress = entry.getValue();
 
-            Map<String, Object> dayMetrics = new HashMap<>();
-            dayMetrics.put("lessonsCount", dayProgress.size());
-            dayMetrics.put("completedLessons", dayProgress.stream()
-                    .filter(p -> "COMPLETED".equals(p.getStatus())).count());
-            dayMetrics.put("totalTimeMinutes", dayProgress.stream()
+                Map<String, Object> dayMetrics = new HashMap<>();
+                dayMetrics.put("lessonsCount", dayProgress.size());
+                dayMetrics.put("completedLessons", dayProgress.stream()
+                        .filter(p -> "COMPLETED".equals(p.getStatus())).count());
+                dayMetrics.put("totalTimeMinutes", dayProgress.stream()
+                        .mapToInt(p -> p.getTimeSpentMinutes() != null ? p.getTimeSpentMinutes() : 0)
+                        .sum());
+
+                dailyActivity.put(date, dayMetrics);
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("dailyActivity", dailyActivity);
+            result.put("totalDaysActive", dailyActivity.size());
+            result.put("averageLessonsPerDay", dailyActivity.values().stream()
+                    .mapToLong(day -> (Long) ((Map<String, Object>) day).get("lessonsCount"))
+                    .average()
+                    .orElse(0.0));
+            result.put("totalLessonsInPeriod", recentProgress.size());
+            result.put("totalTimeInPeriod", recentProgress.stream()
                     .mapToInt(p -> p.getTimeSpentMinutes() != null ? p.getTimeSpentMinutes() : 0)
                     .sum());
 
-            dailyActivity.put(date, dayMetrics);
+            return result;
+        } catch (Exception e) {
+            // Add error logging
+            System.err.println("Error getting daily activity for user " + userId + ": " + e.getMessage());
+            return new HashMap<>(); // Return empty map on error
         }
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("dailyActivity", dailyActivity);
-        result.put("totalDaysActive", dailyActivity.size());
-        result.put("averageLessonsPerDay", dailyActivity.values().stream()
-                .mapToLong(day -> (Long) ((Map<String, Object>) day).get("lessonsCount"))
-                .average()
-                .orElse(0.0));
-        result.put("totalLessonsInPeriod", recentProgress.size());
-        result.put("totalTimeInPeriod", recentProgress.stream()
-                .mapToInt(p -> p.getTimeSpentMinutes() != null ? p.getTimeSpentMinutes() : 0)
-                .sum());
-
-        return result;
     }
 
     /**

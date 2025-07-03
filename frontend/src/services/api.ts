@@ -7,22 +7,39 @@
  * Base URL and common headers setup
  */
 
-import { AxiosError, AxiosResponse } from "axios";
+import axios, {
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
 import { ApiResponse, ErrorResponse } from "../types";
 import apiClient from "./apiRequest";
+
+// ========== TYPE EXTENSIONS ==========
+
+// Extend Axios request config to include our custom properties
+interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
 // ========== REQUEST INTERCEPTOR ==========
 
 apiClient.interceptors.request.use(
   (config) => {
-    // Add authorization token if available
-    const token = localStorage.getItem("accessToken");
+    // Add authorization token if available - check multiple possible keys
+    const token =
+      localStorage.getItem("toeic_access_token") ||
+      localStorage.getItem("authToken") ||
+      localStorage.getItem("accessToken");
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
     // Add current user info for authorization checks
-    const currentUser = localStorage.getItem("currentUser");
+    const currentUser =
+      localStorage.getItem("toeic_current_user") ||
+      localStorage.getItem("currentUser");
     if (currentUser) {
       config.headers["X-Current-User"] = currentUser;
     }
@@ -49,7 +66,7 @@ apiClient.interceptors.response.use(
     );
     return response;
   },
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
     console.error(
       `❌ API Error: ${error.config?.method?.toUpperCase()} ${
         error.config?.url
@@ -57,22 +74,109 @@ apiClient.interceptors.response.use(
       error.response?.data
     );
 
-    // Handle common error scenarios
-    if (error.response?.status === 401) {
-      // Unauthorized - redirect to login
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("currentUser");
-      window.location.href = "/login";
+    const original = error.config as ExtendedAxiosRequestConfig;
+
+    // Handle JWT token refresh on 401 errors
+    if (error.response?.status === 401 && original && !original._retry) {
+      original._retry = true;
+
+      const refreshToken =
+        localStorage.getItem("toeic_refresh_token") ||
+        localStorage.getItem("refreshToken");
+
+      if (refreshToken) {
+        try {
+          console.log("🔄 Attempting to refresh token...");
+
+          // Use a separate axios instance to avoid infinite loops
+          const refreshResponse = await axios
+            .create({
+              baseURL: "http://localhost:8080/api",
+              timeout: 10000,
+            })
+            .post("/auth/refresh", {
+              refreshToken,
+            });
+
+          const { accessToken, refreshToken: newRefreshToken } =
+            refreshResponse.data;
+
+          // Update tokens using the same keys as auth service
+          localStorage.setItem("toeic_access_token", accessToken);
+          localStorage.setItem("authToken", accessToken); // For backward compatibility
+
+          if (newRefreshToken) {
+            localStorage.setItem("toeic_refresh_token", newRefreshToken);
+            localStorage.setItem("refreshToken", newRefreshToken); // For backward compatibility
+          }
+
+          console.log("✅ Token refreshed successfully");
+
+          // Retry original request with new token
+          if (original.headers) {
+            original.headers["Authorization"] = `Bearer ${accessToken}`;
+          }
+
+          return apiClient(original);
+        } catch (refreshError: any) {
+          console.error("❌ Token refresh failed:", refreshError);
+
+          // Check if refresh endpoint exists and user session is valid
+          if (refreshError.response?.status === 404) {
+            console.log("🔄 Refresh endpoint not found, redirecting to login");
+          } else if (refreshError.response?.status === 401) {
+            console.log("🔄 Refresh token invalid, redirecting to login");
+          } else {
+            console.log(
+              "🔄 Refresh failed for unknown reason, redirecting to login"
+            );
+          }
+
+          // Clear tokens and redirect gracefully
+          handleAuthFailure();
+          return Promise.reject(error);
+        }
+      } else {
+        console.log("🚫 No refresh token available, redirecting to login");
+        handleAuthFailure();
+        return Promise.reject(error);
+      }
     }
 
+    // Handle other common error scenarios
     if (error.response?.status === 403) {
-      // Forbidden - show access denied message
       console.warn("🚫 Access Denied: Insufficient permissions");
     }
 
     return Promise.reject(error);
   }
 );
+
+// ========== AUTH FAILURE HANDLER ==========
+
+/**
+ * Handle authentication failure gracefully
+ */
+const handleAuthFailure = () => {
+  // Clear all auth data - all possible keys
+  localStorage.removeItem("toeic_access_token");
+  localStorage.removeItem("toeic_refresh_token");
+  localStorage.removeItem("toeic_current_user");
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("user");
+  localStorage.removeItem("currentUser");
+
+  // Set a flag to prevent immediate redirect loops
+  sessionStorage.setItem("authFailed", "true");
+
+  // Use setTimeout to allow current operations to complete
+  setTimeout(() => {
+    console.log("🔄 Redirecting to login due to authentication failure");
+    window.location.href = "/login";
+  }, 100);
+};
 
 // ========== HELPER FUNCTIONS ==========
 

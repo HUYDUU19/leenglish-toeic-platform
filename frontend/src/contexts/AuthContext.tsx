@@ -1,55 +1,136 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { getCurrentUser, getToken, startAutoRefresh, stopAutoRefresh } from '../services/auth';
+import { User } from '../types';
 
-interface AuthContextType {
+export interface AuthContextType {
+    user: User | null; // For backward compatibility
+    currentUser: User | null; // Primary user property
+    login: (email: string, password: string) => Promise<void>; // Fixed signature
+    logout: () => void;
+    signOut: () => void;
+    updateCurrentUser: (user: User) => void;
     isAuthenticated: boolean;
     loading: boolean;
-    currentUser: any;
-    login: (user: any, token: string) => void;
-    logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = React.createContext<AuthContextType>({
+    user: null,
+    currentUser: null,
     isAuthenticated: false,
     loading: true,
-    currentUser: null,
-    login: () => { },
+    login: async () => { }, // Fixed default to match signature
     logout: () => { },
+    signOut: () => { },
+    updateCurrentUser: () => { },
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [currentUser, setCurrentUser] = useState<any>(null);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
 
     useEffect(() => {
-        const userStr = localStorage.getItem('currentUser');
-        const token = localStorage.getItem('accessToken');
-        if (userStr && token) {
-            setCurrentUser(JSON.parse(userStr));
+        console.log('🔍 AuthProvider: Checking authentication status...');
+
+        // Use the auth service to get user and token with consistent keys
+        const user = getCurrentUser();
+        const token = getToken();
+
+        if (user && token) {
+            console.log('✅ User authenticated:', user.email || user.username);
+            setCurrentUser(user);
             setIsAuthenticated(true);
+            // Start auto-refresh for authenticated users
+            startAutoRefresh();
         } else {
+            console.log('❌ No valid authentication found');
             setCurrentUser(null);
             setIsAuthenticated(false);
         }
         setLoading(false);
+
+        // Cleanup on unmount
+        return () => {
+            stopAutoRefresh();
+        };
     }, []);
 
-    const login = (user: any, token: string) => {
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        localStorage.setItem('accessToken', token);
-        setCurrentUser(user);
-        setIsAuthenticated(true);
+    // ✅ FIXED: Sử dụng hàm login chính thay vì loginUser
+    const login = async (email: string, password: string): Promise<void> => {
+        try {
+            console.log('🔑 AuthContext: Attempting login for:', email);
+
+            // ✅ SỬA: Import hàm login chính từ auth service
+            const { login: authLogin } = await import('../services/auth');
+
+            // ✅ SỬA: Gọi với đúng format LoginRequest
+            const response = await authLogin({
+                username: email, // Backend expect username field
+                password: password
+            });
+
+            if (response.user && response.accessToken) {
+                console.log('✅ Login successful, storing auth data...');
+                setCurrentUser(response.user);
+                setIsAuthenticated(true);
+                startAutoRefresh();
+                console.log('✅ AuthContext: Login completed successfully');
+            } else {
+                throw new Error('Invalid login response - missing user or accessToken');
+            }
+        } catch (error: any) {
+            console.error('❌ AuthContext login error:', error);
+            throw error; // Re-throw so components can handle the error
+        }
     };
 
     const logout = () => {
+        console.log('🚪 AuthContext: Logging out...');
+
+        // Clear all possible token keys
+        localStorage.removeItem('toeic_current_user');
+        localStorage.removeItem('toeic_access_token');
+        localStorage.removeItem('toeic_refresh_token');
         localStorage.removeItem('currentUser');
+        localStorage.removeItem('authToken');
         localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
         setCurrentUser(null);
         setIsAuthenticated(false);
+        stopAutoRefresh();
+
+        console.log('✅ Logout completed');
+    };
+
+    const signOut = () => {
+        console.log('🚪 AuthContext: Signing out...');
+        logout(); // Sử dụng logout function
+    };
+
+    const updateCurrentUser = (updatedUser: User) => {
+        console.log('👤 AuthContext: Updating user info...');
+
+        localStorage.setItem('toeic_current_user', JSON.stringify(updatedUser));
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser)); // For backward compatibility
+        setCurrentUser(updatedUser);
+
+        console.log('✅ User info updated');
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, loading, currentUser, login, logout }}>
+        <AuthContext.Provider
+            value={{
+                user: currentUser, // Provide both for compatibility
+                currentUser,
+                isAuthenticated,
+                loading,
+                login, // Now uses the correct login function
+                logout,
+                signOut,
+                updateCurrentUser,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );

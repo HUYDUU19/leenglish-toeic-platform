@@ -1,14 +1,23 @@
 package com.leenglish.toeic.domain;
 
-import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "questions")
@@ -17,63 +26,193 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Question {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "question_text", nullable = false, length = 500)
+    private String questionText;
+
+    @Column(name = "question_type", nullable = false)
+    private String questionType;
+
+    @Column(name = "option_a")
+    private String optionA;
+
+    @Column(name = "option_b")
+    private String optionB;
+
+    @Column(name = "option_c")
+    private String optionC;
+
+    @Column(name = "option_d")
+    private String optionD;
+
+    @Column(name = "correct_answer", nullable = false)
+    private String correctAnswer;
+
+    @Column(name = "explanation")
+    private String explanation;
+
+    @Column(name = "points", nullable = false)
+    private Integer points;
+
+    @Column(name = "question_order")
+    private Integer questionOrder;
+
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+
+    @CreationTimestamp
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_id", nullable = false)
     private Exercise exercise;
 
-    // ================================================================
-    // CỐT LÕI - CHỈ NHỮNG GÌ CẦN THIẾT
-    // ================================================================
+    // Constructors, getters, setters...
+   
 
-    @Column(name = "question_text", columnDefinition = "TEXT", nullable = false)
-    private String questionText;
+    public Question(String questionText, String questionType, String optionA, String optionB,
+            String optionC, String optionD, String correctAnswer, String explanation,
+            Integer points, Integer questionOrder, Exercise exercise) {
+        this.questionText = questionText;
+        this.questionType = questionType;
+        this.optionA = optionA;
+        this.optionB = optionB;
+        this.optionC = optionC;
+        this.optionD = optionD;
+        this.correctAnswer = correctAnswer;
+        this.explanation = explanation;
+        this.points = points;
+        this.questionOrder = questionOrder;
+        this.exercise = exercise;
+        this.isActive = true;
+    }
 
-    // Answer Options - CHỈ A, B, C, D cho TOEIC
-    @Column(name = "option_a", length = 500)
-    private String optionA;
+    // Getters and setters
+    public Long getId() {
+        return id;
+    }
 
-    @Column(name = "option_b", length = 500)
-    private String optionB;
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    @Column(name = "option_c", length = 500)
-    private String optionC;
+    public String getQuestionText() {
+        return questionText;
+    }
 
-    @Column(name = "option_d", length = 500)
-    private String optionD;
+    public void setQuestionText(String questionText) {
+        this.questionText = questionText;
+    }
 
-    // Correct Answer - CHỈ CẦN THIẾT
-    @Column(name = "correct_answer", nullable = false, length = 1)
-    private String correctAnswer; // A, B, C, or D
+    public String getQuestionType() {
+        return questionType;
+    }
 
-    // Explanation - CƠ BẢN
-    @Column(name = "explanation", columnDefinition = "TEXT")
-    private String explanation;
+    public void setQuestionType(String questionType) {
+        this.questionType = questionType;
+    }
 
-    // Scoring & Order - TỐI THIỂU
-    @Column(name = "points")
-    @Builder.Default
-    private Integer points = 1;
+    public String getOptionA() {
+        return optionA;
+    }
 
-    @Column(name = "question_order")
-    @Builder.Default
-    private Integer questionOrder = 0;
+    public void setOptionA(String optionA) {
+        this.optionA = optionA;
+    }
 
-    // Status - CẦN THIẾT
-    @Column(name = "is_active")
-    @Builder.Default
-    private Boolean isActive = true;
+    public String getOptionB() {
+        return optionB;
+    }
 
-    // Timestamps - TỰ ĐỘNG
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    public void setOptionB(String optionB) {
+        this.optionB = optionB;
+    }
 
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    public String getOptionC() {
+        return optionC;
+    }
+
+    public void setOptionC(String optionC) {
+        this.optionC = optionC;
+    }
+
+    public String getOptionD() {
+        return optionD;
+    }
+
+    public void setOptionD(String optionD) {
+        this.optionD = optionD;
+    }
+
+    public String getCorrectAnswer() {
+        return correctAnswer;
+    }
+
+    public void setCorrectAnswer(String correctAnswer) {
+        this.correctAnswer = correctAnswer;
+    }
+
+    public String getExplanation() {
+        return explanation;
+    }
+
+    public void setExplanation(String explanation) {
+        this.explanation = explanation;
+    }
+
+    public Integer getPoints() {
+        return points;
+    }
+
+    public void setPoints(Integer points) {
+        this.points = points;
+    }
+
+    public Integer getQuestionOrder() {
+        return questionOrder;
+    }
+
+    public void setQuestionOrder(Integer questionOrder) {
+        this.questionOrder = questionOrder;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
 }

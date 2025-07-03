@@ -6,6 +6,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import MediaDebug from '../../components/debug/MediaDebug';
+import { AuthenticatedAudio, AuthenticatedImage } from '../../components/media/AuthenticatedMedia';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
 import { lessonService } from '../../services/lessons';
@@ -18,7 +20,7 @@ const LessonDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [startingLesson, setStartingLesson] = useState(false);
-  const { currentUser, isAuthenticated } = useAuth();
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     const fetchLesson = async () => {
@@ -30,6 +32,15 @@ const LessonDetailPage: React.FC = () => {
       try {
         setLoading(true);
         const lessonData = await lessonService.getLessonById(parseInt(id));
+
+        // ✅ Only log in development mode
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🎯 Lesson loaded:', lessonData.title, {
+            hasImage: !!lessonData.imageUrl,
+            hasAudio: !!lessonData.audioUrl
+          });
+        }
+
         setLesson(lessonData);
         setError(null);
       } catch (err: any) {
@@ -140,29 +151,91 @@ const LessonDetailPage: React.FC = () => {
             </div>
           )}
 
-          {lesson.imageUrl && (
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Visual Content</h2>
-              <img
-                src={lesson.imageUrl}
-                alt={lesson.title}
-                className="w-full max-w-md rounded-lg shadow-md"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            </div>
-          )}
+          {/* Visual Content với Authentication */}
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Visual Content</h2>
+            {lesson.imageUrl ? (
+              <div className="space-y-2">
+                <AuthenticatedImage
+                  src={lesson.imageUrl}
+                  alt={lesson.title}
+                  className="w-full max-w-md rounded-lg shadow-md"
+                  onLoad={() => console.log('✅ Image loaded successfully:', lesson.imageUrl)}
+                  onError={(error) => console.error('❌ Image failed to load:', error)}
+                  fallback={
+                    <div className="bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg p-8 text-center max-w-md">
+                      <div className="flex flex-col items-center text-white">
+                        <svg className="w-12 h-12 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-sm font-medium">Image Unavailable</p>
+                        <p className="text-xs opacity-90 mt-1">{lesson.title}</p>
+                      </div>
+                    </div>
+                  }
+                />
+                <p className="text-xs text-gray-500">Image URL: {lesson.imageUrl}</p>
+              </div>
+            ) : (
+              <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <div className="flex flex-col items-center">
+                  <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <p className="text-gray-500 text-sm">No image available for this lesson</p>
+                </div>
+              </div>
+            )}
+          </div>
 
-          {lesson.audioUrl && (
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Audio Content</h2>
-              <audio controls className="w-full">
-                <source src={lesson.audioUrl} type="audio/mpeg" />
-                Your browser does not support the audio element.
-              </audio>
-            </div>
-          )}
+          {/* Audio Content với Authentication */}
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Audio Content</h2>
+            {lesson.audioUrl ? (
+              <div className="space-y-2">
+                <AuthenticatedAudio
+                  src={lesson.audioUrl}
+                  className="w-full mb-2"
+                  preload="metadata"
+                  onLoad={() => console.log('✅ Audio loaded successfully:', lesson.audioUrl)}
+                  onError={(error) => console.error('❌ Audio failed to load:', error)}
+                  fallback={
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="text-center">
+                        <svg className="w-8 h-8 text-red-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M9 9a3 3 0 000 6 3 3 0 000-6zm0 0V5a2 2 0 012-2h2m-2 4v6m0-6h4" />
+                        </svg>
+                        <p className="text-red-800 text-sm font-medium">Audio Unavailable</p>
+                        <p className="text-red-600 text-xs mt-1">Unable to load audio for this lesson</p>
+                      </div>
+                    </div>
+                  }
+                />
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>Audio URL: {lesson.audioUrl}</span>
+                  <button
+                    onClick={() => {
+                      console.log('🔍 Testing audio URL directly...');
+                      window.open(lesson.audioUrl, '_blank');
+                    }}
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Test URL
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <div className="flex flex-col items-center">
+                  <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M9 9a3 3 0 000 6 3 3 0 000-6zm0 0V5a2 2 0 012-2h2m-2 4v6m0-6h4" />
+                  </svg>
+                  <p className="text-gray-500 text-sm">No audio available for this lesson</p>
+                  <p className="text-gray-400 text-xs mt-1">Audio may still be processing or unavailable</p>
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="flex gap-4 pt-4">
             <button
@@ -188,6 +261,9 @@ const LessonDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* ✅ Debug component để test media URLs */}
+      {lesson && <MediaDebug lesson={lesson} />}
     </div>
   );
 };
