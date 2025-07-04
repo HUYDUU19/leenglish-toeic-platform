@@ -7,14 +7,17 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Breadcrumb from '../../components/ui/Breadcrumb';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
+import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import { lessonService } from '../../services/lessons';
 import { Lesson } from '../../types';
 
 const LessonsPage: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser, isAuthenticated } = useAuth();
+  const breadcrumbItems = useBreadcrumb();
 
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
@@ -183,6 +186,9 @@ const LessonsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumb */}
+      <Breadcrumb items={breadcrumbItems} />
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">TOEIC Lessons</h1>

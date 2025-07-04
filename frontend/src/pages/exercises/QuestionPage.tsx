@@ -7,8 +7,10 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import Breadcrumb from '../../components/ui/Breadcrumb';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
+import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import { exerciseService } from '../../services/exercises';
 import questionService from '../../services/questions';
 import { Exercise, Question, QuestionAnswerRequest } from '../../types';
@@ -18,6 +20,7 @@ const QuestionPage: React.FC = () => {
     const { lessonId, exerciseId } = useParams<{ lessonId: string; exerciseId: string }>();
     const navigate = useNavigate();
     const { currentUser } = useAuth();
+    const breadcrumbItems = useBreadcrumb();
 
     const [exercise, setExercise] = useState<Exercise | null>(null);
     const [questions, setQuestions] = useState<Question[]>([]);
@@ -296,24 +299,12 @@ const QuestionPage: React.FC = () => {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
+            {/* Breadcrumb Navigation */}
+            <Breadcrumb items={breadcrumbItems} />
+
             {/* Header with Timer and Progress */}
             <div className="flex justify-between items-center">
                 <div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                        <button onClick={() => navigate('/lessons')} className="hover:text-blue-600">
-                            Lessons
-                        </button>
-                        <span>›</span>
-                        <button onClick={() => navigate(`/lessons/${lessonId}`)} className="hover:text-blue-600">
-                            Lesson {lessonId}
-                        </button>
-                        <span>›</span>
-                        <button onClick={() => navigate(`/lessons/${lessonId}/exercises`)} className="hover:text-blue-600">
-                            Exercises
-                        </button>
-                        <span>›</span>
-                        <span>{exercise.title}</span>
-                    </div>
                     <h1 className="text-2xl font-bold text-gray-900">{exercise.title}</h1>
                 </div>
 

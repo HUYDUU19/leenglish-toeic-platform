@@ -6,10 +6,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import MediaDebug from '../../components/debug/MediaDebug';
 import { AuthenticatedAudio, AuthenticatedImage } from '../../components/media/AuthenticatedMedia';
+import Breadcrumb from '../../components/ui/Breadcrumb';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
+import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import { lessonService } from '../../services/lessons';
 import { Lesson } from '../../types';
 
@@ -21,6 +22,7 @@ const LessonDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [startingLesson, setStartingLesson] = useState(false);
   const { currentUser } = useAuth();
+  const breadcrumbItems = useBreadcrumb();
 
   useEffect(() => {
     const fetchLesson = async () => {
@@ -114,6 +116,9 @@ const LessonDetailPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumb */}
+      <Breadcrumb items={breadcrumbItems} />
+
       <div>
         <h1 className="text-3xl font-bold text-gray-900">{lesson.title}</h1>
         <p className="mt-2 text-gray-600">Level: {lesson.level} {lesson.isPremium && '🔒 Premium'}</p>
@@ -174,7 +179,6 @@ const LessonDetailPage: React.FC = () => {
                     </div>
                   }
                 />
-                <p className="text-xs text-gray-500">Image URL: {lesson.imageUrl}</p>
               </div>
             ) : (
               <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
@@ -197,8 +201,6 @@ const LessonDetailPage: React.FC = () => {
                   src={lesson.audioUrl}
                   className="w-full mb-2"
                   preload="metadata"
-                  onLoad={() => console.log('✅ Audio loaded successfully:', lesson.audioUrl)}
-                  onError={(error) => console.error('❌ Audio failed to load:', error)}
                   fallback={
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                       <div className="text-center">
@@ -211,18 +213,6 @@ const LessonDetailPage: React.FC = () => {
                     </div>
                   }
                 />
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>Audio URL: {lesson.audioUrl}</span>
-                  <button
-                    onClick={() => {
-                      console.log('🔍 Testing audio URL directly...');
-                      window.open(lesson.audioUrl, '_blank');
-                    }}
-                    className="text-blue-600 hover:text-blue-800 underline"
-                  >
-                    Test URL
-                  </button>
-                </div>
               </div>
             ) : (
               <div className="bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
@@ -261,9 +251,6 @@ const LessonDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* ✅ Debug component để test media URLs */}
-      {lesson && <MediaDebug lesson={lesson} />}
     </div>
   );
 };

@@ -6,7 +6,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Breadcrumb from '../../components/ui/Breadcrumb';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import { getCurrentUser } from '../../services/auth';
 import { flashcardService } from '../../services/flashcardService'; // Import flashcard service
 import { FlashcardSet, User } from '../../types'; // ✅ Import unified types
@@ -18,6 +20,7 @@ const FlashcardsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const navigate = useNavigate();
+  const breadcrumbItems = useBreadcrumb();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -178,6 +181,9 @@ const FlashcardsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumb */}
+      <Breadcrumb items={breadcrumbItems} />
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">

@@ -25,9 +25,15 @@ interface SidebarProps {
   currentUser: User | null;
   isOpen: boolean;
   onClose: () => void;
+  onMenuClick: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentUser, isOpen, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ 
+  currentUser, 
+  isOpen, 
+  onClose, 
+  onMenuClick 
+}) => {
   const location = useLocation();
 
   if (!currentUser) {

@@ -19,7 +19,7 @@ const Footer: React.FC = () => {
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
             <div className="text-2xl font-bold text-gradient mb-4">
-              LeEnglish
+              TOICEnglish
             </div>
             <p className="text-gray-600 text-sm max-w-md">
               Comprehensive TOEIC learning platform designed to help you achieve your target score 
@@ -79,7 +79,7 @@ const Footer: React.FC = () => {
         <div className="mt-8 pt-8 border-t border-gray-200">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-500 text-sm">
-              © {currentYear} LeEnglish TOEIC Platform. All rights reserved.
+              © {currentYear} TOICEnglish TOEIC Platform. All rights reserved.
             </p>            <div className="mt-4 md:mt-0 flex space-x-6">
               <a href="/privacy" className="text-gray-400 hover:text-gray-500">
                 Privacy Policy

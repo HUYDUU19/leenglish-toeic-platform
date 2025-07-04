@@ -68,6 +68,8 @@ const AppContent: React.FC = () => {
       <div className="min-h-screen bg-gray-50">
         <Navbar
           currentUser={currentUser}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
           onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
         />
         <div className="flex">

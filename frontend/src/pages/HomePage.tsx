@@ -280,7 +280,7 @@ const HomePage: React.FC = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.6, delay: 0.5 }}
                 >
-                  with LeEnglish
+                  with TOICEnglish
                 </motion.span>
               </motion.h1>
 
@@ -362,7 +362,7 @@ const HomePage: React.FC = () => {
               variants={itemVariants}
             >
               <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                Why Choose LeEnglish?
+                Why Choose TOICEnglish?
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                 Advanced learning technology meets proven teaching methods

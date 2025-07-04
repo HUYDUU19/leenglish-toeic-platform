@@ -24,8 +24,8 @@ export class MediaService {
       return imageUrl;
     }
 
-    // Xử lý relative URL
-    const processedUrl = `${API_BASE_URL}/api/files/images/${imageUrl}`;
+    // Xử lý relative URL - sử dụng /files/ thay vì /api/files/
+    const processedUrl = `${API_BASE_URL}/files/images/${imageUrl}`;
     console.log(
       "🔄 Processing relative image URL:",
       imageUrl,
@@ -38,26 +38,137 @@ export class MediaService {
   /**
    * Xử lý và validate audio URL
    */
-  static processAudioUrl(audioUrl?: string): string | null {
-    if (!audioUrl) {
-      console.log("🔊 No audio URL provided");
-      return null;
+  static processAudioUrl(audioUrl: string): string {
+    if (!audioUrl) return "";
+
+    // Convert to absolute URL if relative
+    let processedUrl = audioUrl.startsWith("http")
+      ? audioUrl
+      : `${API_BASE_URL}/files/audio/${audioUrl}`;
+
+    // Normalize audio path to include lessons/ prefix if missing
+    if (
+      processedUrl.includes("/files/audio/") &&
+      !processedUrl.includes("/files/audio/lessons/")
+    ) {
+      // Extract the filename part after /files/audio/
+      const audioPathMatch = processedUrl.match(/\/files\/audio\/(.+)$/);
+      if (audioPathMatch) {
+        const audioPath = audioPathMatch[1];
+
+        // Special handling for common audio categories
+        if (
+          audioPath.startsWith("number/") ||
+          audioPath.startsWith("numbers/")
+        ) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/numbers/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("colors/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/colors/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("greetings/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/greetings/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("family/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/family/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("food/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/food/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("hobbies/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/hobbies/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("travel/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/travel/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("work/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/work/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("routine/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/routine/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("weather/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/weather/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("sports/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/sports/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("music/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/music/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("movies/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/movies/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("books/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/books/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("art/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/art/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("nature/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/nature/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("technology/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/technology/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("health/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/health/" + audioPath.split("/").pop()
+          );
+        } else if (audioPath.startsWith("education/")) {
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/education/" + audioPath.split("/").pop()
+          );
+        } else if (!audioPath.includes("/")) {
+          // Single file without category, add lessons/ prefix
+          processedUrl = processedUrl.replace(
+            "/files/audio/" + audioPath,
+            "/files/audio/lessons/" + audioPath
+          );
+        }
+      }
     }
 
-    // Nếu đã là absolute URL
-    if (audioUrl.startsWith("http")) {
-      console.log("✅ Using absolute audio URL:", audioUrl);
-      return audioUrl;
+    if (process.env.NODE_ENV === "development") {
+      console.log("✅ Using absolute audio URL:", processedUrl);
     }
 
-    // Xử lý relative URL
-    const processedUrl = `${API_BASE_URL}/api/files/audio/${audioUrl}`;
-    console.log(
-      "🔄 Processing relative audio URL:",
-      audioUrl,
-      "→",
-      processedUrl
-    );
     return processedUrl;
   }
 

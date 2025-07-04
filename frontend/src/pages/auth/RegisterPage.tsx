@@ -69,7 +69,7 @@ const RegisterPage: React.FC = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <div className="text-center">
-            <div className="text-3xl font-bold text-gradient">LeEnglish</div>
+            <div className="text-3xl font-bold text-gradient">TOICEnglish</div>
             <span className="text-sm text-gray-500">TOEIC Platform</span>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">

@@ -16,12 +16,15 @@ import {
 } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
+import Breadcrumb from '../components/ui/Breadcrumb';
 import { useAuth } from '../contexts/AuthContext';
+import { useBreadcrumb } from '../hooks/useBreadcrumb';
 import apiClient from '../services/apiClient';
 import dashboardService, { DashboardStats, RecentActivity } from '../services/dashboard';
 
 const DashboardPage: React.FC = () => {
   const { currentUser, isAuthenticated } = useAuth();
+  const breadcrumbItems = useBreadcrumb();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -144,6 +147,11 @@ const DashboardPage: React.FC = () => {
       initial="hidden"
       animate="visible"
     >
+      {/* Breadcrumb Navigation */}
+      <motion.div variants={cardVariants}>
+        <Breadcrumb items={breadcrumbItems} />
+      </motion.div>
+
       {/* Header */}
       <motion.div variants={cardVariants}>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>

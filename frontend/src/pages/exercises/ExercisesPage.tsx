@@ -17,9 +17,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Badge } from '../../components/ui/badge';
+import Breadcrumb from '../../components/ui/Breadcrumb';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { Skeleton } from '../../components/ui/skeleton';
+import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import api from '../../services/api'; // Import your API client
 
 interface Exercise {

@@ -11,27 +11,21 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Navbar: React.FC = () => {
-  // Fix: Use the correct property name from AuthContext
-  const { currentUser, logout } = useAuth(); // Changed from 'user' to 'currentUser'
-  const navigate = useNavigate();
+  const { currentUser, logout } = useAuth();
   const location = useLocation();
-
-  // Check if current page is a question/exercise page
-  const isQuestionPage = location.pathname.includes('/questions') ||
-    location.pathname.includes('/exercises');
-
+  
   const handleLogout = () => {
     logout();
-    navigate('/login');
   };
 
-  // Compact navbar for question pages
+  const isQuestionPage = location.pathname.includes('/questions');
+
   if (isQuestionPage) {
     return (
       <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-12"> {/* Reduced height from 16 to 12 */}
-            {/* Logo - Compact version */}
+          <div className="flex justify-between items-center h-12"> 
+            
             <Link to="/dashboard" className="flex items-center space-x-2">
               <span className="text-lg font-bold text-blue-600">LeEnglish</span>
               <span className="text-xs text-gray-500">TOEIC Platform</span>
@@ -68,7 +62,7 @@ const Navbar: React.FC = () => {
     );
   }
 
-  // Full navbar for other pages
+  // Regular navbar for other pages
   return (
     <nav className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -21,7 +21,7 @@ const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { login: loginWithContext } = useAuth();
+  const { loginWithUserData } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -40,7 +40,8 @@ const LoginPage: React.FC = () => {
       // Check if result has user and accessToken properties
       if (result && result.user && result.accessToken) {
         // Lưu user và token vào context
-        loginWithContext(result.user, result.accessToken);
+        loginWithUserData(result.user, result.accessToken);
+        // Lưu token vào localStorage
         toast.success('Login successful!');
         const redirectTo = location.state?.from || '/';
         navigate(redirectTo, { replace: true });

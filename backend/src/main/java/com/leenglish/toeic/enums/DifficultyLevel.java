@@ -1,11 +1,9 @@
 package com.leenglish.toeic.enums;
 
 public enum DifficultyLevel {
-    BEGINNER("Beginner"),
-    ELEMENTARY("Elementary"), 
-    INTERMEDIATE("Intermediate"),
-    UPPER_INTERMEDIATE("Upper Intermediate"),
-    ADVANCED("Advanced");
+    EASY("Easy"),
+    MEDIUM("Medium"), 
+    HARD("Hard");
 
     private final String displayName;
 
@@ -19,11 +17,17 @@ public enum DifficultyLevel {
 
     public int getLevel() {
         return switch (this) {
-            case BEGINNER -> 1;
-            case ELEMENTARY -> 2;
-            case INTERMEDIATE -> 3;
-            case UPPER_INTERMEDIATE -> 4;
-            case ADVANCED -> 5;
+            case EASY -> 1;
+            case MEDIUM -> 2;
+            case HARD -> 3;
+        };
+    }
+
+    public int getPoints() {
+        return switch (this) {
+            case EASY -> 1;
+            case MEDIUM -> 2;
+            case HARD -> 3;
         };
     }
 }

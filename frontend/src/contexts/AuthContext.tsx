@@ -6,6 +6,7 @@ export interface AuthContextType {
     user: User | null; // For backward compatibility
     currentUser: User | null; // Primary user property
     login: (email: string, password: string) => Promise<void>; // Fixed signature
+    loginWithUserData: (user: User, accessToken: string) => void; // NEW: For direct user data login
     logout: () => void;
     signOut: () => void;
     updateCurrentUser: (user: User) => void;
@@ -19,6 +20,7 @@ export const AuthContext = React.createContext<AuthContextType>({
     isAuthenticated: false,
     loading: true,
     login: async () => { }, // Fixed default to match signature
+    loginWithUserData: () => { }, // NEW: Default for loginWithUserData
     logout: () => { },
     signOut: () => { },
     updateCurrentUser: () => { },
@@ -55,17 +57,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
     }, []);
 
-    // ✅ FIXED: Sử dụng hàm login chính thay vì loginUser
+    // ✅ FIXED: Proper login function for AuthContext
     const login = async (email: string, password: string): Promise<void> => {
         try {
             console.log('🔑 AuthContext: Attempting login for:', email);
 
-            // ✅ SỬA: Import hàm login chính từ auth service
+            // ✅ Import the login function from auth service
             const { login: authLogin } = await import('../services/auth');
 
-            // ✅ SỬA: Gọi với đúng format LoginRequest
+            // ✅ Call with proper LoginRequest format
             const response = await authLogin({
-                username: email, // Backend expect username field
+                username: email, // Backend expects username field
                 password: password
             });
 
@@ -82,6 +84,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error('❌ AuthContext login error:', error);
             throw error; // Re-throw so components can handle the error
         }
+    };
+
+    // ✅ NEW: Function to handle login with existing user data (for after successful API call)
+    const loginWithUserData = (user: User, accessToken: string) => {
+        console.log('🔑 AuthContext: Logging in with user data:', user.email || user.username);
+
+        // Store tokens using auth service functions
+        const { setToken, setCurrentUser: setAuthUser } = require('../services/auth');
+        setToken(accessToken);
+        setAuthUser(user);
+
+        // Update context state
+        setCurrentUser(user);
+        setIsAuthenticated(true);
+        startAutoRefresh();
+
+        console.log('✅ AuthContext: Login with user data completed');
     };
 
     const logout = () => {
@@ -126,6 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 isAuthenticated,
                 loading,
                 login, // Now uses the correct login function
+                loginWithUserData, // NEW: For direct user data login
                 logout,
                 signOut,
                 updateCurrentUser,

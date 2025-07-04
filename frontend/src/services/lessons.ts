@@ -24,7 +24,20 @@ const processLessonMediaUrls = (lesson: Lesson): Lesson => {
   // Process audio URL
   if (lesson.audioUrl) {
     if (!lesson.audioUrl.startsWith("http")) {
-      lesson.audioUrl = `${API_BASE_URL}/files/audio/${lesson.audioUrl}`;
+      // Normalize audio URL - add lessons/ prefix if missing
+      let normalizedAudioUrl = lesson.audioUrl;
+      if (!normalizedAudioUrl.startsWith("lessons/")) {
+        normalizedAudioUrl = `lessons/${normalizedAudioUrl}`;
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            "🔧 Adding lessons/ prefix to audio URL:",
+            lesson.audioUrl,
+            "→",
+            normalizedAudioUrl
+          );
+        }
+      }
+      lesson.audioUrl = `${API_BASE_URL}/files/audio/${normalizedAudioUrl}`;
     }
   }
 

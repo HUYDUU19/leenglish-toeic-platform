@@ -6,8 +6,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import Breadcrumb from '../../components/ui/Breadcrumb';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
+import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import apiClient from '../../services/api';
 import { Flashcard, FlashcardSet } from '../../types'; // ✅ Import unified types
 
@@ -15,6 +17,7 @@ const FlashcardStudyPage: React.FC = () => {
     const { setId } = useParams<{ setId: string }>();
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
+    const breadcrumbItems = useBreadcrumb();
 
     const [flashcardSet, setFlashcardSet] = useState<FlashcardSet | null>(null);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -234,6 +237,9 @@ const FlashcardStudyPage: React.FC = () => {
 
     return (
         <div className="max-w-4xl mx-auto p-6">
+            {/* Breadcrumb */}
+            <Breadcrumb items={breadcrumbItems} className="mb-4" />
+
             {/* Header */}
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
@@ -332,8 +338,8 @@ const FlashcardStudyPage: React.FC = () => {
                                     {/* Audio Player */}
                                     {currentCard.audioUrl && (
                                         <div className="mb-4">
-                                            <audio 
-                                                controls 
+                                            <audio
+                                                controls
                                                 className="mx-auto"
                                                 preload="none"
                                                 onError={(e) => {

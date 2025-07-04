@@ -20,7 +20,9 @@ import {
 import { motion } from 'framer-motion';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+import Breadcrumb from '../../components/ui/Breadcrumb';
 import { useAuth } from '../../contexts/AuthContext';
+import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import { getUserProfile, getUserStats, updateUserProfile, uploadProfilePicture } from '../../services/users';
 import { User } from '../../types';
 
@@ -46,6 +48,7 @@ interface ProfileFormData {
 
 const ProfilePage: React.FC = () => {
   const { currentUser, updateCurrentUser } = useAuth();
+  const breadcrumbItems = useBreadcrumb();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -233,6 +236,9 @@ const ProfilePage: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
+      {/* Breadcrumb Navigation */}
+      <Breadcrumb items={breadcrumbItems} />
+
       {/* Header */}
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>

@@ -5,7 +5,7 @@
  * Components để hiển thị media với authentication headers
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface AuthenticatedImageProps {
     src: string;
@@ -28,15 +28,6 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const loadingRef = useRef<string>(''); // Track which src is currently loading
-
-    const handleLoad = useCallback(() => {
-        onLoad?.();
-    }, [onLoad]);
-
-    const handleError = useCallback((errorMsg: string) => {
-        setError(errorMsg);
-        onError?.(errorMsg);
-    }, [onError]);
 
     useEffect(() => {
         // Prevent reloading if already loading this src
@@ -64,7 +55,7 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
                             const blob = await response.blob();
                             const imageUrl = URL.createObjectURL(blob);
                             setImageSrc(imageUrl);
-                            handleLoad();
+                            onLoad?.();
                             return;
                         }
                     } catch (publicErr) {
@@ -72,21 +63,25 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
                     }
                 }
 
-                // Get auth token for authenticated access
+                // Get auth token for authenticated access (only for non-file endpoints)
                 const token = localStorage.getItem('toeic_access_token') ||
                     localStorage.getItem('authToken');
 
                 if (!token && !isFileEndpoint) {
                     console.warn('🔑 No auth token found for image request');
+                    // For file endpoints that failed above, this might be a server issue
+                    if (isFileEndpoint) {
+                        throw new Error('Public file endpoint returned 401');
+                    }
                     // Try loading without token for non-file endpoints
                     setImageSrc(src);
-                    handleLoad();
+                    onLoad?.();
                     return;
                 }
 
-                // Fetch image with auth headers
+                // Only add auth headers for non-file endpoints
                 const headers: Record<string, string> = {};
-                if (token) {
+                if (token && !isFileEndpoint) {
                     headers['Authorization'] = `Bearer ${token}`;
                 }
 
@@ -100,21 +95,16 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
                     const imageUrl = URL.createObjectURL(blob);
                     setImageSrc(imageUrl);
                     if (process.env.NODE_ENV === 'development') {
-                        console.log('✅ Authenticated image loaded:', src.split('/').pop());
+                        console.log('✅ Image loaded:', src.split('/').pop());
                     }
-                    handleLoad();
+                    onLoad?.();
                 } else {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
             } catch (err: any) {
                 console.error('❌ Failed to load image:', src.split('/').pop(), err.message);
-                handleError(err.message);
-
-                // Final fallback: try loading without auth
-                if (process.env.NODE_ENV === 'development') {
-                    console.log('🔄 Final fallback: trying to load image without auth...');
-                }
-                setImageSrc(src);
+                setError(err.message);
+                onError?.(err.message);
             } finally {
                 setLoading(false);
             }
@@ -125,7 +115,7 @@ export const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
         }
 
         // Cleanup will be handled by component unmount
-    }, [src, handleLoad, handleError]); // Only depend on src and memoized handlers
+    }, [src, onLoad, onError]); // Include all dependencies
 
     // Separate cleanup effect for blob URLs
     useEffect(() => {
@@ -198,21 +188,13 @@ export const AuthenticatedAudio: React.FC<AuthenticatedAudioProps> = ({
     const audioRef = useRef<HTMLAudioElement>(null);
     const loadingRef = useRef<string>(''); // Track which src is currently loading
 
-    const handleLoad = useCallback(() => {
-        onLoad?.();
-    }, [onLoad]);
-
-    const handleError = useCallback((errorMsg: string) => {
-        setError(errorMsg);
-        onError?.(errorMsg);
-    }, [onError]);
-
     useEffect(() => {
         // Prevent reloading if already loading this src
         if (loadingRef.current === src) {
             return;
         }
         loadingRef.current = src;
+
         const loadAudio = async () => {
             try {
                 setLoading(true);
@@ -240,20 +222,24 @@ export const AuthenticatedAudio: React.FC<AuthenticatedAudioProps> = ({
                     }
                 }
 
-                // Get auth token for authenticated access
+                // Get auth token for authenticated access (only for non-file endpoints)
                 const token = localStorage.getItem('toeic_access_token') ||
                     localStorage.getItem('authToken');
 
                 if (!token && !isFileEndpoint) {
                     console.warn('🔑 No auth token found for audio request');
+                    // For file endpoints that failed above, this might be a server issue
+                    if (isFileEndpoint) {
+                        throw new Error('Public file endpoint returned 401');
+                    }
                     // Try loading without token for non-file endpoints
                     setAudioSrc(src);
                     return;
                 }
 
-                // Fetch audio with auth headers
+                // Only add auth headers for non-file endpoints
                 const headers: Record<string, string> = {};
-                if (token) {
+                if (token && !isFileEndpoint) {
                     headers['Authorization'] = `Bearer ${token}`;
                 }
 
@@ -266,19 +252,15 @@ export const AuthenticatedAudio: React.FC<AuthenticatedAudioProps> = ({
                     const blob = await response.blob();
                     const audioUrl = URL.createObjectURL(blob);
                     setAudioSrc(audioUrl);
-                    console.log('✅ Authenticated audio loaded:', src);
+                    console.log('✅ Audio loaded:', src.split('/').pop());
                     onLoad?.();
                 } else {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
             } catch (err: any) {
-                console.error('❌ Failed to load audio:', src, err);
+                console.error('❌ Failed to load audio:', src.split('/').pop(), err.message);
                 setError(err.message);
                 onError?.(err.message);
-
-                // Final fallback: try loading without auth
-                console.log('🔄 Final fallback: trying to load audio without auth...');
-                setAudioSrc(src);
             } finally {
                 setLoading(false);
             }
@@ -289,7 +271,7 @@ export const AuthenticatedAudio: React.FC<AuthenticatedAudioProps> = ({
         }
 
         // Cleanup will be handled by component unmount
-    }, [src, handleLoad, handleError]); // Only depend on src and memoized handlers
+    }, [src, onLoad, onError]); // Include all dependencies
 
     // Separate cleanup effect for blob URLs
     useEffect(() => {
