@@ -12,7 +12,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useAuth } from '../../contexts/AuthContext';
 import { useBreadcrumb } from '../../hooks/useBreadcrumb';
 import { exerciseService } from '../../services/exercises';
-import questionService from '../../services/questions';
+import { questionService } from '../../services/questions';
 import { Exercise, Question, QuestionAnswerRequest } from '../../types';
 
 
@@ -130,8 +130,7 @@ const QuestionPage: React.FC = () => {
                 console.log(`🔍 Fetching exercise ${exerciseId} for lesson ${lessonId}...`);
 
                 // Fetch exercise details
-                const exerciseData = await exerciseService.getExercise(
-                    parseInt(lessonId),
+                const exerciseData = await exerciseService.getExerciseById(
                     parseInt(exerciseId)
                 );
                 setExercise(exerciseData);
@@ -278,14 +277,12 @@ const QuestionPage: React.FC = () => {
 
     // Helper function to get question text
     const getQuestionText = (question: Question) => {
-        return question.questionText || question.question || '';
+        return question.questionText || '';
     };
 
     // Helper function to get options array from backend format
     const getOptionsArray = (question: Question): string[] => {
-        if (question.options && question.options.length > 0) {
-            return question.options;
-        }
+        // Only use properties that exist in the Question type
 
         // Convert backend format to array
         const options: string[] = [];

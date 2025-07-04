@@ -7,14 +7,14 @@
  */
 
 import {
-    AcademicCapIcon,
-    BookOpenIcon,
-    ChartBarIcon,
-    CogIcon,
-    CreditCardIcon,
-    HomeIcon,
-    UserGroupIcon,
-    XMarkIcon
+  AcademicCapIcon,
+  BookOpenIcon,
+  ChartBarIcon,
+  CogIcon,
+  CreditCardIcon,
+  HomeIcon,
+  UserGroupIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import React from 'react';
@@ -25,14 +25,14 @@ interface SidebarProps {
   currentUser: User | null;
   isOpen: boolean;
   onClose: () => void;
-  onMenuClick: () => void;
+  onMenuClick?: () => void; // Make it optional
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  currentUser, 
-  isOpen, 
-  onClose, 
-  onMenuClick 
+const Sidebar: React.FC<SidebarProps> = ({
+  currentUser,
+  isOpen,
+  onClose,
+  onMenuClick
 }) => {
   const location = useLocation();
 
@@ -56,7 +56,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { name: 'Settings', href: '/settings', icon: CogIcon },
   ];
 
-  const NavItem: React.FC<{ 
+  const NavItem: React.FC<{
     item: { name: string; href: string; icon: React.ElementType };
     onClick?: () => void;
   }> = ({ item, onClick }) => {
@@ -77,8 +77,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         <Icon
           className={clsx(
             'mr-3 flex-shrink-0 h-6 w-6 transition-colors',
-            isActive 
-              ? 'text-primary-500' 
+            isActive
+              ? 'text-primary-500'
               : 'text-gray-400 group-hover:text-gray-500'
           )}
         />
@@ -91,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     <>
       {/* Mobile overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 lg:hidden bg-gray-600 bg-opacity-75"
           onClick={onClose}
         />
@@ -130,9 +130,9 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="flex items-center">
                 <div className="flex-shrink-0">
                   {currentUser.profilePicture ? (
-                    <img 
-                      className="h-10 w-10 rounded-full" 
-                      src={currentUser.profilePicture} 
+                    <img
+                      className="h-10 w-10 rounded-full"
+                      src={currentUser.profilePicture}
                       alt={currentUser.firstName}
                     />
                   ) : (
@@ -157,9 +157,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             {/* Main navigation */}
             <nav className="flex-1 px-2 py-4 space-y-1">
               {navigation.map((item) => (
-                <NavItem 
-                  key={item.name} 
-                  item={item} 
+                <NavItem
+                  key={item.name}
+                  item={item}
                   onClick={() => window.innerWidth < 1024 && onClose()}
                 />
               ))}
@@ -174,9 +174,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                       </h3>
                     </div>
                     {adminNavigation.map((item) => (
-                      <NavItem 
-                        key={item.name} 
-                        item={item} 
+                      <NavItem
+                        key={item.name}
+                        item={item}
                         onClick={() => window.innerWidth < 1024 && onClose()}
                       />
                     ))}
@@ -188,9 +188,9 @@ const Sidebar: React.FC<SidebarProps> = ({
             {/* Bottom navigation */}
             <div className="border-t border-gray-200 p-2">
               {bottomNavigation.map((item) => (
-                <NavItem 
-                  key={item.name} 
-                  item={item} 
+                <NavItem
+                  key={item.name}
+                  item={item}
                   onClick={() => window.innerWidth < 1024 && onClose()}
                 />
               ))}

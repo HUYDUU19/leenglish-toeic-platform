@@ -1,72 +1,69 @@
-import { Exercise, Question } from "../types";
-import api from "./api";
+/**
+ * ================================================================
+ * EXERCISE SERVICE
+ * ================================================================
+ * Service để xử lý API calls liên quan đến exercises
+ */
+
+import { Exercise } from '../types';
+import { api } from './api';
+
+export interface ExerciseSubmissionData {
+    exerciseId: number;
+    answers: {
+        questionId: number;
+        selectedAnswer: string;
+    }[];
+    score: number;
+    completedAt: string;
+}
 
 export const exerciseService = {
-  /**
-   * Get exercise by ID
-   */
-  getExercise: async (
-    lessonId: number,
-    exerciseId: number
-  ): Promise<Exercise> => {
-    try {
-      const response = await api.get(
-        `/lessons/${lessonId}/exercises/${exerciseId}`
-      );
-      return response.data;
-    } catch (error: any) {
-      console.error(`Error fetching exercise ${exerciseId}:`, error);
-      throw error;
-    }
-  },
+    /**
+     * Lấy thông tin chi tiết của một exercise
+     */
+    getExerciseById: async (exerciseId: number): Promise<Exercise> => {
+        console.log(`🔍 Fetching exercise ${exerciseId}...`);
+        
+        try {
+            const response = await api.get(`/exercises/${exerciseId}`);
+            console.log('✅ Exercise loaded:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('❌ Error fetching exercise:', error);
+            throw error;
+        }
+    },
 
-  /**
-   * Get questions for an exercise
-   */
-  getExerciseQuestions: async (exerciseId: number): Promise<Question[]> => {
-    try {
-      const response = await api.get(`/questions/exercise/${exerciseId}`);
-      return response.data || [];
-    } catch (error: any) {
-      console.error(
-        `Error fetching questions for exercise ${exerciseId}:`,
-        error
-      );
-      throw error;
-    }
-  },
+    /**
+     * Submit kết quả exercise
+     */
+    submitExerciseResult: async (data: ExerciseSubmissionData): Promise<any> => {
+        console.log(`📊 Submitting exercise result for exercise ${data.exerciseId}...`);
+        
+        try {
+            const response = await api.post('/exercises/submit', data);
+            console.log('✅ Exercise result submitted successfully:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('❌ Error submitting exercise result:', error);
+            throw error;
+        }
+    },
 
-  /**
-   * Submit exercise answers
-   */
-  submitExercise: async (exerciseId: number, answers: any[]): Promise<any> => {
-    try {
-      const response = await api.post(
-        `/questions/exercise/${exerciseId}/submit-all`,
-        answers
-      );
-      return response.data;
-    } catch (error: any) {
-      console.error("Error submitting exercise:", error);
-      throw error;
+    /**
+     * Lấy lịch sử kết quả exercises của user
+     */
+    getUserExerciseHistory: async (userId: number): Promise<any[]> => {
+        console.log(`📚 Fetching exercise history for user ${userId}...`);
+        
+        try {
+            const response = await api.get(`/users/${userId}/exercise-history`);
+            console.log('✅ Exercise history loaded:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('❌ Error fetching exercise history:', error);
+            throw error;
+        }
     }
-  },
-
-  /**
-   * Get exercise results
-   */
-  getExerciseResults: async (
-    exerciseId: number,
-    userId: number
-  ): Promise<any> => {
-    try {
-      const response = await api.get(
-        `/exercises/${exerciseId}/results/${userId}`
-      );
-      return response.data;
-    } catch (error: any) {
-      console.error("Error fetching exercise results:", error);
-      throw error;
-    }
-  },
 };

@@ -38,13 +38,11 @@ export enum ToeicPart {
   PART7 = "PART7", // Reading Comprehension
 }
 
-export enum DifficultyLevel {
+export enum Difficult {
   EASY = "EASY",
   MEDIUM = "MEDIUM",
   HARD = "HARD",
-  BEGINNER = "BEGINNER",
-  INTERMEDIATE = "INTERMEDIATE",
-  ADVANCED = "ADVANCED",
+
 }
 
 export enum QuestionType {
@@ -69,6 +67,28 @@ export enum LessonType {
   READING = "READING",
   SPEAKING = "SPEAKING",
   WRITING = "WRITING",
+}
+export interface Question{
+  // create a Question interface that matches the backend structure
+  id: number;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+  correctAnswer: string; // 'A', 'B', 'C', or 'D'
+  explanation?: string;
+  points: number;
+  questionOrder: number;
+  exerciseId: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  difficulty: Difficult; // Use the Difficult enum
+  questionType: QuestionType; // Use the QuestionType enum
+  questiontext: string; // This seems to be a duplicate, but keeping for compatibility
+  
+
 }
 
 export enum ProgressType {
@@ -102,6 +122,14 @@ export interface User {
   premiumExpiresAt?: string;
   redirectUrl?: string;
 }
+export interface DifficultyLevel {
+  id: number;
+  name: string; // e.g., "A1", "A2", "B1", "B2", "C1", "C2"
+  description?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export interface Lesson {
   id: number;
@@ -126,53 +154,45 @@ export interface Lesson {
   progress?: number;
 }
 
+export interface Question {
+  id: number;
+  questionText: string;
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+  correctAnswer: string; // 'A', 'B', 'C', or 'D'
+  explanation?: string;
+  points: number;
+  questionOrder: number;
+  exerciseId: number;
+  audioUrl?: string; // URL to audio file if applicable
+  imageUrl?: string; // URL to image file if applicable
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QuestionAnswer {
+  questionId: number;
+  selectedAnswer: string;
+  isCorrect: boolean;
+  points: number;
+}
+
 export interface Exercise {
   id: number;
   title: string;
   description: string;
   type: "READING" | "LISTENING" | "VOCABULARY" | "GRAMMAR";
   difficulty: "EASY" | "MEDIUM" | "HARD";
-  timeLimit?: number;
   orderIndex: number;
+  totalQuestions?: number;
+  timeLimit?: number;
   isActive: boolean;
   lessonId: number;
-  totalQuestions?: number;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface Question {
-  // Primary fields (match database exactly)
-  id: number;
-  exerciseId: number;
-  questionText: string; // Primary field name from backend
-  questionType: QuestionType; // Use enum instead of string literals
-  optionA?: string;
-  optionB?: string;
-  optionC?: string;
-  optionD?: string;
-  correctAnswer: string; // A, B, C, or D
-  explanation?: string;
-  points: number; // Make required (default 10 in backend)
-  questionOrder?: number; // Backend field name
-  isActive: boolean; // Required in backend
-  createdAt: string; // ISO string from backend
-  updatedAt: string; // ISO string from backend
-
-  // Optional media fields
-  imageUrl?: string;
-  audioUrl?: string;
-
-  // Enum fields (match backend exactly)
-  difficulty?: "EASY" | "MEDIUM" | "HARD"; // Could be enum later
-
-  // Computed/Helper fields for frontend
-  options?: string[]; // Computed from optionA, optionB, optionC, optionD
-
-  // Legacy compatibility (deprecated)
-  question?: string; // @deprecated Use questionText instead
-  orderIndex?: number; // @deprecated Use questionOrder instead
-  type?: "MULTIPLE_CHOICE" | "TRUE_FALSE" | "FILL_BLANK"; // @deprecated Use questionType instead
 }
 
 export interface UserAnswer {
@@ -371,6 +391,7 @@ export interface UserStats {
     };
   };
 }
+
 
 export interface DashboardData {
   user: User;

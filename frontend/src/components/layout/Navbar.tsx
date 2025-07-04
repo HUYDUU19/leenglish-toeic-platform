@@ -7,15 +7,27 @@
  */
 
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { Link, useLocation } from 'react-router-dom';
+import { handleLogout } from '../../services/auth';
+import { User } from '../../types';
 
-const Navbar: React.FC = () => {
-  const { currentUser, logout } = useAuth();
+interface NavbarProps {
+  currentUser: User | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onMenuClick: () => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ currentUser, isOpen, onClose, onMenuClick }) => {
   const location = useLocation();
-  
-  const handleLogout = () => {
-    logout();
+
+  // Nếu muốn sử dụng handleLogout trong component, cần tạo handler
+  const handleUserLogout = async () => {
+    try {
+      await handleLogout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   const isQuestionPage = location.pathname.includes('/questions');
@@ -24,8 +36,8 @@ const Navbar: React.FC = () => {
     return (
       <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-12"> 
-            
+          <div className="flex justify-between items-center h-12">
+
             <Link to="/dashboard" className="flex items-center space-x-2">
               <span className="text-lg font-bold text-blue-600">LeEnglish</span>
               <span className="text-xs text-gray-500">TOEIC Platform</span>
@@ -48,7 +60,7 @@ const Navbar: React.FC = () => {
                   {currentUser?.username || currentUser?.email || 'User'}
                 </span>
                 <button
-                  onClick={handleLogout}
+                  onClick={handleUserLogout} // Thay thế handleLogout bằng handleUserLogout
                   className="text-sm text-gray-600 hover:text-gray-900 px-2 py-1 rounded"
                   aria-label="Logout"
                 >
@@ -158,7 +170,7 @@ const Navbar: React.FC = () => {
               </div>
 
               <button
-                onClick={handleLogout}
+                onClick={handleUserLogout} // Thay thế handleLogout bằng handleUserLogout
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                 aria-label="Logout from account"
               >

@@ -27,6 +27,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import ExerciseDetailPage from './pages/exercises/ExerciseDetailPage';
+import ExerciseQuestionsPage from './pages/exercises/ExerciseQuestionsPage';
 import ExercisesPage from './pages/exercises/ExercisesPage';
 import QuestionPage from './pages/exercises/QuestionPage';
 import FlashcardsPage from './pages/flashcards/FlashcardsPage';
@@ -125,6 +126,7 @@ const AppContent: React.FC = () => {
           <Route path="/flashcards" element={<ProtectedRoute><Layout><FlashcardsPage /></Layout></ProtectedRoute>} />
           <Route path="/flashcards/study/:setId" element={<ProtectedRoute><Layout><FlashcardStudyPage /></Layout></ProtectedRoute>} />
           <Route path="/lessons/:lessonId/exercises/:exerciseId/questions" element={<ProtectedRoute><Layout><QuestionPage /></Layout></ProtectedRoute>} />
+          <Route path="/lessons/:lessonId/exercises/:exerciseId" element={<ProtectedRoute><Layout><ExerciseQuestionsPage /></Layout></ProtectedRoute>} />
           {/* Admin Routes */}
           <Route path="/admin/users" element={<ProtectedRoute><Layout><AdminUsersPage /></Layout></ProtectedRoute>} />
           <Route path="/admin/content" element={<ProtectedRoute><Layout><AdminContentPage /></Layout></ProtectedRoute>} />

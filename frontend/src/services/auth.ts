@@ -8,8 +8,6 @@
 
 import { LoginRequest, RegisterRequest, User } from "../types";
 import api from "./api";
-
-// ================================================================
 // CONSTANTS
 // ================================================================
 
@@ -323,6 +321,28 @@ export const register = async (userData: RegisterRequest): Promise<User> => {
     throw new Error(
       error.response?.data?.message || error.message || "Registration failed"
     );
+  }
+};
+//handleLogout
+// ===============================================================
+// ================================================================
+// HANDLE LOGOUT FUNCTION
+// ================================================================
+
+/**
+ * Handles the logout process with proper cleanup
+ * Can be used directly in components with error handling
+ */
+export const handleLogout = async (): Promise<void> => {
+  try {
+    await logout();
+    console.log("✅ Logout completed successfully");
+  } catch (error) {
+    console.error("❌ Error during logout:", error);
+    // Even if logout fails, ensure local data is cleared
+    clearAuthData();
+    // Redirect to login page
+    window.location.href = "/auth/login";
   }
 };
 

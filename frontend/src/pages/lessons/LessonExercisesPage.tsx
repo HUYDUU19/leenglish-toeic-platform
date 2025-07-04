@@ -117,16 +117,8 @@ const LessonExercisesPage: React.FC = () => {
     const handleStartExercise = (exercise: Exercise) => {
         console.log(`🎯 Starting exercise ${exercise.id}: ${exercise.title}`);
 
-        // Hiện tại có thể có các options:
-
-        // Option 1: Navigate to individual exercise page (nếu đã có)
-        // navigate(`/lessons/${id}/exercises/${exercise.id}`);
-
-        // Option 2: Open exercise in modal (recommended for now)
-        openExerciseModal(exercise);
-
-        // Option 3: Navigate to generic exercise player
-        // navigate(`/exercise-player/${exercise.id}`);
+        // Navigate to exercise questions page
+        navigate(`/lessons/${id}/exercises/${exercise.id}/questions`);
     };
 
     // Hàm mở exercise trong modal
