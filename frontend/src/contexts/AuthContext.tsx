@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { getCurrentUser, getToken, startAutoRefresh, stopAutoRefresh } from '../services/auth';
+import { startAutoRefresh, stopAutoRefresh } from '../services/auth';
 import { User } from '../types';
 
 export interface AuthContextType {
@@ -31,48 +31,122 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
 
+    const initializeAuth = () => {
+        console.log('🔍 AuthProvider: Initializing authentication...');
+
+        try {
+            // Check for token first - use toeic_access_token as primary key
+            const token = localStorage.getItem("toeic_access_token") ||
+                localStorage.getItem("authToken");
+
+            if (!token) {
+                console.log('❌ No valid token found');
+                return false;
+            }
+
+            // Then check for user data - use toeic_current_user as primary key
+            const userData = localStorage.getItem("toeic_current_user") ||
+                localStorage.getItem("currentUser");
+
+            if (!userData) {
+                console.log('❌ No user data found');
+                return false;
+            }
+
+            try {
+                const user = JSON.parse(userData);
+                // Less strict validation to handle different user data formats
+                if (!user) {
+                    console.log('❌ Invalid user data format');
+                    return false;
+                }
+                console.log('✅ Found valid authentication data');
+                return { user, token };
+            } catch (e) {
+                console.error('❌ Error parsing user data:', e);
+                return false;
+            }
+        } catch (e) {
+            console.error('❌ Error during auth initialization:', e);
+            return false;
+        }
+    };
+
+    // Thêm hàm này vào AuthProvider để debug
+    const debugAuthState = () => {
+        console.group('🔍 Auth Debug Info');
+        // Kiểm tra tất cả các key có thể chứa token
+        console.log('toeic_access_token:', localStorage.getItem('toeic_access_token') ? '✅ Exists' : '❌ Missing');
+        console.log('authToken:', localStorage.getItem('authToken') ? '✅ Exists' : '❌ Missing');
+
+        // Kiểm tra tất cả các key có thể chứa user data
+        console.log('toeic_current_user:', localStorage.getItem('toeic_current_user') ? '✅ Exists' : '❌ Missing');
+        console.log('currentUser:', localStorage.getItem('currentUser') ? '✅ Exists' : '❌ Missing');
+
+        // Kiểm tra trạng thái auth trong React component
+        console.log('isAuthenticated state:', isAuthenticated);
+        console.log('currentUser state:', currentUser ? '✅ Exists' : '❌ Missing');
+        console.groupEnd();
+    };
+
     useEffect(() => {
         console.log('🔍 AuthProvider: Checking authentication status...');
+        debugAuthState(); // Thêm debug info
 
-        // Use the auth service to get user and token with consistent keys
-        const user = getCurrentUser();
-        const token = getToken();
+        const authData = initializeAuth();
 
-        if (user && token) {
-            console.log('✅ User authenticated:', user.email || user.username);
-            setCurrentUser(user);
+        if (authData) {
+            console.log('✅ Valid authentication found:', authData.user.email || authData.user.username);
+            setCurrentUser(authData.user);
             setIsAuthenticated(true);
-            // Start auto-refresh for authenticated users
             startAutoRefresh();
         } else {
             console.log('❌ No valid authentication found');
+            // Clean up any invalid auth data
+            localStorage.removeItem("toeic_access_token");
+            localStorage.removeItem("toeic_current_user");
+            localStorage.removeItem("authToken");
+            localStorage.removeItem("currentUser");
             setCurrentUser(null);
             setIsAuthenticated(false);
         }
         setLoading(false);
 
-        // Cleanup on unmount
         return () => {
             stopAutoRefresh();
         };
     }, []);
 
     // ✅ FIXED: Proper login function for AuthContext
-    const login = async (email: string, password: string): Promise<void> => {
+    const login = async (usernameOrEmail: string, password: string): Promise<void> => {
         try {
-            console.log('🔑 AuthContext: Attempting login for:', email);
+            console.log('🔑 AuthContext: Attempting login for:', usernameOrEmail);
+
+            // Thêm kiểm tra tính hợp lệ của thông tin đăng nhập
+            if (!usernameOrEmail || !password) {
+                throw new Error('Tên đăng nhập và mật khẩu không được để trống');
+            }
+
+            // Log chi tiết hơn để debug
+            console.log(`🔍 Login attempt with: ${usernameOrEmail.length > 3 ? usernameOrEmail.substring(0, 3) + '...' : usernameOrEmail} / ${password ? '********' : 'empty'}`);
 
             // ✅ Import the login function from auth service
             const { login: authLogin } = await import('../services/auth');
 
-            // ✅ Call with proper LoginRequest format
+            // Thêm logic để kiểm tra xem đang nhập email hay username
+            const isEmail = usernameOrEmail.includes('@');
+
+            // ✅ Call with proper LoginRequest format, gửi đúng kiểu thông tin
             const response = await authLogin({
-                username: email, // Backend expects username field
+                username: usernameOrEmail,
+                // Không truyền email nữa
                 password: password
             });
 
-            if (response.user && response.accessToken) {
+            if (response && response.user && response.accessToken) {
                 console.log('✅ Login successful, storing auth data...');
+                // Don't need to duplicate storage since login function already handles it
+                // Just update the local state
                 setCurrentUser(response.user);
                 setIsAuthenticated(true);
                 startAutoRefresh();
@@ -82,25 +156,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         } catch (error: any) {
             console.error('❌ AuthContext login error:', error);
+
+            // Cải thiện thông báo lỗi cụ thể về vấn đề mật khẩu
+            if (error.response) {
+                if (error.response.status === 401) {
+                    throw new Error('Sai tên đăng nhập hoặc mật khẩu');
+                } else if (error.response.data?.message?.toLowerCase().includes('password')) {
+                    throw new Error('Mật khẩu không hợp lệ: ' + error.response.data.message);
+                }
+            }
+
             throw error; // Re-throw so components can handle the error
         }
     };
 
     // ✅ NEW: Function to handle login with existing user data (for after successful API call)
     const loginWithUserData = (user: User, accessToken: string) => {
-        console.log('🔑 AuthContext: Logging in with user data:', user.email || user.username);
+        console.log('🔑 AuthProvider: Setting up user session...');
 
-        // Store tokens using auth service functions
-        const { setToken, setCurrentUser: setAuthUser } = require('../services/auth');
-        setToken(accessToken);
-        setAuthUser(user);
+        // Store with consistent keys
+        localStorage.setItem("toeic_access_token", accessToken);
+        localStorage.setItem("toeic_current_user", JSON.stringify(user));
 
-        // Update context state
+        // Update state
         setCurrentUser(user);
         setIsAuthenticated(true);
         startAutoRefresh();
 
-        console.log('✅ AuthContext: Login with user data completed');
+        console.log('✅ User session initialized successfully');
     };
 
     const logout = () => {

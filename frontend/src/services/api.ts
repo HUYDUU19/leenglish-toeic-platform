@@ -26,22 +26,46 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
 
 apiClient.interceptors.request.use(
   (config) => {
-    // Add authorization token if available - check multiple possible keys
+    // Get token with fallback options
     const token =
       localStorage.getItem("toeic_access_token") ||
       localStorage.getItem("authToken") ||
       localStorage.getItem("accessToken");
 
+    // Always add token if available
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log("🔒 Added token to request headers");
+    } else {
+      console.log("⚠️ No auth token available for request");
     }
 
-    // Add current user info for authorization checks
-    const currentUser =
-      localStorage.getItem("toeic_current_user") ||
-      localStorage.getItem("currentUser");
-    if (currentUser) {
-      config.headers["X-Current-User"] = currentUser;
+    // Completely revamped URL handling logic
+    if (config.url) {
+      // First, fix any double slash issues (except for http:// or https://)
+      config.url = config.url.replace(/([^:])\/\//g, "$1/");
+
+      // Handle missing and duplicate /api prefixes
+      if (config.url.startsWith("/api/api/")) {
+        // Fix double api prefix
+        config.url = config.url.replace("/api/api/", "/api/");
+        console.log(`🛠️ Fixed double /api prefix: ${config.url}`);
+      } else if (config.url.startsWith("api/")) {
+        // Add missing slash
+        config.url = `/${config.url}`;
+        console.log(`🛠️ Added leading slash: ${config.url}`);
+      } else if (
+        !config.url.startsWith("/api/") &&
+        !config.url.startsWith("http")
+      ) {
+        // Add missing /api/ prefix for relative URLs
+        if (config.url.startsWith("/")) {
+          config.url = `/api${config.url}`;
+        } else {
+          config.url = `/api/${config.url}`;
+        }
+        console.log(`🛠️ Added /api prefix: ${config.url}`);
+      }
     }
 
     console.log(
@@ -298,5 +322,13 @@ export const apiRequest = async <T>(
   }
 };
 
-export { apiClient as api };
+// Check your API base URL configuration:
+const apiInstance = axios.create({
+  baseURL: "http://localhost:8080", // Removed /api to prevent double prefixing
+  timeout: 10000,
+  // ...other config
+});
+
+// Export the instance with a more descriptive name to avoid confusion with the file name
+export { apiClient as api, apiInstance };
 export default apiClient;

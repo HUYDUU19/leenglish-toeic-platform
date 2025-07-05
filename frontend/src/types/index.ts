@@ -68,8 +68,8 @@ export enum LessonType {
   SPEAKING = "SPEAKING",
   WRITING = "WRITING",
 }
-export interface Question{
-  // create a Question interface that matches the backend structure
+// Consolidated Question interface to avoid duplication and ensure compatibility with backend structure
+export interface Question {
   id: number;
   questionText: string;
   optionA: string;
@@ -81,14 +81,14 @@ export interface Question{
   points: number;
   questionOrder: number;
   exerciseId: number;
+  audioUrl?: string; // URL to audio file if applicable
+  imageUrl?: string; // URL to image file if applicable
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  difficulty: Difficult; // Use the Difficult enum
-  questionType: QuestionType; // Use the QuestionType enum
-  questiontext: string; // This seems to be a duplicate, but keeping for compatibility
-  
-
+  difficulty?: Difficult | "EASY" | "MEDIUM" | "HARD"; // Use the Difficult enum or string for compatibility
+  questionType?: QuestionType | "MULTIPLE_CHOICE" | "TRUE_FALSE" | "FILL_IN_BLANK" | "LISTENING" | "READING_COMPREHENSION"; // Use the QuestionType enum or string for compatibility
+  questiontext?: string; // For compatibility with legacy backend property
 }
 
 export enum ProgressType {
@@ -154,24 +154,7 @@ export interface Lesson {
   progress?: number;
 }
 
-export interface Question {
-  id: number;
-  questionText: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  correctAnswer: string; // 'A', 'B', 'C', or 'D'
-  explanation?: string;
-  points: number;
-  questionOrder: number;
-  exerciseId: number;
-  audioUrl?: string; // URL to audio file if applicable
-  imageUrl?: string; // URL to image file if applicable
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+// (Removed duplicate Question interface. See consolidated definition above.)
 
 export interface QuestionAnswer {
   questionId: number;
@@ -341,6 +324,9 @@ export interface ErrorResponse {
 export interface LoginRequest {
   username: string;
   password: string;
+  email?: string; // Optional for flexibility
+  rememberMe?: boolean; // Optional for "Remember Me" functionality
+
 }
 
 export interface RegisterRequest {

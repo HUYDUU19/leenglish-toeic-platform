@@ -1,147 +1,182 @@
-// package com.leenglish.toeic.domain;
+package com.leenglish.toeic.domain;
 
-// import jakarta.persistence.*;
-// import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
-// @Entity
-// @Table(name = "user_question_answers")
-// public class UserQuestionAnswer {
+@Entity
+@Table(name = "user_question_answers")
+public class UserQuestionAnswer {
 
-//     @Id
-//     @GeneratedValue(strategy = GenerationType.IDENTITY)
-//     private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-//     @ManyToOne(fetch = FetchType.LAZY)
-//     @JoinColumn(name = "user_id")
-//     private User user;
+    @ManyToOne
+    @JoinColumn(name = "result_id", nullable = false)
+    private UserExerciseResult result;
 
-//     @ManyToOne(fetch = FetchType.LAZY)
-//     @JoinColumn(name = "exercise_question_id")
-//     private ExerciseQuestion exerciseQuestion;
+    @ManyToOne
+    @JoinColumn(name = "question_id", nullable = false)
+    private Question question;
 
-//     @ManyToOne(fetch = FetchType.LAZY)
-//     @JoinColumn(name = "user_exercise_attempt_id")
-//     private UserExerciseAttempt userExerciseAttempt;
+    @Column(name = "selected_answer")
+    private String selectedAnswer;
 
-//     @Column(name = "user_answer", columnDefinition = "TEXT")
-//     private String userAnswer;
+    @Column(name = "is_correct", nullable = false)
+    private Boolean isCorrect;
 
-//     @Column(name = "is_correct")
-//     private Boolean isCorrect = false;
+    // Constructors, getters and setters
+    public UserQuestionAnswer() {
+    }
 
-//     @Column(name = "time_taken")
-//     private Integer timeTaken; // seconds taken to answer this question
+    public UserQuestionAnswer(UserExerciseResult result, Question question, String selectedAnswer, Boolean isCorrect) {
+        this.result = result;
+        this.question = question;
+        this.selectedAnswer = selectedAnswer;
+        this.isCorrect = isCorrect;
+    }
 
-//     @Column(name = "answered_at")
-//     private LocalDateTime answeredAt = LocalDateTime.now();
+    // Getters and setters
+    public Long getId() {
+        return id;
+    }
 
-//     // Constructors
-//     public UserQuestionAnswer() {
-//     }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-//     public UserQuestionAnswer(User user, ExerciseQuestion exerciseQuestion,
-//             UserExerciseAttempt userExerciseAttempt, String userAnswer) {
-//         this.user = user;
-//         this.exerciseQuestion = exerciseQuestion;
-//         this.userExerciseAttempt = userExerciseAttempt;
-//         this.userAnswer = userAnswer;
-//         this.answeredAt = LocalDateTime.now();
-//         this.isCorrect = exerciseQuestion.isCorrect(userAnswer);
-//     }
+    public UserExerciseResult getResult() {
+        return result;
+    }
 
-//     // Getters and Setters
-//     public Long getId() {
-//         return id;
-//     }
+    public void setResult(UserExerciseResult result) {
+        this.result = result;
+    }
 
-//     public void setId(Long id) {
-//         this.id = id;
-//     }
+    public Question getQuestion() {
+        return question;
+    }
 
-//     public User getUser() {
-//         return user;
-//     }
+    public void setQuestion(Question question) {
+        this.question = question;
+    }
 
-//     public void setUser(User user) {
-//         this.user = user;
-//     }
+    public String getSelectedAnswer() {
+        return selectedAnswer;
+    }
 
-//     public ExerciseQuestion getExerciseQuestion() {
-//         return exerciseQuestion;
-//     }
+    public void setSelectedAnswer(String selectedAnswer) {
+        this.selectedAnswer = selectedAnswer;
+    }
 
-//     public void setExerciseQuestion(ExerciseQuestion exerciseQuestion) {
-//         this.exerciseQuestion = exerciseQuestion;
-//     }
+    public Boolean getIsCorrect() {
+        return isCorrect;
+    }
 
-//     public UserExerciseAttempt getUserExerciseAttempt() {
-//         return userExerciseAttempt;
-//     }
+    public void setIsCorrect(Boolean isCorrect) {
+        this.isCorrect = isCorrect;
+    }
+}
 
-//     public void setUserExerciseAttempt(UserExerciseAttempt userExerciseAttempt) {
-//         this.userExerciseAttempt = userExerciseAttempt;
-//     }
+// // Getters and Setters
+// public Long getId() {
+// return id;
+// }
 
-//     public String getUserAnswer() {
-//         return userAnswer;
-//     }
+// public void setId(Long id) {
+// this.id = id;
+// }
 
-//     public void setUserAnswer(String userAnswer) {
-//         this.userAnswer = userAnswer;
-//         // Auto-check correctness when answer is set
-//         if (this.exerciseQuestion != null) {
-//             this.isCorrect = this.exerciseQuestion.isCorrect(userAnswer);
-//         }
-//     }
+// public User getUser() {
+// return user;
+// }
 
-//     public Boolean getIsCorrect() {
-//         return isCorrect;
-//     }
+// public void setUser(User user) {
+// this.user = user;
+// }
 
-//     public void setIsCorrect(Boolean isCorrect) {
-//         this.isCorrect = isCorrect;
-//     }
+// public ExerciseQuestion getExerciseQuestion() {
+// return exerciseQuestion;
+// }
 
-//     public Integer getTimeTaken() {
-//         return timeTaken;
-//     }
+// public void setExerciseQuestion(ExerciseQuestion exerciseQuestion) {
+// this.exerciseQuestion = exerciseQuestion;
+// }
 
-//     public void setTimeTaken(Integer timeTaken) {
-//         this.timeTaken = timeTaken;
-//     }
+// public UserExerciseAttempt getUserExerciseAttempt() {
+// return userExerciseAttempt;
+// }
 
-//     public LocalDateTime getAnsweredAt() {
-//         return answeredAt;
-//     }
+// public void setUserExerciseAttempt(UserExerciseAttempt userExerciseAttempt) {
+// this.userExerciseAttempt = userExerciseAttempt;
+// }
 
-//     public void setAnsweredAt(LocalDateTime answeredAt) {
-//         this.answeredAt = answeredAt;
-//     }
+// public String getUserAnswer() {
+// return userAnswer;
+// }
 
-//     // Business Logic Methods
-//     public boolean isAnswered() {
-//         return userAnswer != null && !userAnswer.trim().isEmpty();
-//     }
+// public void setUserAnswer(String userAnswer) {
+// this.userAnswer = userAnswer;
+// // Auto-check correctness when answer is set
+// if (this.exerciseQuestion != null) {
+// this.isCorrect = this.exerciseQuestion.isCorrect(userAnswer);
+// }
+// }
 
-//     public void checkCorrectness() {
-//         if (exerciseQuestion != null && userAnswer != null) {
-//             this.isCorrect = exerciseQuestion.isCorrect(userAnswer);
-//         }
-//     }
+// public Boolean getIsCorrect() {
+// return isCorrect;
+// }
 
-//     public String getCorrectAnswer() {
-//         return exerciseQuestion != null ? exerciseQuestion.getCorrectAnswer() : null;
-//     }
+// public void setIsCorrect(Boolean isCorrect) {
+// this.isCorrect = isCorrect;
+// }
 
-//     public long getTimeTakenInMinutes() {
-//         return timeTaken != null ? timeTaken / 60 : 0;
-//     }
+// public Integer getTimeTaken() {
+// return timeTaken;
+// }
 
-//     public boolean isQuickAnswer(int thresholdSeconds) {
-//         return timeTaken != null && timeTaken < thresholdSeconds;
-//     }
+// public void setTimeTaken(Integer timeTaken) {
+// this.timeTaken = timeTaken;
+// }
 
-//     public boolean isSlowAnswer(int thresholdSeconds) {
-//         return timeTaken != null && timeTaken > thresholdSeconds;
-//     }
+// public LocalDateTime getAnsweredAt() {
+// return answeredAt;
+// }
+
+// public void setAnsweredAt(LocalDateTime answeredAt) {
+// this.answeredAt = answeredAt;
+// }
+
+// // Business Logic Methods
+// public boolean isAnswered() {
+// return userAnswer != null && !userAnswer.trim().isEmpty();
+// }
+
+// public void checkCorrectness() {
+// if (exerciseQuestion != null && userAnswer != null) {
+// this.isCorrect = exerciseQuestion.isCorrect(userAnswer);
+// }
+// }
+
+// public String getCorrectAnswer() {
+// return exerciseQuestion != null ? exerciseQuestion.getCorrectAnswer() : null;
+// }
+
+// public long getTimeTakenInMinutes() {
+// return timeTaken != null ? timeTaken / 60 : 0;
+// }
+
+// public boolean isQuickAnswer(int thresholdSeconds) {
+// return timeTaken != null && timeTaken < thresholdSeconds;
+// }
+
+// public boolean isSlowAnswer(int thresholdSeconds) {
+// return timeTaken != null && timeTaken > thresholdSeconds;
+// }
 // }

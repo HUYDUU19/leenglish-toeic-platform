@@ -63,13 +63,21 @@ export const questionService = {
    */
   submitExerciseAnswers: async (
     exerciseId: number,
-    answers: { questionId: number; selectedAnswer: string }[]
+    lessonId: number,
+    answers: {
+      questionId: number;
+      selectedAnswer: string;
+    }[],
+    timeTaken: number
   ): Promise<any> => {
     console.log(`📊 Submitting answers for exercise ${exerciseId}...`);
 
     try {
       const response = await api.post(`/exercises/${exerciseId}/submit`, {
+        exerciseId,
+        lessonId,
         answers,
+        timeTaken,
       });
       console.log("✅ Exercise answers submitted:", response.data);
       return response.data;
@@ -77,7 +85,29 @@ export const questionService = {
       console.error("❌ Error submitting exercise answers:", error);
       throw error;
     }
-    //getExercises
+  },
+
+  /**
+   * Lấy kết quả của một exercise đã làm
+   */
+  getExerciseResults: async (
+    exerciseId: number,
+    userId?: number
+  ): Promise<any> => {
+    console.log(`🔍 Fetching results for exercise ${exerciseId}...`);
+
+    const endpoint = userId
+      ? `/exercises/${exerciseId}/results?userId=${userId}`
+      : `/exercises/${exerciseId}/results`;
+
+    try {
+      const response = await api.get(endpoint);
+      console.log("✅ Exercise results loaded:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Error fetching exercise results:", error);
+      throw error;
+    }
   },
   //getExercises
   getExercises: async (lessonId: number): Promise<any[]> => {
@@ -92,23 +122,4 @@ export const questionService = {
       throw error;
     }
   },
-  //getQuestionsByExercise
-  getQuestionsByExercise: async (exerciseId: number): Promise<any[]> => {
-    console.log(`🔍 Fetching questions for exercise ${exerciseId}...`);
-    try {
-      const token = localStorage.getItem('auth_token');
-      const response = await api.get(`/exercises/${exerciseId}/questions`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      console.log("✅ Questions loaded:", response.data);
-      return response.data;
-    } catch (error) {
-      console.error("❌ Error fetching questions:", error);
-      throw error;
-    }
-  }
-
-
 };

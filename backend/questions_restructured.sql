@@ -47,46 +47,50 @@ INSERT INTO `questions` (`correct_answer`, `created_at`, `explanation`, `is_acti
 ('C', '2025-07-02 10:00:00.000000', 'Big is the opposite of small.', b'1', 'Large', 'Huge', 'Big', 'Giant', 10, 6, 'What is the opposite of "small"?', '2025-07-02 10:00:00.000000', 4);
 
 -- ========================================
--- EXERCISE 5: Numbers & Science (6 questions)
+-- EXERCISE 5: Numbers & Science (6 questions) - MEDIUM DIFFICULTY
 -- ========================================
+-- UPDATE exercises SET difficulty_level = 'medium' WHERE id = 5;
 INSERT INTO `questions` (`correct_answer`, `created_at`, `explanation`, `is_active`, `option_a`, `option_b`, `option_c`, `option_d`, `points`, `question_order`, `question_text`, `updated_at`, `exercise_id`) VALUES
-('C', '2025-07-02 10:00:00.000000', 'There are seven continents.', b'1', 'Five', 'Six', 'Seven', 'Eight', 10, 1, 'How many continents are there?', '2025-07-02 10:00:00.000000', 5),
-('B', '2025-07-02 10:00:00.000000', '2 is the smallest prime number.', b'1', '1', '2', '3', '5', 10, 2, 'What is the smallest prime number?', '2025-07-02 10:00:00.000000', 5),
-('D', '2025-07-02 10:00:00.000000', 'The Pacific Ocean is the largest.', b'1', 'Atlantic', 'Indian', 'Arctic', 'Pacific', 10, 3, 'What is the largest ocean?', '2025-07-02 10:00:00.000000', 5),
-('C', '2025-07-02 10:00:00.000000', 'Jupiter is the largest planet.', b'1', 'Earth', 'Mars', 'Jupiter', 'Saturn', 10, 4, 'What is the largest planet in our solar system?', '2025-07-02 10:00:00.000000', 5),
-('C', '2025-07-02 10:00:00.000000', 'Diamond is the hardest natural substance.', b'1', 'Gold', 'Iron', 'Diamond', 'Platinum', 10, 5, 'What is the hardest natural substance on Earth?', '2025-07-02 10:00:00.000000', 5),
-('A', '2025-07-02 10:00:00.000000', 'Au is the chemical symbol for gold.', b'1', 'Au', 'Ag', 'Pb', 'Fe', 10, 6, 'What is the chemical symbol for gold?', '2025-07-02 10:00:00.000000', 5);
+('C', '2025-07-02 10:00:00.000000', 'There are seven continents.', b'1', 'Five', 'Six', 'Seven', 'Eight', 15, 1, 'How many continents are there?', '2025-07-02 10:00:00.000000', 5),
+('B', '2025-07-02 10:00:00.000000', '2 is the smallest prime number.', b'1', '1', '2', '3', '5', 15, 2, 'What is the smallest prime number?', '2025-07-02 10:00:00.000000', 5),
+('D', '2025-07-02 10:00:00.000000', 'The Pacific Ocean is the largest.', b'1', 'Atlantic', 'Indian', 'Arctic', 'Pacific', 15, 3, 'What is the largest ocean?', '2025-07-02 10:00:00.000000', 5),
+('C', '2025-07-02 10:00:00.000000', 'Jupiter is the largest planet.', b'1', 'Earth', 'Mars', 'Jupiter', 'Saturn', 15, 4, 'What is the largest planet in our solar system?', '2025-07-02 10:00:00.000000', 5),
+('C', '2025-07-02 10:00:00.000000', 'Diamond is the hardest natural substance.', b'1', 'Gold', 'Iron', 'Diamond', 'Platinum', 15, 5, 'What is the hardest natural substance on Earth?', '2025-07-02 10:00:00.000000', 5),
+('A', '2025-07-02 10:00:00.000000', 'Au is the chemical symbol for gold.', b'1', 'Au', 'Ag', 'Pb', 'Fe', 15, 6, 'What is the chemical symbol for gold?', '2025-07-02 10:00:00.000000', 5);
 
 -- Tiếp tục với các exercises còn lại...
 -- ========================================
--- EXERCISE 6: Languages (6 questions)
+-- EXERCISE 6: Languages (6 questions) - MEDIUM DIFFICULTY
 -- ========================================
+-- UPDATE exercises SET difficulty_level = 'medium' WHERE id = 6;
 INSERT INTO `questions` (`correct_answer`, `created_at`, `explanation`, `is_active`, `option_a`, `option_b`, `option_c`, `option_d`, `points`, `question_order`, `question_text`, `updated_at`, `exercise_id`) VALUES
-('B', '2025-07-02 10:00:00.000000', 'Mandarin is the most widely spoken language.', b'1', 'English', 'Mandarin', 'Spanish', 'Hindi', 10, 1, 'What is the most widely spoken language in the world?', '2025-07-02 10:00:00.000000', 6),
-('B', '2025-07-02 10:00:00.000000', 'Portuguese is the main language in Brazil.', b'1', 'Spanish', 'Portuguese', 'English', 'French', 10, 2, 'What is the main language spoken in Brazil?', '2025-07-02 10:00:00.000000', 6),
-('A', '2025-07-02 10:00:00.000000', 'English is the most spoken language in the USA.', b'1', 'English', 'Spanish', 'Chinese', 'French', 10, 3, 'What is the most spoken language in the USA?', '2025-07-02 10:00:00.000000', 6),
-('A', '2025-07-02 10:00:00.000000', 'Arabic is the primary language in Egypt.', b'1', 'Arabic', 'English', 'French', 'Spanish', 10, 4, 'What is the primary language in Egypt?', '2025-07-02 10:00:00.000000', 6),
-('A', '2025-07-02 10:00:00.000000', 'Russian is the primary language in Russia.', b'1', 'Russian', 'Ukrainian', 'Belarusian', 'Kazakh', 10, 5, 'What is the primary language in Russia?', '2025-07-02 10:00:00.000000', 6),
-('A', '2025-07-02 10:00:00.000000', 'Spanish is the primary language in Argentina.', b'1', 'Spanish', 'Portuguese', 'Italian', 'French', 10, 6, 'What is the primary language in Argentina?', '2025-07-02 10:00:00.000000', 6);
+('B', '2025-07-02 10:00:00.000000', 'Mandarin is the most widely spoken language.', b'1', 'English', 'Mandarin', 'Spanish', 'Hindi', 15, 1, 'What is the most widely spoken language in the world?', '2025-07-02 10:00:00.000000', 6),
+('B', '2025-07-02 10:00:00.000000', 'Portuguese is the main language in Brazil.', b'1', 'Spanish', 'Portuguese', 'English', 'French', 15, 2, 'What is the main language spoken in Brazil?', '2025-07-02 10:00:00.000000', 6),
+('A', '2025-07-02 10:00:00.000000', 'English is the most spoken language in the USA.', b'1', 'English', 'Spanish', 'Chinese', 'French', 15, 3, 'What is the most spoken language in the USA?', '2025-07-02 10:00:00.000000', 6),
+('A', '2025-07-02 10:00:00.000000', 'Arabic is the primary language in Egypt.', b'1', 'Arabic', 'English', 'French', 'Spanish', 15, 4, 'What is the primary language in Egypt?', '2025-07-02 10:00:00.000000', 6),
+('A', '2025-07-02 10:00:00.000000', 'Russian is the primary language in Russia.', b'1', 'Russian', 'Ukrainian', 'Belarusian', 'Kazakh', 15, 5, 'What is the primary language in Russia?', '2025-07-02 10:00:00.000000', 6),
+('A', '2025-07-02 10:00:00.000000', 'Spanish is the primary language in Argentina.', b'1', 'Spanish', 'Portuguese', 'Italian', 'French', 15, 6, 'What is the primary language in Argentina?', '2025-07-02 10:00:00.000000', 6);
 
 -- ========================================
--- EXERCISE 7: World Capitals - Asia & Others (6 questions)
+-- EXERCISE 7: World Capitals - Asia & Others (6 questions) - HARD DIFFICULTY
 -- ========================================
+-- UPDATE exercises SET difficulty_level = 'hard' WHERE id = 7;
 INSERT INTO `questions` (`correct_answer`, `created_at`, `explanation`, `is_active`, `option_a`, `option_b`, `option_c`, `option_d`, `points`, `question_order`, `question_text`, `updated_at`, `exercise_id`) VALUES
-('C', '2025-07-02 10:00:00.000000', 'Tokyo is the capital of Japan.', b'1', 'Beijing', 'Seoul', 'Tokyo', 'Bangkok', 10, 1, 'What is the capital of Japan?', '2025-07-02 10:00:00.000000', 7),
-('A', '2025-07-02 10:00:00.000000', 'Beijing is the capital of China.', b'1', 'Beijing', 'Shanghai', 'Guangzhou', 'Shenzhen', 10, 2, 'What is the capital of China?', '2025-07-02 10:00:00.000000', 7),
-('D', '2025-07-02 10:00:00.000000', 'Ottawa is the capital of Canada.', b'1', 'Toronto', 'Vancouver', 'Montreal', 'Ottawa', 10, 3, 'What is the capital of Canada?', '2025-07-02 10:00:00.000000', 7),
-('C', '2025-07-02 10:00:00.000000', 'Canberra is the capital of Australia.', b'1', 'Sydney', 'Melbourne', 'Canberra', 'Brisbane', 10, 4, 'What is the capital of Australia?', '2025-07-02 10:00:00.000000', 7),
-('A', '2025-07-02 10:00:00.000000', 'Bangkok is the capital of Thailand.', b'1', 'Bangkok', 'Chiang Mai', 'Phuket', 'Krabi', 10, 5, 'What is the capital of Thailand?', '2025-07-02 10:00:00.000000', 7),
-('A', '2025-07-02 10:00:00.000000', 'Hanoi is the capital of Vietnam.', b'1', 'Hanoi', 'Ho Chi Minh City', 'Da Nang', 'Hai Phong', 10, 6, 'What is the capital of Vietnam?', '2025-07-02 10:00:00.000000', 7);
+('C', '2025-07-02 10:00:00.000000', 'Tokyo is the capital of Japan.', b'1', 'Beijing', 'Seoul', 'Tokyo', 'Bangkok', 20, 1, 'What is the capital of Japan?', '2025-07-02 10:00:00.000000', 7),
+('A', '2025-07-02 10:00:00.000000', 'Beijing is the capital of China.', b'1', 'Beijing', 'Shanghai', 'Guangzhou', 'Shenzhen', 20, 2, 'What is the capital of China?', '2025-07-02 10:00:00.000000', 7),
+('D', '2025-07-02 10:00:00.000000', 'Ottawa is the capital of Canada.', b'1', 'Toronto', 'Vancouver', 'Montreal', 'Ottawa', 20, 3, 'What is the capital of Canada?', '2025-07-02 10:00:00.000000', 7),
+('C', '2025-07-02 10:00:00.000000', 'Canberra is the capital of Australia.', b'1', 'Sydney', 'Melbourne', 'Canberra', 'Brisbane', 20, 4, 'What is the capital of Australia?', '2025-07-02 10:00:00.000000', 7),
+('A', '2025-07-02 10:00:00.000000', 'Bangkok is the capital of Thailand.', b'1', 'Bangkok', 'Chiang Mai', 'Phuket', 'Krabi', 20, 5, 'What is the capital of Thailand?', '2025-07-02 10:00:00.000000', 7),
+('A', '2025-07-02 10:00:00.000000', 'Hanoi is the capital of Vietnam.', b'1', 'Hanoi', 'Ho Chi Minh City', 'Da Nang', 'Hai Phong', 20, 6, 'What is the capital of Vietnam?', '2025-07-02 10:00:00.000000', 7);
 
 -- ========================================  
--- EXERCISE 8: Food & Cooking (6 questions)
+-- EXERCISE 8: Food & Cooking (6 questions) - HARD DIFFICULTY
 -- ========================================
+-- UPDATE exercises SET difficulty_level = 'hard' WHERE id = 8;
 INSERT INTO `questions` (`correct_answer`, `created_at`, `explanation`, `is_active`, `option_a`, `option_b`, `option_c`, `option_d`, `points`, `question_order`, `question_text`, `updated_at`, `exercise_id`) VALUES
-('A', '2025-07-02 10:00:00.000000', 'Rice is the main ingredient in sushi.', b'1', 'Rice', 'Noodles', 'Bread', 'Potato', 10, 1, 'What is the main ingredient in sushi?', '2025-07-02 10:00:00.000000', 8),
-('A', '2025-07-02 10:00:00.000000', 'Flour is the main ingredient in bread.', b'1', 'Flour', 'Sugar', 'Salt', 'Yeast', 10, 2, 'What is the main ingredient in bread?', '2025-07-02 10:00:00.000000', 8),
-('A', '2025-07-02 10:00:00.000000', 'Cocoa is the main ingredient in chocolate.', b'1', 'Cocoa', 'Sugar', 'Milk', 'Vanilla', 10, 3, 'What is the main ingredient in chocolate?', '2025-07-02 10:00:00.000000', 8),
-('C', '2025-07-02 10:00:00.000000', 'Avocado is the main ingredient in guacamole.', b'1', 'Tomato', 'Onion', 'Avocado', 'Pepper', 10, 4, 'What is the main ingredient in guacamole?', '2025-07-02 10:00:00.000000', 8),
-('A', '2025-07-02 10:00:00.000000', 'Basil is the main ingredient in pesto.', b'1', 'Basil', 'Parsley', 'Cilantro', 'Mint', 10, 5, 'What is the main ingredient in pesto?', '2025-07-02 10:00:00.000000', 8),
-('A', '2025-07-02 10:00:00.000000', 'Chickpeas are the main ingredient in hummus.', b'1', 'Chickpeas', 'Lentils', 'Beans',
+('A', '2025-07-02 10:00:00.000000', 'Rice is the main ingredient in sushi.', b'1', 'Rice', 'Noodles', 'Bread', 'Potato', 20, 1, 'What is the main ingredient in sushi?', '2025-07-02 10:00:00.000000', 8),
+('A', '2025-07-02 10:00:00.000000', 'Flour is the main ingredient in bread.', b'1', 'Flour', 'Sugar', 'Salt', 'Yeast', 20, 2, 'What is the main ingredient in bread?', '2025-07-02 10:00:00.000000', 8),
+('A', '2025-07-02 10:00:00.000000', 'Cocoa is the main ingredient in chocolate.', b'1', 'Cocoa', 'Sugar', 'Milk', 'Vanilla', 20, 3, 'What is the main ingredient in chocolate?', '2025-07-02 10:00:00.000000', 8),
+('C', '2025-07-02 10:00:00.000000', 'Avocado is the main ingredient in guacamole.', b'1', 'Tomato', 'Onion', 'Avocado', 'Pepper', 20, 4, 'What is the main ingredient in guacamole?', '2025-07-02 10:00:00.000000', 8),
+('A', '2025-07-02 10:00:00.000000', 'Basil is the main ingredient in pesto.', b'1', 'Basil', 'Parsley', 'Cilantro', 'Mint', 20, 5, 'What is the main ingredient in pesto?', '2025-07-02 10:00:00.000000', 8),
+('A', '2025-07-02 10:00:00.000000', 'Chickpeas are the main ingredient in hummus.', b'1', 'Chickpeas', 'Lentils', 'Beans', 'Peas', 20, 6, 'What is the main ingredient in hummus?', '2025-07-02 10:00:00.000000', 8);

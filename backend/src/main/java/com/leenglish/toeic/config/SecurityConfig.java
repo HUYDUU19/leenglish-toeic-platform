@@ -200,6 +200,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/profile").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/api/progress/**").hasAnyRole("USER", "ADMIN")
 
+                        // Exercise submission and feedback endpoints
+                        .requestMatchers(HttpMethod.POST, "/api/exercises/{id}/submit").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/exercises/feedback").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/exercises/{id}/results").authenticated()
+
                         // Legacy catch-all patterns (maintain backward compatibility)
                         // .requestMatchers("/api/lessons/**").hasAnyRole("USER", "ADMIN")
                         // .requestMatchers("/api/exercises/**").hasAnyRole("USER", "ADMIN")

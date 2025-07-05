@@ -1,7 +1,13 @@
 package com.leenglish.toeic.controller;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,8 +18,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.leenglish.toeic.domain.Exercise;
+import com.leenglish.toeic.domain.User;
 import com.leenglish.toeic.dto.ExerciseDto;
+import com.leenglish.toeic.dto.ExerciseResultDto;
+import com.leenglish.toeic.dto.ExerciseSubmissionDto;
+import com.leenglish.toeic.dto.FeedbackDto;
+import com.leenglish.toeic.service.ExerciseResultService;
 import com.leenglish.toeic.service.ExerciseService;
+import com.leenglish.toeic.service.UserService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/exercises")
@@ -22,6 +36,12 @@ public class ExerciseController {
 
     @Autowired
     private ExerciseService exerciseService;
+
+    @Autowired
+    private ExerciseResultService exerciseResultService;
+
+    @Autowired
+    private UserService userService;
 
     // Lấy 1 exercise theo id
     @GetMapping("/{id}")
@@ -57,6 +77,77 @@ public class ExerciseController {
         return ResponseEntity.ok().build();
     }
 
+    // Nộp bài làm exercise
+    @PostMapping("/{id}/submit")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ExerciseResultDto> submitExercise(
+            @PathVariable Long id,
+            @Valid @RequestBody ExerciseSubmissionDto submissionDto,
+            Authentication authentication) {
+
+        // Validate exercise ID
+        if (!id.equals(submissionDto.getExerciseId())) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Get username from authentication and find user
+        User user = getUserFromAuthentication(authentication);
+
+        Long userId = user.getId();
+
+        // Log the authenticated user information
+        System.out.println("Processing exercise submission for user: " + user.getUsername() +
+                " (ID: " + userId + ", Email: " + user.getEmail() + ")");
+
+        // Submit exercise results
+        ExerciseResultDto result = exerciseResultService.submitExerciseResult(
+                userId, submissionDto);
+
+        return ResponseEntity.ok(result);
+    } // Gửi feedback sau khi hoàn thành bài tập
+
+    @PostMapping("/feedback")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> submitFeedback(
+            @Valid @RequestBody FeedbackDto feedbackDto,
+            Authentication authentication) {
+
+        // Get username from authentication and find user
+        User user = getUserFromAuthentication(authentication);
+
+        Long userId = user.getId();
+
+        // Log the authenticated user information
+        System.out.println("Processing feedback submission for user: " + user.getUsername() +
+                " (ID: " + userId + ", Email: " + user.getEmail() + ")");
+
+        // Submit feedback
+        exerciseResultService.submitFeedback(userId, feedbackDto);
+
+        return ResponseEntity.ok().build();
+    } // Lấy kết quả làm bài của user
+
+    @GetMapping("/{id}/results")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<ExerciseResultDto>> getExerciseResults(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        // Get username from authentication and find user
+        User user = getUserFromAuthentication(authentication);
+
+        Long userId = user.getId();
+
+        // Log the authenticated user information
+        System.out.println("Getting exercise results for user: " + user.getUsername() +
+                " (ID: " + userId + ", Email: " + user.getEmail() + ")");
+
+        List<ExerciseResultDto> results = exerciseResultService.getUserExerciseResults(
+                userId, id);
+
+        return ResponseEntity.ok(results);
+    }
+
     // Chuyển đổi entity sang dto
     private ExerciseDto convertToDto(Exercise exercise) {
         ExerciseDto dto = new ExerciseDto();
@@ -79,5 +170,23 @@ public class ExerciseController {
         exercise.setDifficulty(dto.getDifficulty());
         exercise.setType(dto.getType());
         return exercise;
+    }
+
+    /**
+     * Helper method to find a user by authentication principal (username or email)
+     */
+    private User getUserFromAuthentication(Authentication authentication) {
+        String usernameOrEmail = authentication.getName();
+        Optional<User> userByUsername = userService.findByUsername(usernameOrEmail);
+        if (userByUsername.isPresent()) {
+            return userByUsername.get();
+        }
+
+        Optional<User> userByEmail = userService.findByEmail(usernameOrEmail);
+        if (userByEmail.isPresent()) {
+            return userByEmail.get();
+        }
+
+        throw new UsernameNotFoundException("User not found: " + usernameOrEmail);
     }
 }

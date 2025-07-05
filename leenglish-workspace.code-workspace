@@ -58,7 +58,7 @@
   },
   "mcp": {
     "servers": {
-      "my-mcp-server-aa48e7d7": {
+      "my-mcp-server-5a24ca7e": {
         "url": "localhost:3000"
       }
     }

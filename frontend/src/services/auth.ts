@@ -7,15 +7,15 @@
  */
 
 import { LoginRequest, RegisterRequest, User } from "../types";
-import api from "./api";
+import { api } from "./api";
+import apiClient from "./apiRequest";
+
 // CONSTANTS
 // ================================================================
 
 const TOKEN_KEY = "toeic_access_token";
 const REFRESH_TOKEN_KEY = "toeic_refresh_token";
 const USER_KEY = "toeic_current_user";
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || "http://localhost:8080/api";
 
 // ================================================================
 // TYPES
@@ -45,8 +45,22 @@ let refreshInterval: NodeJS.Timeout | null = null;
 // ================================================================
 
 export const setToken = (token: string): void => {
-  localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem("authToken", token); // For backward compatibility
+  try {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem("authToken", token); // For backward compatibility
+    console.log("✅ Token stored with keys:", TOKEN_KEY, "authToken");
+  } catch (error) {
+    console.error("❌ Failed to store token in localStorage:", error);
+    // Try to diagnose localStorage issues
+    try {
+      const testKey = "localStorage_test";
+      localStorage.setItem(testKey, "test");
+      localStorage.removeItem(testKey);
+      console.log("✅ localStorage is working properly");
+    } catch (storageError) {
+      console.error("❌ localStorage is not available:", storageError);
+    }
+  }
 };
 
 export const getToken = (): string | null => {
@@ -57,7 +71,41 @@ export const getToken = (): string | null => {
     localStorage.getItem("accessToken");
 
   if (token) {
-    console.log("🎫 Retrieved token from localStorage");
+    console.log(
+      "🎫 Retrieved token from localStorage:",
+      token.substring(0, 15) + "..."
+    );
+    // Basic JWT format check (header.payload.signature)
+    if (token.split(".").length !== 3) {
+      console.warn("⚠️ Retrieved token is not in valid JWT format");
+      return null; // Return null for invalid token format
+    }
+
+    // Check for token expiration
+    try {
+      const tokenPayload = JSON.parse(atob(token.split(".")[1]));
+      const currentTime = Date.now() / 1000;
+
+      if (tokenPayload.exp && tokenPayload.exp < currentTime) {
+        console.warn("⚠️ Token has expired, returning null");
+        return null;
+      }
+    } catch (e) {
+      console.warn("⚠️ Could not parse token payload:", e);
+      // Continue and return token anyway, let the API handle invalid tokens
+    }
+  } else {
+    console.log(
+      "⚠️ No token found in localStorage with keys:",
+      TOKEN_KEY,
+      "authToken",
+      "accessToken"
+    );
+    // Hiển thị tất cả các keys trong localStorage để debug
+    console.log(
+      "🔍 All localStorage keys:",
+      Object.keys(localStorage).join(", ")
+    );
   }
   return token;
 };
@@ -129,15 +177,28 @@ export const removeCurrentUser = (): void => {
 // ================================================================
 
 export const isAuthenticated = (): boolean => {
+  console.log("🔍 Checking authentication status...");
+
   const token = getToken();
   const user = getCurrentUser();
 
-  if (!token || !user) {
+  if (!token) {
+    console.log("❌ Authentication check failed: No valid token found");
+    return false;
+  }
+
+  if (!user) {
+    console.log("❌ Authentication check failed: No user data found");
     return false;
   }
 
   // Check if token is expired (basic check)
   try {
+    // Use the debug function for detailed token info in development
+    if (process.env.NODE_ENV !== "production") {
+      debugJwtToken(token);
+    }
+
     const tokenPayload = JSON.parse(atob(token.split(".")[1]));
     const currentTime = Date.now() / 1000;
 
@@ -147,11 +208,22 @@ export const isAuthenticated = (): boolean => {
       return false;
     }
 
-    console.log("🔍 Authentication check: true");
+    console.log(
+      "✅ Authentication check passed: User is authenticated as",
+      user.username || user.email
+    );
     return true;
   } catch (error) {
     console.error("🔑 Error checking token validity:", error);
+
     // Don't clear token on parse error, just return true if we have token and user
+    // But log it clearly for debugging
+    console.log(
+      `Token parse failed, but token exists. Token starts with: ${token.substring(
+        0,
+        15
+      )}...`
+    );
     return !!(token && user);
   }
 };
@@ -216,7 +288,7 @@ export const refreshAuthToken = async (): Promise<string | null> => {
 
     console.log("🔄 Refreshing auth token...");
 
-    const response = await api.post("/auth/refresh", {
+    const response = await apiClient.post("/api/auth/refresh", {
       refreshToken: refreshToken,
     });
 
@@ -241,6 +313,24 @@ export const refreshAuthToken = async (): Promise<string | null> => {
 };
 
 // ================================================================
+// SERVER HEALTH CHECK
+// ================================================================
+
+// Sửa hàm checkServerStatus
+export const checkServerStatus = async (): Promise<boolean> => {
+  try {
+    console.log("🩺 Checking server health...");
+    // Sử dụng endpoint chính xác /api/health
+    const response = await api.get("/api/health");
+    console.log("✅ Server health check passed:", response.data);
+    return true;
+  } catch (error) {
+    console.error("❌ Server health check failed:", error);
+    return false;
+  }
+};
+
+// ================================================================
 // AUTH ACTIONS
 // ================================================================
 
@@ -248,61 +338,108 @@ export const refreshAuthToken = async (): Promise<string | null> => {
 export const login = async (
   credentials: LoginRequest
 ): Promise<LoginResponse> => {
+  console.log(`🔑 Login attempt for: ${credentials.username}`);
+
   try {
-    // Only log in development mode
-    if (process.env.NODE_ENV === "development") {
-      console.log("� Login attempt for:", credentials.username);
+    // First check if the server is available
+    const isServerUp = await checkServerStatus().catch(() => false);
+    if (!isServerUp) {
+      throw new Error("Server is not responding. Please try again later.");
     }
 
-    const response = await api.post("/auth/login", credentials);
-    const loginData = response.data;
+    console.log("🔐 Using correct endpoint: /api/auth/login");
+    // Use the correct endpoint /api/auth/login that matches the backend
+    const response = await api.post("/api/auth/login", credentials);
 
-    // Store authentication data
-    if (loginData.accessToken) {
-      setToken(loginData.accessToken);
-      if (process.env.NODE_ENV === "development") {
-        console.log("✅ Login successful");
+    if (!response.data || !response.data.accessToken) {
+      console.error("❌ Invalid login response:", response.data);
+      throw new Error("Server returned invalid login data");
+    }
+
+    const { accessToken, refreshToken, user } = response.data;
+
+    // Add explicit console logs for debugging
+    console.log("🔐 Received login response:", {
+      accessToken: response.data.accessToken ? "✓ Present" : "✗ Missing",
+      refreshToken: response.data.refreshToken ? "✓ Present" : "✗ Missing",
+      user: response.data.user ? "✓ Present" : "✗ Missing",
+      tokenLength: response.data.accessToken?.length,
+    });
+
+    // Store tokens and user data with explicit success checks
+    try {
+      setToken(accessToken);
+      console.log("✅ Token stored successfully");
+
+      if (refreshToken) {
+        setRefreshToken(refreshToken);
+        console.log("✅ Refresh token stored successfully");
       }
+
+      setCurrentUser(user);
+      console.log(
+        "✅ User data stored successfully:",
+        user.username || user.email
+      );
+
+      // Verify the token was actually stored
+      const storedToken = getToken();
+      if (!storedToken) {
+        console.error("⚠️ Failed to store token in localStorage");
+        throw new Error("Failed to store authentication data");
+      }
+
+      // Verify user data was actually stored
+      const storedUser = getCurrentUser();
+      if (!storedUser) {
+        console.error("⚠️ Failed to store user data in localStorage");
+        throw new Error("Failed to store user data");
+      }
+    } catch (storageError) {
+      console.error("❌ Error storing auth data:", storageError);
+      throw new Error("Failed to save authentication data");
     }
 
-    if (loginData.refreshToken) {
-      setRefreshToken(loginData.refreshToken);
-    }
+    // Start auto-refresh timer to keep the session alive
+    startAutoRefresh();
 
-    if (loginData.user) {
-      setCurrentUser(loginData.user);
-    }
+    console.log("✅ Login successful:", user.username);
 
-    return loginData;
+    return response.data;
   } catch (error: any) {
-    console.error("❌ Login failed:", error);
+    console.error("Login failed:", error);
 
-    // ✅ SỬA: Better error handling with specific messages
+    // Add better error handling with detailed messages
     if (error.response) {
-      const status = error.response.status;
-      const message = error.response.data?.message || "Login failed";
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error(
+        `Server responded with ${error.response.status}: ${JSON.stringify(
+          error.response.data
+        )}`
+      );
 
-      console.error(`❌ Server error ${status}:`, message);
-
-      if (status === 401) {
-        throw new Error("Tên đăng nhập hoặc mật khẩu không đúng");
-      } else if (status === 404) {
+      // Special handling for common authentication errors
+      if (error.response.status === 401) {
+        throw new Error("Invalid username or password. Please try again.");
+      } else if (error.response.status === 404) {
         throw new Error(
-          "Dịch vụ đăng nhập không tìm thấy. Vui lòng kiểm tra server backend."
+          "Authentication service not found. Please contact support."
         );
-      } else if (status === 500) {
-        throw new Error("Lỗi server nội bộ. Vui lòng thử lại sau.");
-      } else {
-        throw new Error(message);
       }
-    } else if (error.request) {
-      console.error("❌ Network error:", error.request);
+
       throw new Error(
-        "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng."
+        error.response.data?.message || `Server error ${error.response.status}`
+      );
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error("No response received from server");
+      throw new Error(
+        "Server not responding. Please check your connection or try again later."
       );
     } else {
-      console.error("❌ Unknown error:", error.message);
-      throw new Error("Đã xảy ra lỗi không mong muốn");
+      // Something happened in setting up the request
+      throw new Error("Login request failed: " + error.message);
     }
   }
 };
@@ -352,7 +489,7 @@ export const logout = async (): Promise<void> => {
 
     // Try to call logout endpoint (if available)
     try {
-      await api.post("/auth/logout");
+      await apiClient.post("/api/auth/logout");
       console.log("✅ Server logout successful");
     } catch (error) {
       console.warn("⚠️ Server logout failed, but clearing local data anyway");
@@ -472,6 +609,111 @@ export const clearAuthData = () => {
   removeToken();
   removeCurrentUser();
   stopAutoRefresh();
+};
+
+// Add this to the UTILITY FUNCTIONS section
+export const debugJwtToken = (token: string | null): void => {
+  if (!token) {
+    console.log("❌ No token provided for debugging");
+    return;
+  }
+
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) {
+      console.error("❌ Invalid JWT token format (should have 3 parts)");
+      return;
+    }
+
+    const header = JSON.parse(atob(parts[0]));
+    const payload = JSON.parse(atob(parts[1]));
+
+    console.group("🔍 JWT Token Debug");
+    console.log("Header:", header);
+    console.log("Payload:", payload);
+    console.log("Issuer:", payload.iss || "Not specified");
+    console.log("Subject:", payload.sub || "Not specified");
+    console.log(
+      "Issued At:",
+      payload.iat
+        ? new Date(payload.iat * 1000).toLocaleString()
+        : "Not specified"
+    );
+    console.log(
+      "Expiration:",
+      payload.exp
+        ? new Date(payload.exp * 1000).toLocaleString()
+        : "Not specified"
+    );
+    console.log(
+      "Roles:",
+      payload.role || payload.roles || payload.authorities || "Not specified"
+    );
+    console.groupEnd();
+
+    // Check expiration
+    if (payload.exp) {
+      const now = Math.floor(Date.now() / 1000);
+      const timeLeft = payload.exp - now;
+
+      if (timeLeft <= 0) {
+        console.error(`❌ Token expired ${Math.abs(timeLeft)} seconds ago`);
+      } else {
+        console.log(
+          `✅ Token valid for ${timeLeft} more seconds (${Math.floor(
+            timeLeft / 60
+          )} minutes)`
+        );
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error parsing JWT token:", error);
+  }
+};
+
+// Add this to your utility functions section
+export const diagnosePossibleAuthIssues = (): void => {
+  console.group("🔍 Authentication Diagnostic Check");
+
+  // Check if localStorage is available and working
+  try {
+    const testKey = "test_storage";
+    localStorage.setItem(testKey, "test");
+    localStorage.removeItem(testKey);
+    console.log("✅ localStorage is accessible");
+  } catch (e) {
+    console.error("❌ localStorage is not accessible:", e);
+    console.log(
+      "⚠️ Possible causes: Private browsing mode, storage quota exceeded"
+    );
+  }
+
+  // Check for existing tokens
+  const token = getToken();
+  console.log(token ? "✅ Token exists" : "❌ No token found");
+
+  // Check for existing user data
+  const user = getCurrentUser();
+  console.log(user ? "✅ User data exists" : "❌ No user data found");
+
+  // Check for cookie settings
+  console.log("ℹ️ Document cookie settings:", {
+    cookieEnabled: navigator.cookieEnabled,
+    cookieLength: document.cookie.length,
+  });
+
+  // Check for CORS issues
+  console.log("ℹ️ Check network tab for CORS errors during API calls");
+
+  // Check if we're running in an iframe (may affect storage)
+  const isInIframe = window !== window.top;
+  console.log(
+    isInIframe
+      ? "⚠️ Application is running in an iframe (may affect storage)"
+      : "✅ Application is not in an iframe"
+  );
+
+  console.groupEnd();
 };
 
 // Export commonly used functions for backward compatibility
