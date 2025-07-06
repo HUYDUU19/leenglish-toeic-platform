@@ -177,7 +177,7 @@ const QuestionPage: React.FC = () => {
                 setExercise(exerciseData);
 
                 // Fetch questions for this exercise
-                const questionsData = await questionService.getQuestionsByExercise(parseInt(exerciseId));
+                const questionsData = await questionService.getQuestionsByExerciseId(parseInt(exerciseId));
                 setQuestions(questionsData);
 
                 // Set timer if exercise has time limit

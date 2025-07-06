@@ -57,7 +57,10 @@ export const getToken = (): string | null => {
     localStorage.getItem("accessToken");
 
   if (token) {
-    console.log("🎫 Retrieved token from localStorage:", token.substring(0, 15) + "...");
+    console.log(
+      "🎫 Retrieved token from localStorage:",
+      token.substring(0, 15) + "..."
+    );
     // Basic JWT format check (header.payload.signature)
     if (token.split(".").length !== 3) {
       console.warn("⚠️ Retrieved token is not in valid JWT format");
@@ -78,9 +81,17 @@ export const getToken = (): string | null => {
       // Continue and return token anyway, let the API handle invalid tokens
     }
   } else {
-    console.log("⚠️ No token found in localStorage with keys:", TOKEN_KEY, "authToken", "accessToken");
+    console.log(
+      "⚠️ No token found in localStorage with keys:",
+      TOKEN_KEY,
+      "authToken",
+      "accessToken"
+    );
     // Hiển thị tất cả các keys trong localStorage để debug
-    console.log("🔍 All localStorage keys:", Object.keys(localStorage).join(", "));
+    console.log(
+      "🔍 All localStorage keys:",
+      Object.keys(localStorage).join(", ")
+    );
   }
   return token;
 };
@@ -123,12 +134,20 @@ export const isAuthenticated = (): boolean => {
       return false;
     }
 
-    console.log("✅ Authentication check passed: User is authenticated as", user.username || user.email);
+    console.log(
+      "✅ Authentication check passed: User is authenticated as",
+      user.username || user.email
+    );
     return true;
   } catch (error) {
     console.error("🔑 Error checking token validity:", error);
     // Log token format for debugging
-    console.log(`Token parse failed, but token exists. Token starts with: ${token.substring(0, 15)}...`);
+    console.log(
+      `Token parse failed, but token exists. Token starts with: ${token.substring(
+        0,
+        15
+      )}...`
+    );
     return !!(token && user);
   }
 };
@@ -201,18 +220,30 @@ Thêm hàm debug để hiển thị đầy đủ thông tin về localStorage v�
 ```typescript
 // Thêm hàm này vào AuthProvider để debug
 const debugAuthState = () => {
-  console.group('🔍 Auth Debug Info');
+  console.group("🔍 Auth Debug Info");
   // Kiểm tra tất cả các key có thể chứa token
-  console.log('toeic_access_token:', localStorage.getItem('toeic_access_token') ? '✅ Exists' : '❌ Missing');
-  console.log('authToken:', localStorage.getItem('authToken') ? '✅ Exists' : '❌ Missing');
-  
+  console.log(
+    "toeic_access_token:",
+    localStorage.getItem("toeic_access_token") ? "✅ Exists" : "❌ Missing"
+  );
+  console.log(
+    "authToken:",
+    localStorage.getItem("authToken") ? "✅ Exists" : "❌ Missing"
+  );
+
   // Kiểm tra tất cả các key có thể chứa user data
-  console.log('toeic_current_user:', localStorage.getItem('toeic_current_user') ? '✅ Exists' : '❌ Missing');
-  console.log('currentUser:', localStorage.getItem('currentUser') ? '✅ Exists' : '❌ Missing');
-  
+  console.log(
+    "toeic_current_user:",
+    localStorage.getItem("toeic_current_user") ? "✅ Exists" : "❌ Missing"
+  );
+  console.log(
+    "currentUser:",
+    localStorage.getItem("currentUser") ? "✅ Exists" : "❌ Missing"
+  );
+
   // Kiểm tra trạng thái auth trong React component
-  console.log('isAuthenticated state:', isAuthenticated);
-  console.log('currentUser state:', currentUser ? '✅ Exists' : '❌ Missing');
+  console.log("isAuthenticated state:", isAuthenticated);
+  console.log("currentUser state:", currentUser ? "✅ Exists" : "❌ Missing");
   console.groupEnd();
 };
 ```
@@ -222,51 +253,64 @@ const debugAuthState = () => {
 Thêm xử lý lỗi chi tiết và không yêu cầu email:
 
 ```typescript
-const login = async (usernameOrEmail: string, password: string): Promise<void> => {
+const login = async (
+  usernameOrEmail: string,
+  password: string
+): Promise<void> => {
   try {
-    console.log('🔑 AuthContext: Attempting login for:', usernameOrEmail);
+    console.log("🔑 AuthContext: Attempting login for:", usernameOrEmail);
 
     // Thêm kiểm tra tính hợp lệ của thông tin đăng nhập
     if (!usernameOrEmail || !password) {
-      throw new Error('Tên đăng nhập và mật khẩu không được để trống');
+      throw new Error("Tên đăng nhập và mật khẩu không được để trống");
     }
 
     // Log chi tiết hơn để debug
-    console.log(`🔍 Login attempt with: ${usernameOrEmail.length > 3 ? usernameOrEmail.substring(0, 3) + '...' : usernameOrEmail} / ${password ? '********' : 'empty'}`);
+    console.log(
+      `🔍 Login attempt with: ${
+        usernameOrEmail.length > 3
+          ? usernameOrEmail.substring(0, 3) + "..."
+          : usernameOrEmail
+      } / ${password ? "********" : "empty"}`
+    );
 
     // ✅ Import the login function from auth service
-    const { login: authLogin } = await import('../services/auth');
+    const { login: authLogin } = await import("../services/auth");
 
     // Thêm logic để kiểm tra xem đang nhập email hay username
-    const isEmail = usernameOrEmail.includes('@');
+    const isEmail = usernameOrEmail.includes("@");
 
     // ✅ Call with proper LoginRequest format, gửi đúng kiểu thông tin
     const response = await authLogin({
       username: usernameOrEmail,
       // Không truyền email nữa
-      password: password
+      password: password,
     });
 
     if (response && response.user && response.accessToken) {
-      console.log('✅ Login successful, storing auth data...');
+      console.log("✅ Login successful, storing auth data...");
       // Don't need to duplicate storage since login function already handles it
       // Just update the local state
       setCurrentUser(response.user);
       setIsAuthenticated(true);
       startAutoRefresh();
-      console.log('✅ AuthContext: Login completed successfully');
+      console.log("✅ AuthContext: Login completed successfully");
     } else {
-      throw new Error('Invalid login response - missing user or accessToken');
+      throw new Error("Invalid login response - missing user or accessToken");
     }
   } catch (error: any) {
-    console.error('❌ AuthContext login error:', error);
+    console.error("❌ AuthContext login error:", error);
 
     // Cải thiện thông báo lỗi cụ thể về vấn đề mật khẩu
     if (error.response) {
       if (error.response.status === 401) {
-        throw new Error('Sai tên đăng nhập hoặc mật khẩu');
-      } else if (error.response.data?.message?.toLowerCase().includes('password')) {
-        throw new Error('Mật khẩu không hợp lệ: ' + error.response.data.message);
+        throw new Error("Sai tên đăng nhập hoặc mật khẩu");
+      } else if (
+        error.response.data?.message?.toLowerCase().includes("password")
+      ) {
+        throw new Error(
+          "Mật khẩu không hợp lệ: " + error.response.data.message
+        );
       }
     }
 
@@ -282,6 +326,7 @@ Health check trong ứng dụng có các ý nghĩa quan trọng sau:
 ### 1. Vai trò của Health Check
 
 Health check trong ứng dụng có những mục đích sau:
+
 - **Kiểm tra server còn sống không**: Xác định server còn hoạt động trước khi thực hiện các thao tác quan trọng như đăng nhập
 - **Endpoint không cần xác thực**: Là một trong số ít các endpoint không yêu cầu token xác thực
 - **Theo dõi hệ thống**: Cung cấp thông tin chi tiết về trạng thái hệ thống (endpoint `/api/health/details`)
@@ -289,6 +334,7 @@ Health check trong ứng dụng có những mục đích sau:
 ### 2. Triển khai Health Check
 
 **Frontend**:
+
 ```typescript
 export const checkServerStatus = async (): Promise<boolean> => {
   try {
@@ -305,6 +351,7 @@ export const checkServerStatus = async (): Promise<boolean> => {
 ```
 
 **Backend**:
+
 ```java
 @GetMapping("/health")
 public ResponseEntity<Map<String, Object>> healthCheck() {
@@ -312,32 +359,82 @@ public ResponseEntity<Map<String, Object>> healthCheck() {
     response.put("status", "UP");
     response.put("timestamp", LocalDateTime.now().toString());
     response.put("service", "TOEIC Platform API");
-    
+
     return ResponseEntity.ok(response);
 }
 ```
 
 ## Vấn đề còn tồn đọng và hướng giải quyết
 
-1. **Kiểm tra đăng nhập với username và email**:
-   - Backend đã hỗ trợ đăng nhập bằng cả username và email
-   - Frontend cần đảm bảo truyền đúng tham số dựa vào định dạng input
+### ✅ ĐÃ GIẢI QUYẾT:
 
-2. **Xử lý refresh token**:
-   - Đã cập nhật đường dẫn endpoint refresh token
-   - Cần kiểm tra lại cơ chế auto-refresh
+1. **Lỗi MySQL Connection Timeout**:
 
-3. **Kiểm tra an ninh**:
-   - Đảm bảo token được lưu trữ an toàn
-   - Triển khai cơ chế blacklist token khi logout để tăng tính bảo mật
+   - ✅ Tạo DatabaseConfig với failsafe connection
+   - ✅ Cập nhật application.properties với timeout tối ưu
+   - ✅ Health check không phụ thuộc vào database connection
+   - ✅ Script tự động khởi động và kiểm tra MySQL
 
-## Kết luận
+2. **Lỗi CORS Policy**:
 
-Các vấn đề chính về xác thực đã được giải quyết:
+   - ✅ Cập nhật CorsConfig với @CrossOrigin annotations
+   - ✅ Thêm WebMvcConfigurer cho CORS mapping
+   - ✅ Expose required headers cho authentication
 
-1. **Đồng bộ endpoints**: Frontend và backend đã có cùng endpoint format (`/api/auth/login`)
-2. **Cải thiện token handling**: Kiểm tra format JWT, expiry, và lưu trữ token
-3. **Debug logging**: Đã thêm nhiều log chi tiết để dễ dàng phát hiện vấn đề
-4. **Health check**: Triển khai đúng cách để kiểm tra server status trước khi đăng nhập
+3. **Health Check Endpoint**:
+   - ✅ Always return 200 OK ngay cả khi database down
+   - ✅ Detailed database status reporting
+   - ✅ Memory và application info
 
-Với những sửa đổi này, hệ thống xác thực nên hoạt động đúng như mong đợi.
+### 🔧 CÔNG CỤ MỚI:
+
+1. **start-backend.bat**: Script tự động khởi động với MySQL check
+2. **health-check.bat**: Kiểm tra nhanh tất cả services
+3. **DatabaseConfig.java**: Configuration linh hoạt cho database
+4. **Enhanced application.properties**: Cấu hình tối ưu cho production
+
+### 🚀 HƯỚNG DẪN SỬ DỤNG:
+
+1. **Khởi động tự động**:
+
+   ```bash
+   # Chạy script tự động
+   start-backend.bat
+   ```
+
+2. **Kiểm tra health**:
+
+   ```bash
+   # Kiểm tra nhanh tất cả services
+   health-check.bat
+   ```
+
+3. **Khởi động manual**:
+
+   ```bash
+   # Khởi động MySQL trước
+   net start mysql80
+
+   # Sau đó khởi động Spring Boot
+   cd backend
+   mvn spring-boot:run
+   ```
+
+## Kết luận - Phiên bản cập nhật
+
+Các vấn đề chính về xác thực đã được giải quyết hoàn toàn:
+
+1. **✅ Đồng bộ endpoints**: Frontend và backend đã có cùng endpoint format (`/api/auth/login`)
+2. **✅ Cải thiện token handling**: Kiểm tra format JWT, expiry, và lưu trữ token
+3. **✅ Debug logging**: Đã thêm nhiều log chi tiết để dễ dàng phát hiện vấn đề
+4. **✅ Health check**: Triển khai đúng cách để kiểm tra server status trước khi đăng nhập
+5. **✅ Database resilience**: Ứng dụng khởi động được ngay cả khi MySQL chưa sẵn sàng
+6. **✅ CORS handling**: Xử lý đầy đủ CORS cho frontend communication
+7. **✅ Automated tools**: Scripts tự động giúp khởi động và kiểm tra hệ thống
+
+### 🎯 Lưu ý quan trọng:
+
+- Ứng dụng sẽ khởi động thành công ngay cả khi MySQL chưa chạy
+- Health endpoint sẽ báo cáo trạng thái database nhưng vẫn trả về 200 OK
+- CORS đã được cấu hình để hỗ trợ development từ localhost:3000
+- Authentication sẽ hoạt động bình thường sau khi MySQL được khởi động
